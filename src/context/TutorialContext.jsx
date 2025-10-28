@@ -29,8 +29,10 @@ export const TutorialProvider = ({ children }) => {
       const execute = async (attempt = 1) => {
         try {
           const data = await api.getTutorials({ signal })
-          setTutorials(Array.isArray(data) ? data : [])
-          setError(null)
+          if (!signal?.aborted) {
+            setTutorials(Array.isArray(data) ? data : [])
+            setError(null)
+          }
         } catch (err) {
           if (signal?.aborted) {
             return
@@ -38,13 +40,32 @@ export const TutorialProvider = ({ children }) => {
 
           if (attempt < 3 && (!err.status || err.status >= 500)) {
             const delay = 300 * attempt
-            await new Promise((resolve) => setTimeout(resolve, delay))
-            return execute(attempt + 1)
+            // Use AbortSignal.timeout with race to cancel timeout on abort
+            await new Promise((resolve, reject) => {
+              const timeoutId = setTimeout(resolve, delay)
+              if (signal) {
+                const abortHandler = () => {
+                  clearTimeout(timeoutId)
+                  reject(new Error('Aborted'))
+                }
+                signal.addEventListener('abort', abortHandler, { once: true })
+              }
+            }).catch(() => {
+              // Aborted during delay
+              return
+            })
+            
+            if (!signal?.aborted) {
+              return execute(attempt + 1)
+            }
+            return
           }
 
           console.error('Failed to load tutorials:', err)
-          setTutorials([])
-          setError(err)
+          if (!signal?.aborted) {
+            setTutorials([])
+            setError(err)
+          }
         }
       }
 
@@ -124,6 +145,9 @@ export const TutorialProvider = ({ children }) => {
   }
 
   const getIconComponent = (iconName) => {
+    if (!iconMap[iconName]) {
+      console.warn(`Unknown icon: ${iconName}, falling back to Terminal`)
+    }
     return iconMap[iconName] || Terminal
   }
 

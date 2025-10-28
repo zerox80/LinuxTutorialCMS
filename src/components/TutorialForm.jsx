@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import PropTypes from 'prop-types'
 import { useTutorials } from '../context/TutorialContext'
 import { X, Save, Plus, Trash2, AlertCircle } from 'lucide-react'
 
@@ -68,13 +69,15 @@ const TutorialForm = ({ tutorial, onClose }) => {
       return
     }
 
-    // Filter out empty topics
+    // Filter out empty topics and trim them
     const cleanedData = {
       title: formData.title.trim(),
       description: formData.description.trim(),
       icon: formData.icon,
       color: formData.color,
-      topics: formData.topics.filter((t) => t && t.trim() !== ''),
+      topics: formData.topics
+        .map((t) => (t || '').trim())
+        .filter((t) => t !== ''),
       content: formData.content.trim(),
     }
 
@@ -129,7 +132,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
     <div className="p-8">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">
+        <h2 id="modal-title" className="text-2xl font-bold text-gray-800">
           {tutorial ? 'Tutorial bearbeiten' : 'Neues Tutorial erstellen'}
         </h2>
         <button
@@ -290,6 +293,19 @@ const TutorialForm = ({ tutorial, onClose }) => {
       </form>
     </div>
   )
+}
+
+TutorialForm.propTypes = {
+  tutorial: PropTypes.shape({
+    id: PropTypes.string,
+    title: PropTypes.string,
+    description: PropTypes.string,
+    icon: PropTypes.string,
+    color: PropTypes.string,
+    topics: PropTypes.arrayOf(PropTypes.string),
+    content: PropTypes.string,
+  }),
+  onClose: PropTypes.func.isRequired,
 }
 
 export default TutorialForm

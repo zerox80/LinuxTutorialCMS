@@ -1,6 +1,24 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  (typeof window !== 'undefined' ? `${window.location.origin}/api` : 'http://localhost:8489/api')
+// Validate and sanitize API base URL
+const getApiBaseUrl = () => {
+  // Prefer explicit environment variable
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL
+  }
+  
+  // Fallback to window.location.origin with validation
+  if (typeof window !== 'undefined' && window.location) {
+    const origin = window.location.origin
+    // Validate origin starts with http:// or https://
+    if (origin && (origin.startsWith('http://') || origin.startsWith('https://'))) {
+      return `${origin}/api`
+    }
+  }
+  
+  // Safe fallback for development
+  return 'http://localhost:8489/api'
+}
+
+const API_BASE_URL = getApiBaseUrl()
 
 const hasStorage = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
 
@@ -85,9 +103,6 @@ class ApiClient {
 
     try {
       const response = await fetch(url, config)
-      
-      // Clean up immediately on success
-      cleanup()
 
       const isEmptyBody =
         response.status === 204 ||

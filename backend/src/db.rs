@@ -49,6 +49,7 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
             color TEXT NOT NULL,
             topics TEXT NOT NULL,
             content TEXT NOT NULL DEFAULT '',
+            version INTEGER NOT NULL DEFAULT 1,
             created_at TEXT NOT NULL DEFAULT (datetime('now')),
             updated_at TEXT NOT NULL DEFAULT (datetime('now'))
         )
@@ -56,6 +57,14 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     )
     .execute(pool)
     .await?;
+    
+    // Create indexes for better query performance
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorials_created_at ON tutorials(created_at)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorials_updated_at ON tutorials(updated_at)")
+        .execute(pool)
+        .await?;
 
     // Create or update default admin user from environment variables
     let admin_username = env::var("ADMIN_USERNAME").ok();
@@ -141,26 +150,29 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
 
 async fn insert_default_tutorials_tx(tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>) -> Result<(), sqlx::Error> {
     let tutorials = vec![
-        ("1", "Grundlegende Befehle", "Lerne die wichtigsten Linux-Befehle für die tägliche Arbeit im Terminal.", "Terminal", "from-blue-500 to-cyan-500", r#"["ls, cd, pwd","mkdir, rm, cp, mv","cat, grep, find","chmod, chown"]"#),
-        ("2", "Dateisystem & Navigation", "Verstehe die Linux-Dateistruktur und navigiere effizient durch Verzeichnisse.", "FolderTree", "from-green-500 to-emerald-500", r#"["Verzeichnisstruktur","Absolute vs. Relative Pfade","Symlinks","Mount Points"]"#),
-        ("3", "Text-Editoren", "Beherrsche vim, nano und andere Editoren für die Arbeit in der Kommandozeile.", "FileText", "from-purple-500 to-pink-500", r#"["vim Basics","nano Befehle","sed & awk","Regex Patterns"]"#),
-        ("4", "Prozessverwaltung", "Verwalte und überwache Prozesse effektiv in deinem Linux-System.", "Settings", "from-orange-500 to-red-500", r#"["ps, top, htop","kill, pkill","Background Jobs","systemctl"]"#),
-        ("5", "Berechtigungen & Sicherheit", "Verstehe Benutzerrechte, Gruppen und Sicherheitskonzepte.", "Shield", "from-indigo-500 to-blue-500", r#"["User & Groups","chmod & chown","sudo & su","SSH & Keys"]"#),
-        ("6", "Netzwerk-Grundlagen", "Konfiguriere Netzwerke und nutze wichtige Netzwerk-Tools.", "Network", "from-teal-500 to-green-500", r#"["ip & ifconfig","ping, traceroute","netstat, ss","curl & wget"]"#),
-        ("7", "Bash Scripting", "Automatisiere Aufgaben mit Shell-Scripts und Bash-Programmierung.", "Database", "from-yellow-500 to-orange-500", r#"["Variables & Loops","If-Statements","Functions","Cron Jobs"]"#),
-        ("8", "System Administration", "Erweiterte Admin-Aufgaben und Systemwartung.", "Server", "from-red-500 to-pink-500", r#"["Package Manager","Logs & Monitoring","Backup & Recovery","Performance Tuning"]"#),
+        ("1", "Grundlegende Befehle", "Lerne die wichtigsten Linux-Befehle für die tägliche Arbeit im Terminal.", "Terminal", "from-blue-500 to-cyan-500", vec!["ls, cd, pwd", "mkdir, rm, cp, mv", "cat, grep, find", "chmod, chown"]),
+        ("2", "Dateisystem & Navigation", "Verstehe die Linux-Dateistruktur und navigiere effizient durch Verzeichnisse.", "FolderTree", "from-green-500 to-emerald-500", vec!["Verzeichnisstruktur", "Absolute vs. Relative Pfade", "Symlinks", "Mount Points"]),
+        ("3", "Text-Editoren", "Beherrsche vim, nano und andere Editoren für die Arbeit in der Kommandozeile.", "FileText", "from-purple-500 to-pink-500", vec!["vim Basics", "nano Befehle", "sed & awk", "Regex Patterns"]),
+        ("4", "Prozessverwaltung", "Verwalte und überwache Prozesse effektiv in deinem Linux-System.", "Settings", "from-orange-500 to-red-500", vec!["ps, top, htop", "kill, pkill", "Background Jobs", "systemctl"]),
+        ("5", "Berechtigungen & Sicherheit", "Verstehe Benutzerrechte, Gruppen und Sicherheitskonzepte.", "Shield", "from-indigo-500 to-blue-500", vec!["User & Groups", "chmod & chown", "sudo & su", "SSH & Keys"]),
+        ("6", "Netzwerk-Grundlagen", "Konfiguriere Netzwerke und nutze wichtige Netzwerk-Tools.", "Network", "from-teal-500 to-green-500", vec!["ip & ifconfig", "ping, traceroute", "netstat, ss", "curl & wget"]),
+        ("7", "Bash Scripting", "Automatisiere Aufgaben mit Shell-Scripts und Bash-Programmierung.", "Database", "from-yellow-500 to-orange-500", vec!["Variables & Loops", "If-Statements", "Functions", "Cron Jobs"]),
+        ("8", "System Administration", "Erweiterte Admin-Aufgaben und Systemwartung.", "Server", "from-red-500 to-pink-500", vec!["Package Manager", "Logs & Monitoring", "Backup & Recovery", "Performance Tuning"]),
     ];
 
     for (id, title, description, icon, color, topics) in tutorials {
+        let topics_json = serde_json::to_string(&topics)
+            .map_err(|e| sqlx::Error::Protocol(format!("Failed to serialize topics: {}", e).into()))?;
+        
         sqlx::query(
-            "INSERT INTO tutorials (id, title, description, icon, color, topics, content) VALUES (?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO tutorials (id, title, description, icon, color, topics, content, version) VALUES (?, ?, ?, ?, ?, ?, ?, 1)"
         )
         .bind(id)
         .bind(title)
         .bind(description)
         .bind(icon)
         .bind(color)
-        .bind(topics)
+        .bind(topics_json)
         .bind("")
         .execute(&mut **tx)
         .await?;

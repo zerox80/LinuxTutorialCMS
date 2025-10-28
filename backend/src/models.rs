@@ -38,6 +38,7 @@ pub struct Tutorial {
     pub color: String,
     pub topics: String, // JSON array as string
     pub content: String,
+    pub version: i64,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -71,6 +72,7 @@ pub struct TutorialResponse {
     pub color: String,
     pub topics: Vec<String>,
     pub content: String,
+    pub version: i64,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -96,6 +98,7 @@ impl From<Tutorial> for TutorialResponse {
             color: tutorial.color,
             topics,
             content: tutorial.content,
+            version: tutorial.version,
             created_at: tutorial.created_at,
             updated_at: tutorial.updated_at,
         }

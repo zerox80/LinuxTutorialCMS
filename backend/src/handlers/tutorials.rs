@@ -79,7 +79,14 @@ fn sanitize_topics(topics: &[String]) -> Result<Vec<String>, String> {
         .iter()
         .map(|topic| topic.trim())
         .filter(|topic| !topic.is_empty())
-        .map(|topic| topic.to_string())
+        .map(|topic| {
+            // Validate individual topic length
+            if topic.len() > 100 {
+                topic.chars().take(100).collect()
+            } else {
+                topic.to_string()
+            }
+        })
         .collect();
 
     if sanitized.is_empty() {
@@ -209,8 +216,8 @@ pub async fn create_tutorial(
 
     sqlx::query(
         r#"
-        INSERT INTO tutorials (id, title, description, icon, color, topics, content, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO tutorials (id, title, description, icon, color, topics, content, version, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
         "#,
     )
     .bind(&id)
@@ -242,8 +249,9 @@ pub async fn create_tutorial(
         color: payload.color,
         topics: payload.topics,
         content: payload.content,
+        version: 1,
         created_at: now.clone(),
-        updated_at: now.clone(),
+        updated_at: now,
     }))
 }
 
@@ -321,6 +329,8 @@ pub async fn update_tutorial(
             Json(ErrorResponse { error: e }),
         ));
     }
+    let new_version = tutorial.version + 1;
+    
     let (topics_json, topics_vec) = if let Some(t) = payload.topics {
         let sanitized = sanitize_topics(&t).map_err(|e| {
             (
@@ -360,11 +370,12 @@ pub async fn update_tutorial(
     };
     let now = chrono::Utc::now().to_rfc3339();
 
-    sqlx::query(
+    // Optimistic locking: update only if version hasn't changed
+    let result = sqlx::query(
         r#"
         UPDATE tutorials
-        SET title = ?, description = ?, icon = ?, color = ?, topics = ?, content = ?, updated_at = ?
-        WHERE id = ?
+        SET title = ?, description = ?, icon = ?, color = ?, topics = ?, content = ?, version = ?, updated_at = ?
+        WHERE id = ? AND version = ?
         "#,
     )
     .bind(&title)
@@ -373,8 +384,10 @@ pub async fn update_tutorial(
     .bind(&color)
     .bind(&topics_json)
     .bind(&content)
+    .bind(new_version)
     .bind(&now)
     .bind(&id)
+    .bind(tutorial.version)
     .execute(&pool)
     .await
     .map_err(|e| {
@@ -386,6 +399,16 @@ pub async fn update_tutorial(
             }),
         )
     })?;
+    
+    // Check if the update actually happened (optimistic lock check)
+    if result.rows_affected() == 0 {
+        return Err((
+            StatusCode::CONFLICT,
+            Json(ErrorResponse {
+                error: "Tutorial was modified by another request. Please refresh and try again.".to_string(),
+            }),
+        ));
+    }
 
     Ok(Json(TutorialResponse {
         id,
@@ -395,6 +418,7 @@ pub async fn update_tutorial(
         color,
         topics: topics_vec,
         content,
+        version: new_version,
         created_at: tutorial.created_at,
         updated_at: now,
     }))

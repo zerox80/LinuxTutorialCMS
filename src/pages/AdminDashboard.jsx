@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTutorials } from '../context/TutorialContext'
@@ -11,6 +11,7 @@ const AdminDashboard = () => {
   const [deletingId, setDeletingId] = useState(null)
   const [confirmingId, setConfirmingId] = useState(null)
   const [deleteError, setDeleteError] = useState(null)
+  const isMountedRef = useRef(true)
   const { logout, user } = useAuth()
   const { tutorials, deleteTutorial, loading, error, refreshTutorials } = useTutorials()
   const navigate = useNavigate()
@@ -43,21 +44,56 @@ const AdminDashboard = () => {
   const handleDeleteConfirm = async (id) => {
     setDeleteError(null)
     setDeletingId(id)
+    
     try {
       await deleteTutorial(id)
-      setConfirmingId(null)
+      if (isMountedRef.current) {
+        setConfirmingId(null)
+      }
     } catch (err) {
-      const message = err?.message || 'Löschen fehlgeschlagen'
-      setDeleteError({ id, message })
+      if (isMountedRef.current) {
+        const message = err?.message || 'Löschen fehlgeschlagen'
+        setDeleteError({ id, message })
+      }
     } finally {
-      setDeletingId(null)
+      if (isMountedRef.current) {
+        setDeletingId(null)
+      }
     }
   }
+  
+  // Track mounted state
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
 
   const handleCloseForm = () => {
     setShowForm(false)
     setEditingTutorial(null)
   }
+  
+  // Handle ESC key for modal
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && showForm) {
+        handleCloseForm()
+      }
+    }
+    
+    if (showForm) {
+      document.addEventListener('keydown', handleEscape)
+      // Trap focus in modal
+      document.body.style.overflow = 'hidden'
+    }
+    
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+      document.body.style.overflow = 'unset'
+    }
+  }, [showForm])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -136,8 +172,21 @@ const AdminDashboard = () => {
 
         {/* Tutorial Form Modal */}
         {showForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-title"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                handleCloseForm()
+              }
+            }}
+          >
+            <div 
+              className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+              role="document"
+            >
               <TutorialForm
                 tutorial={editingTutorial}
                 onClose={handleCloseForm}

@@ -20,6 +20,15 @@ export const AuthProvider = ({ children }) => {
       }
       const token = localStorage.getItem('token')
       if (token) {
+        // Basic JWT format validation (should have 3 parts separated by dots)
+        const jwtParts = token.split('.')
+        if (jwtParts.length !== 3) {
+          console.warn('Invalid JWT format in localStorage, removing token')
+          localStorage.removeItem('token')
+          setLoading(false)
+          return
+        }
+        
         try {
           api.setToken(token)
           const userData = await api.me({ signal: controller.signal })

@@ -28,20 +28,30 @@ async fn security_headers(
     request: Request,
     next: Next,
 ) -> Response {
+    // Check if request is HTTPS before processing
+    let is_https = request
+        .headers()
+        .get("x-forwarded-proto")
+        .and_then(|v| v.to_str().ok())
+        .map(|v| v == "https")
+        .unwrap_or(false);
+    
     let mut response = next.run(request).await;
     let headers = response.headers_mut();
     
-    // Content Security Policy
+    // Content Security Policy - More restrictive, no unsafe-inline for scripts
     headers.insert(
         CONTENT_SECURITY_POLICY,
-        HeaderValue::from_static("default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;"),
+        HeaderValue::from_static("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self';"),
     );
     
-    // HSTS - Enforce HTTPS
-    headers.insert(
-        STRICT_TRANSPORT_SECURITY,
-        HeaderValue::from_static("max-age=31536000; includeSubDomains"),
-    );
+    // HSTS - Only set if request came via HTTPS
+    if is_https {
+        headers.insert(
+            STRICT_TRANSPORT_SECURITY,
+            HeaderValue::from_static("max-age=31536000; includeSubDomains; preload"),
+        );
+    }
     
     // Prevent MIME sniffing
     headers.insert(
@@ -85,10 +95,23 @@ async fn main() {
             if trimmed.is_empty() {
                 return None;
             }
+            
+            // Validate that origin is a valid URL
+            if !trimmed.starts_with("http://") && !trimmed.starts_with("https://") {
+                tracing::warn!("Ignoring invalid origin (must start with http:// or https://): '{trimmed}'");
+                return None;
+            }
+            
+            // Additional validation: check for valid URL structure
+            if let Err(e) = url::Url::parse(trimmed) {
+                tracing::warn!("Ignoring malformed origin URL '{trimmed}': {e}");
+                return None;
+            }
+            
             match HeaderValue::from_str(trimmed) {
                 Ok(value) => Some(value),
                 Err(err) => {
-                    tracing::warn!("Ignoring invalid origin '{trimmed}': {err}");
+                    tracing::warn!("Ignoring invalid origin header value '{trimmed}': {err}");
                     None
                 }
             }
@@ -114,10 +137,10 @@ async fn main() {
 
     tracing::info!(origins = ?allowed_origins, "Configured CORS origins");
 
-    // Configure rate limiting (5 requests per 60 seconds for login)
+    // Configure rate limiting (5 requests per minute for login)
     let rate_limit_config = Box::new(
         GovernorConfigBuilder::default()
-            .per_second(60)
+            .per_second(1)
             .burst_size(5)
             .finish()
             .unwrap(),

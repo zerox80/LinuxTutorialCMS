@@ -48,8 +48,11 @@ impl Claims {
             .map(|dt| dt.timestamp())
             .and_then(|ts| usize::try_from(ts).ok())
             .unwrap_or_else(|| {
-                tracing::warn!("Timestamp overflow, using maximum safe value");
-                usize::MAX / 2 // Safe fallback
+                tracing::error!("Timestamp overflow when creating JWT, using 24h from epoch");
+                // Fallback: use current time as best effort (will likely fail validation)
+                // This should never happen in practice with modern timestamps
+                let now = chrono::Utc::now().timestamp() as usize;
+                now.saturating_add(86400) // 24 hours in seconds
             });
 
         Claims {
