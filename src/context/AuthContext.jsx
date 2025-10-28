@@ -14,12 +14,14 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token')
       if (token) {
         try {
+          api.setToken(token)
           const userData = await api.me()
           setIsAuthenticated(true)
           setUser(userData)
         } catch (error) {
           console.error('Auth check failed:', error)
           localStorage.removeItem('token')
+          api.setToken(null)
         }
       }
       setLoading(false)
@@ -30,10 +32,16 @@ export const AuthProvider = ({ children }) => {
   const login = async (username, password) => {
     try {
       const response = await api.login(username, password)
+      if (response.token) {
+        api.setToken(response.token)
+      }
       setIsAuthenticated(true)
       setUser(response.user)
       return { success: true }
     } catch (error) {
+      api.setToken(null)
+      setIsAuthenticated(false)
+      setUser(null)
       return { success: false, error: error.message || 'Ungültige Anmeldedaten' }
     }
   }

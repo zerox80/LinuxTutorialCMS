@@ -15,7 +15,23 @@ const TutorialForm = ({ tutorial, onClose }) => {
 
   useEffect(() => {
     if (tutorial) {
-      setFormData(tutorial)
+      setFormData({
+        title: tutorial.title || '',
+        description: tutorial.description || '',
+        icon: tutorial.icon || 'Terminal',
+        color: tutorial.color || 'from-blue-500 to-cyan-500',
+        topics: Array.isArray(tutorial.topics) && tutorial.topics.length > 0 ? [...tutorial.topics] : [''],
+        content: tutorial.content || '',
+      })
+    } else {
+      setFormData({
+        title: '',
+        description: '',
+        icon: 'Terminal',
+        color: 'from-blue-500 to-cyan-500',
+        topics: [''],
+        content: '',
+      })
     }
   }, [tutorial])
 
@@ -50,7 +66,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
       description: formData.description,
       icon: formData.icon,
       color: formData.color,
-      topics: formData.topics.filter(t => t.trim() !== ''),
+      topics: formData.topics.filter((t) => t.trim() !== ''),
       content: formData.content,
     }
 

@@ -4,7 +4,10 @@ use std::env;
 pub type DbPool = SqlitePool;
 
 pub async fn create_pool() -> Result<DbPool, sqlx::Error> {
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| {
+        tracing::warn!("DATABASE_URL not set, defaulting to sqlite:./database.db");
+        "sqlite:./database.db".to_string()
+    });
     
     let pool = SqlitePoolOptions::new()
         .max_connections(5)
@@ -50,8 +53,14 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     .await?;
 
     // Create or update default admin user from environment variables
-    let admin_username = env::var("ADMIN_USERNAME").unwrap_or_else(|_| "admin".to_string());
-    let admin_password = env::var("ADMIN_PASSWORD").unwrap_or_else(|_| "admin123".to_string());
+    let admin_username = env::var("ADMIN_USERNAME").unwrap_or_else(|_| {
+        tracing::warn!("ADMIN_USERNAME not set; using insecure default 'admin'. Change this in production.");
+        "admin".to_string()
+    });
+    let admin_password = env::var("ADMIN_PASSWORD").unwrap_or_else(|_| {
+        tracing::warn!("ADMIN_PASSWORD not set; using insecure default. Change this in production.");
+        "admin123".to_string()
+    });
 
     if admin_username.is_empty() {
         tracing::warn!("ADMIN_USERNAME is empty; skipping default admin provisioning");

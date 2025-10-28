@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { Terminal, FolderTree, FileText, Settings, Shield, Network, Database, Server } from 'lucide-react'
 import { api } from '../api/client'
 
@@ -19,27 +19,32 @@ const iconMap = {
 export const TutorialProvider = ({ children }) => {
   const [tutorials, setTutorials] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  const loadTutorials = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await api.getTutorials()
+      setTutorials(Array.isArray(data) ? data : [])
+    } catch (err) {
+      console.error('Failed to load tutorials:', err)
+      setTutorials([])
+      setError(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   // Load tutorials from API
   useEffect(() => {
     loadTutorials()
-  }, [])
-
-  const loadTutorials = async () => {
-    try {
-      const data = await api.getTutorials()
-      setTutorials(data)
-    } catch (error) {
-      console.error('Failed to load tutorials:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [loadTutorials])
 
   const addTutorial = async (tutorial) => {
     try {
       const newTutorial = await api.createTutorial(tutorial)
-      setTutorials([...tutorials, newTutorial])
+      setTutorials((prev) => [...prev, newTutorial])
       return newTutorial
     } catch (error) {
       console.error('Failed to create tutorial:', error)
@@ -50,7 +55,7 @@ export const TutorialProvider = ({ children }) => {
   const updateTutorial = async (id, updatedTutorial) => {
     try {
       const updated = await api.updateTutorial(id, updatedTutorial)
-      setTutorials(tutorials.map((t) => (t.id === id ? updated : t)))
+      setTutorials((prev) => prev.map((t) => (t.id === id ? updated : t)))
       return updated
     } catch (error) {
       console.error('Failed to update tutorial:', error)
@@ -61,7 +66,7 @@ export const TutorialProvider = ({ children }) => {
   const deleteTutorial = async (id) => {
     try {
       await api.deleteTutorial(id)
-      setTutorials(tutorials.filter((t) => t.id !== id))
+      setTutorials((prev) => prev.filter((t) => t.id !== id))
     } catch (error) {
       console.error('Failed to delete tutorial:', error)
       throw error
@@ -87,6 +92,7 @@ export const TutorialProvider = ({ children }) => {
         getTutorial,
         getIconComponent,
         refreshTutorials: loadTutorials,
+        error,
       }}
     >
       {children}

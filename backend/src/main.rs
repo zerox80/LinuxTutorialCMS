@@ -9,7 +9,11 @@ use axum::{
 };
 use dotenv::dotenv;
 use std::env;
-use tower_http::cors::{Any, CorsLayer};
+use http::{
+    header::{AUTHORIZATION, CONTENT_TYPE},
+    HeaderValue, Method,
+};
+use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tracing_subscriber;
 
 #[tokio::main]
@@ -25,10 +29,44 @@ async fn main() {
     db::run_migrations(&pool).await.expect("Failed to run migrations");
 
     // Configure CORS
+    let allowed_origins_env = env::var("FRONTEND_ORIGINS").unwrap_or_else(|_| {
+        "http://localhost:5173,http://localhost:3000".to_string()
+    });
+    let mut allowed_origins: Vec<HeaderValue> = allowed_origins_env
+        .split(',')
+        .filter_map(|origin| {
+            let trimmed = origin.trim();
+            if trimmed.is_empty() {
+                return None;
+            }
+            match HeaderValue::from_str(trimmed) {
+                Ok(value) => Some(value),
+                Err(err) => {
+                    tracing::warn!("Ignoring invalid origin '{trimmed}': {err}");
+                    None
+                }
+            }
+        })
+        .collect();
+
+    if allowed_origins.is_empty() {
+        tracing::warn!("No valid FRONTEND_ORIGINS configured; falling back to localhost:5173");
+        allowed_origins.push(HeaderValue::from_static("http://localhost:5173"));
+    }
+
     let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
+        .allow_origin(AllowOrigin::list(allowed_origins.clone()))
+        .allow_methods(AllowMethods::list(vec![
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::DELETE,
+            Method::OPTIONS,
+        ]))
+        .allow_headers(AllowHeaders::list(vec![AUTHORIZATION, CONTENT_TYPE]))
+        .allow_credentials(true);
+
+    tracing::info!(origins = ?allowed_origins, "Configured CORS origins");
 
     // Build application routes
     let app = Router::new()
@@ -45,6 +83,7 @@ async fn main() {
         
         // Health check
         .route("/api/health", get(|| async { "OK" }))
+        .route("/health", get(|| async { "OK" }))
         
         .layer(cors)
         .with_state(pool);

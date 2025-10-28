@@ -1,13 +1,19 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
-  || (typeof window !== 'undefined' ? `${window.location.origin}/api` : 'http://localhost:8489/api')
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (typeof window !== 'undefined' ? `${window.location.origin}/api` : 'http://localhost:8489/api')
+
+const hasStorage = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
 
 class ApiClient {
   constructor() {
-    this.token = localStorage.getItem('token')
+    this.token = hasStorage ? localStorage.getItem('token') : null
   }
 
   setToken(token) {
     this.token = token
+    if (!hasStorage) {
+      return
+    }
     if (token) {
       localStorage.setItem('token', token)
     } else {
@@ -16,9 +22,7 @@ class ApiClient {
   }
 
   getHeaders() {
-    const headers = {
-      'Content-Type': 'application/json',
-    }
+    const headers = {}
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`
     }
@@ -27,29 +31,66 @@ class ApiClient {
 
   async request(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`
+    const { timeout = 15000, headers: optionHeaders, signal, ...rest } = options
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), timeout)
+
     const config = {
-      ...options,
+      ...rest,
       headers: {
         ...this.getHeaders(),
-        ...options.headers,
+        ...optionHeaders,
       },
+      signal: signal || controller.signal,
+    }
+
+    if (config.body && !config.headers['Content-Type']) {
+      config.headers['Content-Type'] = 'application/json'
     }
 
     try {
       const response = await fetch(url, config)
-      
-      if (response.status === 204) {
+      clearTimeout(timeoutId)
+
+      const isEmptyBody =
+        response.status === 204 ||
+        response.status === 205 ||
+        response.headers.get('content-length') === '0'
+
+      if (isEmptyBody) {
+        if (!response.ok) {
+          const error = new Error(response.statusText || 'Request failed')
+          error.status = response.status
+          throw error
+        }
         return null
       }
 
-      const data = await response.json()
+      const contentType = response.headers.get('content-type') || ''
+      let payload
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Request failed')
+      if (contentType.includes('application/json')) {
+        payload = await response.json()
+      } else {
+        const text = await response.text()
+        payload = text ? { message: text } : null
       }
 
-      return data
+      if (!response.ok) {
+        const error = new Error(
+          payload?.error || payload?.message || response.statusText || 'Request failed',
+        )
+        error.status = response.status
+        throw error
+      }
+
+      return payload
     } catch (error) {
+      clearTimeout(timeoutId)
+      if (error.name === 'AbortError') {
+        error = new Error('Request timed out')
+        error.status = 408
+      }
       console.error('API Error:', error)
       throw error
     }

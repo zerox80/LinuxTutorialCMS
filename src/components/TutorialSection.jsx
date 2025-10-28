@@ -1,8 +1,9 @@
 import TutorialCard from './TutorialCard'
 import { useTutorials } from '../context/TutorialContext'
+import { AlertCircle } from 'lucide-react'
 
 const TutorialSection = () => {
-  const { tutorials, getIconComponent } = useTutorials()
+  const { tutorials, getIconComponent, loading, error } = useTutorials()
 
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -13,15 +14,30 @@ const TutorialSection = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {tutorials.map((tutorial) => (
-          <TutorialCard 
-            key={tutorial.id} 
-            {...tutorial} 
-            icon={getIconComponent(tutorial.icon)}
-          />
-        ))}
-      </div>
+      {error && (
+        <div className="mb-8 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <div>
+            <p className="font-semibold">Fehler beim Laden der Tutorials</p>
+            <p className="text-sm">{error.message || 'Bitte versuche es später erneut.'}</p>
+          </div>
+        </div>
+      )}
+
+      {loading && tutorials.length === 0 ? (
+        <div className="text-center text-gray-600 py-12">Lade Tutorials…</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {tutorials.map((tutorial) => (
+            <TutorialCard
+              key={tutorial.id}
+              {...tutorial}
+              topics={Array.isArray(tutorial.topics) ? tutorial.topics : []}
+              icon={getIconComponent(tutorial.icon)}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Call to Action */}
       <div className="mt-16 bg-gradient-to-r from-primary-600 to-primary-800 rounded-2xl p-8 md:p-12 text-white text-center">
