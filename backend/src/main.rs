@@ -14,12 +14,12 @@ use dotenv::dotenv;
 use std::env;
 use axum::http::{
     header::{AUTHORIZATION, CONTENT_TYPE, CONTENT_SECURITY_POLICY, STRICT_TRANSPORT_SECURITY, X_CONTENT_TYPE_OPTIONS, X_FRAME_OPTIONS},
-    HeaderValue, Method, StatusCode,
+    HeaderValue, Method,
 };
 use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tower_http::limit::RequestBodyLimitLayer;
 use tower_governor::{
-    governor::{GovernorConfig, GovernorConfigBuilder},
+    governor::GovernorConfigBuilder,
     GovernorLayer,
 };
 use tracing_subscriber;
@@ -149,7 +149,7 @@ async fn main() {
     tracing::info!(origins = ?allowed_origins, "Configured CORS origins");
 
     // Configure rate limiting (5 requests per 5 seconds for login, with burst of 5)
-    let rate_limit_config = Box::new(
+    let rate_limit_config = std::sync::Arc::new(
         GovernorConfigBuilder::default()
             .per_second(1)
             .burst_size(5)
