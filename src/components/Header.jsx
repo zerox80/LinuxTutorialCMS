@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Terminal, Menu, X, Lock } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { scrollToSection } from '../utils/scrollToSection'
@@ -7,15 +7,30 @@ import { scrollToSection } from '../utils/scrollToSection'
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
   const { isAuthenticated } = useAuth()
 
   const navItems = [
-    { id: 'home', label: 'Home' },
-    { id: 'grundlagen', label: 'Grundlagen' },
-    { id: 'befehle', label: 'Befehle' },
-    { id: 'praxis', label: 'Praxis' },
-    { id: 'advanced', label: 'Advanced' },
+    { id: 'home', label: 'Home', type: 'section' },
+    { id: 'grundlagen', label: 'Grundlagen', type: 'route', path: '/grundlagen' },
+    { id: 'befehle', label: 'Befehle', type: 'section' },
+    { id: 'praxis', label: 'Praxis', type: 'section' },
+    { id: 'advanced', label: 'Advanced', type: 'section' },
   ]
+
+  const handleNavigation = (item) => {
+    if (item.type === 'route' && item.path) {
+      navigate(item.path)
+      return
+    }
+
+    if (location.pathname !== '/') {
+      navigate('/', { state: { scrollTo: item.id } })
+      return
+    }
+
+    scrollToSection(item.id)
+  }
 
   return (
     <header className="bg-white/80 backdrop-blur-xl shadow-soft sticky top-0 z-50 border-b border-gray-100/50">
@@ -37,7 +52,7 @@ const Header = () => {
             {navItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => scrollToSection(item.id)}
+                onClick={() => handleNavigation(item)}
                 className="nav-link font-medium hover:text-primary-600"
               >
                 {item.label}
@@ -69,7 +84,7 @@ const Header = () => {
               <button
                 key={item.id}
                 onClick={() => {
-                  scrollToSection(item.id)
+                  handleNavigation(item)
                   setMobileMenuOpen(false)
                 }}
                 className="block w-full text-left px-4 py-2 rounded-md text-gray-600 hover:bg-gray-50 hover:text-primary-600"

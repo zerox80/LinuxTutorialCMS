@@ -5,6 +5,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import Home from './pages/Home'
+import Grundlagen from './pages/Grundlagen'
 import Login from './pages/Login'
 import AdminDashboard from './pages/AdminDashboard'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -24,6 +25,17 @@ function App() {
                     <>
                       <Header />
                       <Home />
+                      <Footer />
+                    </>
+                  }
+                />
+
+                <Route
+                  path="/grundlagen"
+                  element={
+                    <>
+                      <Header />
+                      <Grundlagen />
                       <Footer />
                     </>
                   }
