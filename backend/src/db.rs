@@ -12,7 +12,6 @@ pub async fn create_pool() -> Result<DbPool, sqlx::Error> {
     let pool = SqlitePoolOptions::new()
         .max_connections(5)
         .acquire_timeout(std::time::Duration::from_secs(10))
-        .connect_timeout(std::time::Duration::from_secs(5))
         .max_lifetime(std::time::Duration::from_secs(3600))
         .idle_timeout(std::time::Duration::from_secs(600))
         .connect(&database_url)

@@ -4,7 +4,6 @@ mod handlers;
 mod models;
 
 use axum::{
-    body::Body,
     extract::Request,
     middleware::{self, Next},
     response::Response,
@@ -13,14 +12,16 @@ use axum::{
 };
 use dotenv::dotenv;
 use std::env;
-use http::{
+use axum::http::{
     header::{AUTHORIZATION, CONTENT_TYPE, CONTENT_SECURITY_POLICY, STRICT_TRANSPORT_SECURITY, X_CONTENT_TYPE_OPTIONS, X_FRAME_OPTIONS},
     HeaderValue, Method, StatusCode,
 };
 use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tower_http::limit::RequestBodyLimitLayer;
-use tower_governor::{GovernorConfigBuilder, governor::GovernorConfig};
-use std::time::Duration;
+use tower_governor::{
+    governor::{GovernorConfig, GovernorConfigBuilder},
+    GovernorLayer,
+};
 use tracing_subscriber;
 use tokio::signal;
 
@@ -160,7 +161,7 @@ async fn main() {
     // Login route with rate limiting
     let login_router = Router::new()
         .route("/api/auth/login", post(handlers::auth::login))
-        .layer(tower_governor::GovernorLayer {
+        .layer(GovernorLayer {
             config: rate_limit_config,
         });
     
