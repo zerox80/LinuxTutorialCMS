@@ -1,5 +1,5 @@
 # Multi-stage build für kleines Image
-FROM rust:nightly-slim as builder
+FROM rust:nightly as builder
 
 WORKDIR /app
 
