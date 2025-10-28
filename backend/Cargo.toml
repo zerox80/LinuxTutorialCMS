@@ -24,6 +24,6 @@ uuid = { version = "1.6", features = ["v4", "serde"] }
 url = "2.5"
 
 [dependencies.base64ct]
-version = "1.6"
+version = "=1.6.0"
 default-features = false
 features = ["alloc"]
