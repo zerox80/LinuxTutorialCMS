@@ -1,5 +1,6 @@
 # Multi-stage build für kleines Image
-FROM rust:1.83 as builder
+# Use latest stable Rust
+FROM rust:1.82-bookworm as builder
 
 WORKDIR /app
 
@@ -9,8 +10,8 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Dependencies cachen
-COPY Cargo.toml ./
+# Dependencies cachen - copy both Cargo.toml and Cargo.lock
+COPY Cargo.toml Cargo.lock* ./
 RUN mkdir src && \
     echo "fn main() {}" > src/main.rs && \
     cargo build --release && \

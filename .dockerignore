@@ -1,0 +1,87 @@
+# ============================================
+# LinuxTutorialCMS - .dockerignore
+# ============================================
+# Prevents unnecessary files from being copied into Docker images
+
+# ==================== Version Control ====================
+.git/
+.gitignore
+.gitattributes
+
+# ==================== Documentation ====================
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+BUG_FIXES.md
+SECURITY_NOTES.md
+*.md
+
+# ==================== Node.js / Frontend ====================
+node_modules/
+npm-debug.log*
+yarn-error.log*
+dist/
+build/
+coverage/
+.cache/
+
+# ==================== Rust / Backend ====================
+target/
+**/*.rs.bk
+
+# ==================== Environment Files ====================
+.env
+.env.local
+.env.*.local
+*.env.backup
+
+# Keep example files
+!.env.example
+!.env.docker.example
+
+# ==================== Docker Files ====================
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# ==================== IDE ====================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ==================== CI/CD ====================
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# ==================== Temporary Files ====================
+tmp/
+temp/
+*.tmp
+*.log
+logs/
+
+# ==================== Database ====================
+*.db
+*.sqlite
+*.sqlite3
+database.db
+
+# ==================== Testing ====================
+coverage/
+.nyc_output/
+test/
+tests/
+spec/
+*.test.js
+*.spec.js
+
+# ==================== Nginx Configs (host-only) ====================
+nginx-configs/
+
+# ==================== Development Scripts ====================
+start-docker.bat
+start-docker.sh
