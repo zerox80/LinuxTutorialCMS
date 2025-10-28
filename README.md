@@ -68,6 +68,8 @@ Das Admin Panel erreichst du unter `/login` oder über den "Login" Button im Hea
 - **Benutzername:** `admin`
 - **Passwort:** `admin123`
 
+> Passe die Zugangsdaten jederzeit über die Environment-Variablen `ADMIN_USERNAME` und `ADMIN_PASSWORD` an. Beim nächsten Start aktualisiert das Backend den Admin-User automatisch.
+
 Im Admin Panel kannst du:
 - ✏️ Neue Tutorials erstellen
 - 📝 Bestehende Tutorials bearbeiten

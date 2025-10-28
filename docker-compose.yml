@@ -13,6 +13,8 @@ services:
       - JWT_SECRET=${JWT_SECRET:-change-this-secret-in-production}
       - RUST_LOG=info
       - PORT=8489
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
     volumes:
       - backend-data:/data
     networks:

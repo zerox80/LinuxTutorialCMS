@@ -33,6 +33,8 @@ High-performance REST API backend für die Linux Tutorial Website.
    JWT_SECRET=your-secret-key-change-this-in-production
    RUST_LOG=debug
    PORT=8489
+   ADMIN_USERNAME=admin
+   ADMIN_PASSWORD=admin123
    ```
 
 3. **Dependencies installieren und Server starten:**
@@ -43,7 +45,7 @@ High-performance REST API backend für die Linux Tutorial Website.
    Beim ersten Start:
    - Wird die SQLite-Datenbank erstellt
    - Werden die Tabellen angelegt
-   - Wird ein Admin-User angelegt
+   - Wird ein Admin-User basierend auf `ADMIN_USERNAME` / `ADMIN_PASSWORD` angelegt oder aktualisiert
    - Werden Standard-Tutorials eingefügt
 
 ## 🚀 API Endpoints

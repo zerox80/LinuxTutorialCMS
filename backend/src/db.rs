@@ -49,21 +49,54 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    // Create default admin user if not exists
-    let user_exists: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM users WHERE username = 'admin'")
-        .fetch_one(pool)
+    // Create or update default admin user from environment variables
+    let admin_username = env::var("ADMIN_USERNAME").unwrap_or_else(|_| "admin".to_string());
+    let admin_password = env::var("ADMIN_PASSWORD").unwrap_or_else(|_| "admin123".to_string());
+
+    if admin_username.is_empty() {
+        tracing::warn!("ADMIN_USERNAME is empty; skipping default admin provisioning");
+    } else if admin_password.is_empty() {
+        tracing::warn!("ADMIN_PASSWORD is empty; skipping default admin provisioning");
+    } else {
+        let existing_user: Option<(i64, String)> = sqlx::query_as(
+            "SELECT id, password_hash FROM users WHERE username = ?",
+        )
+        .bind(&admin_username)
+        .fetch_optional(pool)
         .await?;
 
-    if user_exists.0 == 0 {
-        let password_hash = bcrypt::hash("admin123", bcrypt::DEFAULT_COST).unwrap();
-        sqlx::query("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)")
-            .bind("admin")
-            .bind(password_hash)
-            .bind("admin")
-            .execute(pool)
-            .await?;
-        
-        tracing::info!("Created default admin user (username: admin, password: admin123)");
+        match existing_user {
+            Some((user_id, current_hash)) => {
+                let password_matches =
+                    bcrypt::verify(&admin_password, &current_hash).unwrap_or(false);
+                if !password_matches {
+                    let new_hash = bcrypt::hash(&admin_password, bcrypt::DEFAULT_COST)?;
+                    sqlx::query("UPDATE users SET password_hash = ? WHERE id = ?")
+                        .bind(new_hash)
+                        .bind(user_id)
+                        .execute(pool)
+                        .await?;
+                    tracing::info!(
+                        "Updated password for existing admin user (username: {})",
+                        admin_username
+                    );
+                }
+            }
+            None => {
+                let password_hash = bcrypt::hash(&admin_password, bcrypt::DEFAULT_COST)?;
+                sqlx::query("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)")
+                    .bind(&admin_username)
+                    .bind(password_hash)
+                    .bind("admin")
+                    .execute(pool)
+                    .await?;
+
+                tracing::info!(
+                    "Created default admin user from environment (username: {})",
+                    admin_username
+                );
+            }
+        }
     }
 
     // Insert default tutorials if none exist
