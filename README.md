@@ -39,7 +39,7 @@ Eine moderne, responsive Website für Linux-Tutorials mit perfektem Design und A
    cargo run
    ```
    
-   Der Server läuft auf: `http://localhost:3000`
+   Der Server läuft auf: `http://localhost:8489`
 
 ### Frontend (React)
 

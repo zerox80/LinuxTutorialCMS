@@ -44,17 +44,17 @@ docker-compose logs -f
 docker-compose ps
 ```
 
-Die App läuft jetzt auf Port **8080** (Docker-intern).
+Die App läuft jetzt auf Port **8489** (Docker-intern).
 
 ### 4. Verify Container
 
 ```bash
 # Health check
-curl http://localhost:8080/health
-curl http://localhost:8080/api/health
+curl http://localhost:8489/health
+curl http://localhost:8489/api/health
 
 # Backend testen
-curl http://localhost:8080/api/tutorials
+curl http://localhost:8489/api/tutorials
 ```
 
 ## 🌐 nginx Reverse Proxy Setup (Host)

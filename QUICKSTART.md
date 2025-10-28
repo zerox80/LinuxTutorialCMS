@@ -15,7 +15,7 @@ cd backend
 cargo run
 ```
 
-✅ Backend läuft auf: **http://localhost:3000**
+✅ Backend läuft auf: **http://localhost:8489**
 
 ### 2️⃣ Frontend starten
 
@@ -47,7 +47,7 @@ Im Admin Panel kannst du:
 
 ### Backend startet nicht?
 - Stelle sicher, dass Rust installiert ist: `rustc --version`
-- Port 3000 muss frei sein
+- Port 8489 muss frei sein
 
 ### Frontend startet nicht?
 - Installiere Dependencies: `npm install`
@@ -62,10 +62,10 @@ Im Admin Panel kannst du:
 ### API testen
 ```bash
 # Health Check
-curl http://localhost:3000/api/health
+curl http://localhost:8489/api/health
 
 # Tutorials abrufen
-curl http://localhost:3000/api/tutorials
+curl http://localhost:8489/api/tutorials
 ```
 
 ### Backend mit Logging

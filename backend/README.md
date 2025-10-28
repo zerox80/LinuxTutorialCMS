@@ -32,7 +32,7 @@ High-performance REST API backend für die Linux Tutorial Website.
    DATABASE_URL=sqlite:./database.db
    JWT_SECRET=your-secret-key-change-this-in-production
    RUST_LOG=debug
-   PORT=3000
+   PORT=8489
    ```
 
 3. **Dependencies installieren und Server starten:**

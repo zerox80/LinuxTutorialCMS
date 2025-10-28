@@ -50,7 +50,7 @@ async fn main() {
         .with_state(pool);
 
     // Get port from environment or use default
-    let port = env::var("PORT").unwrap_or_else(|_| "3000".to_string());
+    let port = env::var("PORT").unwrap_or_else(|_| "8489".to_string());
     let addr = format!("0.0.0.0:{}", port);
     
     tracing::info!("Starting server on {}", addr);

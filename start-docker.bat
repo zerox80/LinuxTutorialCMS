@@ -39,9 +39,9 @@ echo  Deployment Complete!
 echo ========================================
 echo.
 echo Access the application:
-echo   - Frontend: http://localhost:8080
-echo   - Backend API: http://localhost:8080/api
-echo   - Health Check: http://localhost:8080/health
+echo   - Frontend: http://localhost:8489
+echo   - Backend API: http://localhost:8489/api
+echo   - Health Check: http://localhost:8489/health
 echo.
 echo Default Login:
 echo   Username: admin
