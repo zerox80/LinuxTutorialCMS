@@ -11,6 +11,8 @@ export const AuthProvider = ({ children }) => {
 
   // Check if user is already logged in on mount
   useEffect(() => {
+    const controller = new AbortController()
+    
     const checkAuth = async () => {
       if (typeof window === 'undefined' || !window.localStorage) {
         setLoading(false)
@@ -20,22 +22,32 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         try {
           api.setToken(token)
-          const userData = await api.me()
-          setIsAuthenticated(true)
-          setUser(userData)
-          setError(null)
+          const userData = await api.me({ signal: controller.signal })
+          if (!controller.signal.aborted) {
+            setIsAuthenticated(true)
+            setUser(userData)
+            setError(null)
+          }
         } catch (error) {
-          console.error('Auth check failed:', error)
-          localStorage.removeItem('token')
-          api.setToken(null)
-          setIsAuthenticated(false)
-          setUser(null)
-          // Don't set error here as it's just an expired/invalid token
+          if (!controller.signal.aborted) {
+            console.error('Auth check failed:', error)
+            localStorage.removeItem('token')
+            api.setToken(null)
+            setIsAuthenticated(false)
+            setUser(null)
+            // Don't set error here as it's just an expired/invalid token
+          }
         }
       }
-      setLoading(false)
+      if (!controller.signal.aborted) {
+        setLoading(false)
+      }
     }
     checkAuth()
+    
+    return () => {
+      controller.abort()
+    }
   }, [])
 
   const login = async (username, password) => {

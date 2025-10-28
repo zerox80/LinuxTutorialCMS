@@ -62,12 +62,14 @@ const TutorialSection = () => {
           <button 
             onClick={() => scrollToSection('home')}
             className="px-8 py-3 bg-white text-primary-700 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200"
+            aria-label="Tutorial starten und nach oben scrollen"
           >
             Tutorial starten
           </button>
           <button 
             onClick={() => scrollToSection('home')}
             className="px-8 py-3 bg-primary-700 text-white rounded-lg font-semibold hover:bg-primary-800 border-2 border-white/20 transition-colors duration-200"
+            aria-label="Mehr über die Tutorials erfahren"
           >
             Mehr erfahren
           </button>

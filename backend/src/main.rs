@@ -19,6 +19,8 @@ use http::{
 };
 use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tower_http::limit::RequestBodyLimitLayer;
+use tower_governor::{GovernorConfigBuilder, governor::GovernorConfig};
+use std::time::Duration;
 use tracing_subscriber;
 
 // Security headers middleware
@@ -112,10 +114,26 @@ async fn main() {
 
     tracing::info!(origins = ?allowed_origins, "Configured CORS origins");
 
+    // Configure rate limiting (5 requests per 60 seconds for login)
+    let rate_limit_config = Box::new(
+        GovernorConfigBuilder::default()
+            .per_second(60)
+            .burst_size(5)
+            .finish()
+            .unwrap(),
+    );
+
     // Build application routes
-    let app = Router::new()
-        // Auth routes
+    // Login route with rate limiting
+    let login_router = Router::new()
         .route("/api/auth/login", post(handlers::auth::login))
+        .layer(tower_governor::GovernorLayer {
+            config: rate_limit_config,
+        });
+    
+    let app = Router::new()
+        .merge(login_router)
+        // Auth routes
         .route("/api/auth/me", get(handlers::auth::me))
         
         // Tutorial routes

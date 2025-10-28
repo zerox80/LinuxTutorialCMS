@@ -38,6 +38,38 @@ fn validate_tutorial_data(title: &str, description: &str, content: &str) -> Resu
     Ok(())
 }
 
+fn validate_icon(icon: &str) -> Result<(), String> {
+    const ALLOWED_ICONS: &[&str] = &[
+        "Terminal", "FolderTree", "FileText", "Settings",
+        "Shield", "Network", "Database", "Server"
+    ];
+    
+    if ALLOWED_ICONS.contains(&icon) {
+        Ok(())
+    } else {
+        Err(format!("Invalid icon '{}'. Must be one of: {:?}", icon, ALLOWED_ICONS))
+    }
+}
+
+fn validate_color(color: &str) -> Result<(), String> {
+    const ALLOWED_COLORS: &[&str] = &[
+        "from-blue-500 to-cyan-500",
+        "from-green-500 to-emerald-500",
+        "from-purple-500 to-pink-500",
+        "from-orange-500 to-red-500",
+        "from-indigo-500 to-blue-500",
+        "from-teal-500 to-green-500",
+        "from-yellow-500 to-orange-500",
+        "from-red-500 to-pink-500"
+    ];
+    
+    if ALLOWED_COLORS.contains(&color) {
+        Ok(())
+    } else {
+        Err(format!("Invalid color gradient. Must be one of the predefined options"))
+    }
+}
+
 fn sanitize_topics(topics: &[String]) -> Result<Vec<String>, String> {
     if topics.len() > 20 {
         return Err("Too many topics (max 20)".to_string());
@@ -60,7 +92,11 @@ fn sanitize_topics(topics: &[String]) -> Result<Vec<String>, String> {
 pub async fn list_tutorials(
     State(pool): State<DbPool>,
 ) -> Result<Json<Vec<TutorialResponse>>, (StatusCode, Json<ErrorResponse>)> {
-    let tutorials = sqlx::query_as::<_, Tutorial>("SELECT * FROM tutorials ORDER BY created_at ASC")
+    // Add LIMIT to prevent loading too many tutorials at once
+    // For now, set a reasonable limit of 100
+    let tutorials = sqlx::query_as::<_, Tutorial>(
+        "SELECT * FROM tutorials ORDER BY created_at ASC LIMIT 100"
+    )
         .fetch_all(&pool)
         .await
         .map_err(|e| {
@@ -138,6 +174,20 @@ pub async fn create_tutorial(
             Json(ErrorResponse { error: e }),
         ));
     }
+    
+    // Validate icon and color
+    if let Err(e) = validate_icon(&payload.icon) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse { error: e }),
+        ));
+    }
+    if let Err(e) = validate_color(&payload.color) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse { error: e }),
+        ));
+    }
 
     let id = Uuid::new_v4().to_string();
     let sanitized_topics = sanitize_topics(&payload.topics).map_err(|e| {
@@ -193,7 +243,7 @@ pub async fn create_tutorial(
         topics: payload.topics,
         content: payload.content,
         created_at: now.clone(),
-        updated_at: now,
+        updated_at: now.clone(),
     }))
 }
 
@@ -252,6 +302,20 @@ pub async fn update_tutorial(
 
     // Validate updated data
     if let Err(e) = validate_tutorial_data(&title, &description, &content) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse { error: e }),
+        ));
+    }
+    
+    // Validate icon and color
+    if let Err(e) = validate_icon(&icon) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse { error: e }),
+        ));
+    }
+    if let Err(e) = validate_color(&color) {
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse { error: e }),

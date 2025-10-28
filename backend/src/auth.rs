@@ -42,10 +42,15 @@ pub struct Claims {
 
 impl Claims {
     pub fn new(username: String, role: String) -> Self {
+        // Use checked arithmetic to prevent overflow
         let expiration = chrono::Utc::now()
             .checked_add_signed(chrono::Duration::hours(24))
-            .expect("valid timestamp")
-            .timestamp() as usize;
+            .map(|dt| dt.timestamp())
+            .and_then(|ts| usize::try_from(ts).ok())
+            .unwrap_or_else(|| {
+                tracing::warn!("Timestamp overflow, using maximum safe value");
+                usize::MAX / 2 // Safe fallback
+            });
 
         Claims {
             sub: username,

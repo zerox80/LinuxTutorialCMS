@@ -40,7 +40,7 @@ const TutorialCard = ({ icon: Icon, title, description, topics, color, onSelect 
       <div className="space-y-3 mb-8">
         {topics.map((topic, index) => (
           <div 
-            key={index} 
+            key={`${topic}-${index}`} 
             className="flex items-start text-sm text-gray-600 group/item hover:text-primary-600 transition-colors duration-200"
           >
             <div className={`mt-0.5 mr-3 w-5 h-5 rounded-full bg-gradient-to-br ${color} flex items-center justify-center flex-shrink-0 group-hover/item:scale-110 transition-transform duration-200`}>
@@ -68,8 +68,6 @@ const TutorialCard = ({ icon: Icon, title, description, topics, color, onSelect 
   )
 }
 
-export default TutorialCard
-
 TutorialCard.propTypes = {
   icon: PropTypes.elementType.isRequired,
   title: PropTypes.string.isRequired,
@@ -78,3 +76,5 @@ TutorialCard.propTypes = {
   color: PropTypes.string.isRequired,
   onSelect: PropTypes.func,
 }
+
+export default TutorialCard

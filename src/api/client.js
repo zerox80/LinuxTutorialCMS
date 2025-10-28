@@ -37,6 +37,21 @@ class ApiClient {
     const { timeout = 15000, headers: optionHeaders, signal: userSignal, ...rest } = options
     const controller = new AbortController()
     let timeoutId = null
+    let cleanedUp = false
+
+    // Cleanup function to prevent memory leaks
+    const cleanup = () => {
+      if (cleanedUp) return
+      cleanedUp = true
+      
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId)
+        timeoutId = null
+      }
+      if (userSignal) {
+        userSignal.removeEventListener('abort', handleAbort)
+      }
+    }
 
     // Handle both user signal and internal timeout
     const handleAbort = () => controller.abort()
@@ -72,13 +87,7 @@ class ApiClient {
       const response = await fetch(url, config)
       
       // Clean up immediately on success
-      if (timeoutId !== null) {
-        clearTimeout(timeoutId)
-        timeoutId = null
-      }
-      if (userSignal) {
-        userSignal.removeEventListener('abort', handleAbort)
-      }
+      cleanup()
 
       const isEmptyBody =
         response.status === 204 ||
@@ -122,17 +131,11 @@ class ApiClient {
       return payload
     } catch (error) {
       // Clean up on error
-      if (timeoutId !== null) {
-        clearTimeout(timeoutId)
-        timeoutId = null
-      }
-      if (userSignal) {
-        userSignal.removeEventListener('abort', handleAbort)
-      }
+      cleanup()
       
       if (error.name === 'AbortError') {
         const timeoutError = new Error(userSignal?.aborted ? 'Request aborted' : 'Request timed out')
-        timeoutError.status = userSignal?.aborted ? 499 : 408
+        timeoutError.status = userSignal?.aborted ? 0 : 408
         console.error('API Error:', timeoutError)
         throw timeoutError
       }

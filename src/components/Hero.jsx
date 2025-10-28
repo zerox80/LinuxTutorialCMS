@@ -8,8 +8,8 @@ const Hero = () => {
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-0 -left-4 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl animate-float"></div>
-          <div className="absolute top-0 -right-4 w-96 h-96 bg-yellow-500 rounded-full mix-blend-multiply filter blur-3xl animate-float" style={{animationDelay: '2s'}}></div>
-          <div className="absolute -bottom-8 left-20 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl animate-float" style={{animationDelay: '4s'}}></div>
+          <div className="absolute top-0 -right-4 w-96 h-96 bg-yellow-500 rounded-full mix-blend-multiply filter blur-3xl animate-float-delayed-2s"></div>
+          <div className="absolute -bottom-8 left-20 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl animate-float-delayed-4s"></div>
         </div>
         
         {/* Grid Pattern */}
@@ -45,18 +45,19 @@ const Hero = () => {
           </h1>
 
           {/* Beschreibung */}
-          <p className="text-xl sm:text-2xl text-blue-50 mb-12 max-w-3xl mx-auto leading-relaxed animate-slide-up" style={{animationDelay: '0.1s'}}>
+          <p className="text-xl sm:text-2xl text-blue-50 mb-12 max-w-3xl mx-auto leading-relaxed animate-slide-up-delayed-1">
             Dein umfassendes Tutorial für Linux - von den Basics bis zu Advanced Techniken. 
             <span className="block mt-2 text-blue-100">Interaktiv, modern und praxisnah.</span>
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16 animate-slide-up" style={{animationDelay: '0.2s'}}>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16 animate-slide-up-delayed-2">
             <button 
               onClick={() => {
                 scrollToSection('tutorials')
               }}
               className="group relative px-8 py-4 bg-white text-primary-700 rounded-xl font-semibold shadow-2xl hover:shadow-white/20 transition-all duration-300 hover:scale-105 hover:-translate-y-1 overflow-hidden"
+              aria-label="Zu den Tutorials navigieren"
             >
               <span className="relative z-10 flex items-center gap-2">
                 Los geht's
@@ -70,6 +71,7 @@ const Hero = () => {
                 scrollToSection('tutorials')
               }}
               className="group px-8 py-4 bg-white/10 backdrop-blur-xl text-white rounded-xl font-semibold border-2 border-white/30 hover:bg-white/20 hover:border-white/50 transition-all duration-300 hover:scale-105 hover:-translate-y-1"
+              aria-label="Mehr über die Tutorials erfahren"
             >
               <span className="flex items-center gap-2">
                 Mehr erfahren
@@ -79,7 +81,7 @@ const Hero = () => {
           </div>
 
           {/* Feature Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-5xl mx-auto animate-slide-up" style={{animationDelay: '0.3s'}}>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-5xl mx-auto animate-slide-up-delayed-3">
             {[
               { icon: Book, title: "Schritt für Schritt", desc: "Strukturiert lernen mit klaren Beispielen", color: "from-blue-500 to-cyan-500" },
               { icon: Code, title: "Praktische Befehle", desc: "Direkt anwendbare Kommandos", color: "from-purple-500 to-pink-500" },

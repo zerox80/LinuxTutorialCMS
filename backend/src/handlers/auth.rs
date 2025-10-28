@@ -62,13 +62,16 @@ pub async fn login(
         })?;
 
     // Timing attack prevention: Always verify password even if user doesn't exist
-    let dummy_hash = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5eBWQdQ7IFzPu"; // Dummy bcrypt hash
+    // Generate a dummy hash with similar computational cost to real verification
+    let dummy_hash = "$2b$12$eImiTXuWVxfM37uY4JANjQPzMzXZjQDzqzQpMv0xoGrTplPPNaE3W"; // Precomputed dummy hash
     let (password_valid, username, role) = match user {
         Some(user) => {
             match bcrypt::verify(&payload.password, &user.password_hash) {
                 Ok(valid) => (valid, user.username, user.role),
                 Err(e) => {
                     tracing::error!("Password verification error: {}", e);
+                    // Still perform dummy verification to maintain timing consistency
+                    let _ = bcrypt::verify(&payload.password, dummy_hash);
                     (false, String::new(), String::new())
                 }
             }

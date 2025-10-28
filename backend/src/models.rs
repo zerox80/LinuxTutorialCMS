@@ -78,8 +78,14 @@ pub struct TutorialResponse {
 impl From<Tutorial> for TutorialResponse {
     fn from(tutorial: Tutorial) -> Self {
         let topics: Vec<String> = serde_json::from_str(&tutorial.topics).unwrap_or_else(|e| {
-            tracing::error!("Failed to parse topics JSON for tutorial {}: {}", tutorial.id, e);
-            Vec::new()
+            tracing::error!(
+                "Failed to parse topics JSON for tutorial {}: {}. Topics JSON: {}. Using default topic.", 
+                tutorial.id, 
+                e,
+                tutorial.topics
+            );
+            // Provide a default topic instead of empty array to prevent data loss visibility
+            vec!["Allgemein".to_string()]
         });
         
         TutorialResponse {

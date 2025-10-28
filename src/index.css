@@ -88,4 +88,24 @@
     background-size: 200% 100%;
     animation: shimmer 2s infinite;
   }
+  
+  .animate-float-delayed-2s {
+    animation: float 6s ease-in-out infinite 2s;
+  }
+  
+  .animate-float-delayed-4s {
+    animation: float 6s ease-in-out infinite 4s;
+  }
+  
+  .animate-slide-up-delayed-1 {
+    animation: slideUp 0.8s ease-out 0.1s both;
+  }
+  
+  .animate-slide-up-delayed-2 {
+    animation: slideUp 0.8s ease-out 0.2s both;
+  }
+  
+  .animate-slide-up-delayed-3 {
+    animation: slideUp 0.8s ease-out 0.3s both;
+  }
 }

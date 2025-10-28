@@ -104,7 +104,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
       }
       onClose()
     } catch (error) {
-      alert('Fehler beim Speichern: ' + error.message)
+      setFormError('Fehler beim Speichern: ' + (error.message || 'Unbekannter Fehler'))
     } finally {
       setSubmitting(false)
     }
