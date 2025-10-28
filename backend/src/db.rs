@@ -1,6 +1,10 @@
-use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
+use sqlx::{
+    sqlite::{SqliteConnectOptions, SqlitePoolOptions},
+    SqlitePool,
+};
 use std::env;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 
 pub type DbPool = SqlitePool;
 
@@ -12,12 +16,15 @@ pub async fn create_pool() -> Result<DbPool, sqlx::Error> {
     
     ensure_sqlite_directory(&database_url)?;
 
+    let connect_options = SqliteConnectOptions::from_str(&database_url)?
+        .create_if_missing(true);
+
     let pool = SqlitePoolOptions::new()
         .max_connections(5)
         .acquire_timeout(std::time::Duration::from_secs(10))
         .max_lifetime(std::time::Duration::from_secs(3600))
         .idle_timeout(std::time::Duration::from_secs(600))
-        .connect(&database_url)
+        .connect_with(connect_options)
         .await?;
     
     tracing::info!("Database pool created successfully");
@@ -32,6 +39,7 @@ fn ensure_sqlite_directory(database_url: &str) -> Result<(), sqlx::Error> {
                     tracing::error!(error = %err, path = ?parent, "Failed to create SQLite directory");
                     return Err(sqlx::Error::Io(err));
                 }
+                tracing::info!(path = ?parent, "Ensured SQLite directory exists");
             }
         }
     }
