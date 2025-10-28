@@ -1,4 +1,5 @@
 import { Terminal, Github, Mail, Heart } from 'lucide-react'
+import { scrollToSection } from '../utils/scrollToSection'
 
 const Footer = () => {
   const currentYear = new Date().getFullYear()
@@ -26,7 +27,7 @@ const Footer = () => {
             <ul className="space-y-2">
               <li>
                 <button 
-                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  onClick={() => scrollToSection('grundlagen')}
                   className="hover:text-primary-400 transition-colors duration-200"
                 >
                   Grundlagen
@@ -34,7 +35,7 @@ const Footer = () => {
               </li>
               <li>
                 <button 
-                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  onClick={() => scrollToSection('befehle')}
                   className="hover:text-primary-400 transition-colors duration-200"
                 >
                   Befehle
@@ -42,7 +43,7 @@ const Footer = () => {
               </li>
               <li>
                 <button 
-                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  onClick={() => scrollToSection('praxis')}
                   className="hover:text-primary-400 transition-colors duration-200"
                 >
                   Praxis
@@ -50,7 +51,7 @@ const Footer = () => {
               </li>
               <li>
                 <button 
-                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  onClick={() => scrollToSection('advanced')}
                   className="hover:text-primary-400 transition-colors duration-200"
                 >
                   Advanced

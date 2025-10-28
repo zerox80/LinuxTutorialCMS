@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTutorials } from '../context/TutorialContext'
@@ -8,9 +8,16 @@ import TutorialForm from '../components/TutorialForm'
 const AdminDashboard = () => {
   const [showForm, setShowForm] = useState(false)
   const [editingTutorial, setEditingTutorial] = useState(null)
+  const [deletingId, setDeletingId] = useState(null)
+  const [confirmingId, setConfirmingId] = useState(null)
+  const [deleteError, setDeleteError] = useState(null)
   const { logout, user } = useAuth()
   const { tutorials, deleteTutorial, loading, error, refreshTutorials } = useTutorials()
   const navigate = useNavigate()
+  const sortedTutorials = useMemo(
+    () => [...tutorials].sort((a, b) => a.title.localeCompare(b.title, 'de')),
+    [tutorials],
+  )
 
   const handleLogout = () => {
     logout()
@@ -22,14 +29,28 @@ const AdminDashboard = () => {
     setShowForm(true)
   }
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Möchtest du dieses Tutorial wirklich löschen?')) {
-      return
-    }
+  const handleDeleteRequest = (id) => {
+    setDeleteError(null)
+    setConfirmingId(id)
+  }
+
+  const handleDeleteCancel = () => {
+    setConfirmingId(null)
+    setDeletingId(null)
+    setDeleteError(null)
+  }
+
+  const handleDeleteConfirm = async (id) => {
+    setDeleteError(null)
+    setDeletingId(id)
     try {
       await deleteTutorial(id)
+      setConfirmingId(null)
     } catch (err) {
-      alert(err.message || 'Löschen fehlgeschlagen')
+      const message = err?.message || 'Löschen fehlgeschlagen'
+      setDeleteError({ id, message })
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -83,8 +104,8 @@ const AdminDashboard = () => {
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
             <button
-              onClick={refreshTutorials}
-              className="flex items-center justify-center gap-2 px-5 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+              onClick={() => refreshTutorials()}
+              className="flex items-center justify-center gap-2 px-5 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 disabled:opacity-60"
               disabled={loading}
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -104,11 +125,11 @@ const AdminDashboard = () => {
         </div>
 
         {error && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 flex items-start gap-3 text-red-700">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 flex items-start gap-3 text-red-700" role="alert">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
             <div>
               <p className="font-semibold">Fehler beim Laden der Tutorials</p>
-              <p className="text-sm">{error.message || 'Bitte versuche es erneut.'}</p>
+              <p className="text-sm">{error?.message || String(error)}</p>
             </div>
           </div>
         )}
@@ -130,7 +151,7 @@ const AdminDashboard = () => {
           <div className="py-16 text-center text-gray-600">Lade Tutorials…</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {tutorials.map((tutorial) => (
+            {sortedTutorials.map((tutorial) => (
               <div
                 key={tutorial.id}
                 className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden"
@@ -168,15 +189,39 @@ const AdminDashboard = () => {
                       <Edit className="w-4 h-4" />
                       <span>Bearbeiten</span>
                     </button>
-                    <button
-                      onClick={() => handleDelete(tutorial.id)}
-                      className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors duration-200"
-                      disabled={loading}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>Löschen</span>
-                    </button>
+                    {confirmingId === tutorial.id ? (
+                      <div className="flex-1 flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => handleDeleteConfirm(tutorial.id)}
+                          className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 disabled:opacity-70"
+                          disabled={deletingId === tutorial.id}
+                        >
+                          {deletingId === tutorial.id ? 'Lösche…' : 'Löschen bestätigen'}
+                        </button>
+                        <button
+                          onClick={handleDeleteCancel}
+                          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+                          type="button"
+                        >
+                          Abbrechen
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleDeleteRequest(tutorial.id)}
+                        className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors duration-200"
+                        type="button"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>Löschen</span>
+                      </button>
+                    )}
                   </div>
+                  {deleteError?.id === tutorial.id && (
+                    <p className="mt-3 text-sm text-red-600" role="alert">
+                      {deleteError.message}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}

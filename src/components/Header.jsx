@@ -2,21 +2,12 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Terminal, Menu, X, Lock } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { scrollToSection } from '../utils/scrollToSection'
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const navigate = useNavigate()
   const { isAuthenticated } = useAuth()
-
-  const scrollToSection = (sectionId) => {
-    if (sectionId === 'home') {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    } else {
-      // Scroll to tutorial section for all other items
-      const tutorialSection = document.querySelector('section:nth-of-type(2)')
-      tutorialSection?.scrollIntoView({ behavior: 'smooth' })
-    }
-  }
 
   const navItems = [
     { id: 'home', label: 'Home' },
@@ -54,7 +45,7 @@ const Header = () => {
             ))}
             <button
               onClick={() => navigate(isAuthenticated ? '/admin' : '/login')}
-              className="flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl font-medium shadow-lg hover:shadow-2xl hover:scale-105 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden group/btn"
+              className="relative flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl font-medium shadow-lg hover:shadow-2xl hover:scale-105 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden group/btn"
             >
               <Lock className="w-4 h-4 group-hover/btn:rotate-12 transition-transform duration-300" />
               <span>{isAuthenticated ? 'Admin' : 'Login'}</span>
@@ -94,7 +85,7 @@ const Header = () => {
               className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-200"
             >
               <Lock className="w-4 h-4" />
-              <span>{isAuthenticated ? 'Admin Panel' : 'Anmelden'}</span>
+              <span>{isAuthenticated ? 'Admin' : 'Login'}</span>
             </button>
           </div>
         )}

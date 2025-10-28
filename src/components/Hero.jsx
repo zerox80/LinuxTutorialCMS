@@ -1,4 +1,5 @@
 import { Terminal, Code, Book, Zap, Sparkles, ArrowRight } from 'lucide-react'
+import { scrollToSection } from '../utils/scrollToSection'
 
 const Hero = () => {
   return (
@@ -53,8 +54,7 @@ const Hero = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16 animate-slide-up" style={{animationDelay: '0.2s'}}>
             <button 
               onClick={() => {
-                const tutorialSection = document.querySelector('section:nth-of-type(2)')
-                tutorialSection?.scrollIntoView({ behavior: 'smooth' })
+                scrollToSection('tutorials')
               }}
               className="group relative px-8 py-4 bg-white text-primary-700 rounded-xl font-semibold shadow-2xl hover:shadow-white/20 transition-all duration-300 hover:scale-105 hover:-translate-y-1 overflow-hidden"
             >
@@ -67,8 +67,7 @@ const Hero = () => {
             
             <button 
               onClick={() => {
-                const tutorialSection = document.querySelector('section:nth-of-type(2)')
-                tutorialSection?.scrollIntoView({ behavior: 'smooth' })
+                scrollToSection('tutorials')
               }}
               className="group px-8 py-4 bg-white/10 backdrop-blur-xl text-white rounded-xl font-semibold border-2 border-white/30 hover:bg-white/20 hover:border-white/50 transition-all duration-300 hover:scale-105 hover:-translate-y-1"
             >

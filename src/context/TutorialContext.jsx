@@ -21,30 +21,66 @@ export const TutorialProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const loadTutorials = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const data = await api.getTutorials()
-      setTutorials(Array.isArray(data) ? data : [])
+  const loadTutorials = useCallback(
+    async ({ signal } = {}) => {
+      setLoading(true)
       setError(null)
-    } catch (err) {
-      console.error('Failed to load tutorials:', err)
-      setTutorials([])
-      setError(err)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+
+      const execute = async (attempt = 1) => {
+        try {
+          const data = await api.getTutorials({ signal })
+          setTutorials(Array.isArray(data) ? data : [])
+          setError(null)
+        } catch (err) {
+          if (signal?.aborted) {
+            return
+          }
+
+          if (attempt < 3 && (!err.status || err.status >= 500)) {
+            const delay = 300 * attempt
+            await new Promise((resolve) => setTimeout(resolve, delay))
+            return execute(attempt + 1)
+          }
+
+          console.error('Failed to load tutorials:', err)
+          setTutorials([])
+          setError(err)
+        }
+      }
+
+      try {
+        await execute()
+      } finally {
+        if (!signal?.aborted) {
+          setLoading(false)
+        }
+      }
+    },
+    [],
+  )
 
   // Load tutorials from API
   useEffect(() => {
-    loadTutorials()
+    const controller = new AbortController()
+    loadTutorials({ signal: controller.signal })
+
+    return () => {
+      controller.abort()
+    }
   }, [loadTutorials])
 
   const addTutorial = async (tutorial) => {
+    const sanitizedTopics = Array.isArray(tutorial.topics)
+      ? tutorial.topics.filter((topic) => typeof topic === 'string' && topic.trim() !== '')
+      : []
+
+    const payload = {
+      ...tutorial,
+      topics: sanitizedTopics,
+    }
+
     try {
-      const newTutorial = await api.createTutorial(tutorial)
+      const newTutorial = await api.createTutorial(payload)
       setTutorials((prev) => [...prev, newTutorial])
       return newTutorial
     } catch (error) {
@@ -54,8 +90,17 @@ export const TutorialProvider = ({ children }) => {
   }
 
   const updateTutorial = async (id, updatedTutorial) => {
+    const sanitizedTopics = Array.isArray(updatedTutorial.topics)
+      ? updatedTutorial.topics.filter((topic) => typeof topic === 'string' && topic.trim() !== '')
+      : undefined
+
+    const payload = {
+      ...updatedTutorial,
+      ...(sanitizedTopics ? { topics: sanitizedTopics } : {}),
+    }
+
     try {
-      const updated = await api.updateTutorial(id, updatedTutorial)
+      const updated = await api.updateTutorial(id, payload)
       setTutorials((prev) => prev.map((t) => (t.id === id ? updated : t)))
       return updated
     } catch (error) {

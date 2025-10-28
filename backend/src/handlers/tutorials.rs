@@ -38,6 +38,25 @@ fn validate_tutorial_data(title: &str, description: &str, content: &str) -> Resu
     Ok(())
 }
 
+fn sanitize_topics(topics: &[String]) -> Result<Vec<String>, String> {
+    if topics.len() > 20 {
+        return Err("Too many topics (max 20)".to_string());
+    }
+
+    let sanitized: Vec<String> = topics
+        .iter()
+        .map(|topic| topic.trim())
+        .filter(|topic| !topic.is_empty())
+        .map(|topic| topic.to_string())
+        .collect();
+
+    if sanitized.is_empty() {
+        return Err("At least one topic is required".to_string());
+    }
+
+    Ok(sanitized)
+}
+
 pub async fn list_tutorials(
     State(pool): State<DbPool>,
 ) -> Result<Json<Vec<TutorialResponse>>, (StatusCode, Json<ErrorResponse>)> {
@@ -120,20 +139,22 @@ pub async fn create_tutorial(
         ));
     }
 
-    if payload.topics.len() > 20 {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse {
-                error: "Too many topics (max 20)".to_string(),
-            }),
-        ));
-    }
-
     let id = Uuid::new_v4().to_string();
-    let topics_json = serde_json::to_string(&payload.topics).unwrap_or_else(|e| {
+    let sanitized_topics = sanitize_topics(&payload.topics).map_err(|e| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse { error: e }),
+        )
+    })?;
+    let topics_json = serde_json::to_string(&sanitized_topics).map_err(|e| {
         tracing::error!("Failed to serialize topics: {}", e);
-        "[]".to_string()
-    });
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                error: "Failed to create tutorial".to_string(),
+            }),
+        )
+    })?;
     let now = chrono::Utc::now().to_rfc3339();
 
     sqlx::query(
@@ -236,21 +257,42 @@ pub async fn update_tutorial(
             Json(ErrorResponse { error: e }),
         ));
     }
-    let topics = if let Some(t) = payload.topics {
-        if t.len() > 20 {
-            return Err((
+    let (topics_json, topics_vec) = if let Some(t) = payload.topics {
+        let sanitized = sanitize_topics(&t).map_err(|e| {
+            (
                 StatusCode::BAD_REQUEST,
-                Json(ErrorResponse {
-                    error: "Too many topics (max 20)".to_string(),
-                }),
-            ));
-        }
-        serde_json::to_string(&t).unwrap_or_else(|e| {
+                Json(ErrorResponse { error: e }),
+            )
+        })?;
+
+        let serialized = serde_json::to_string(&sanitized).map_err(|e| {
             tracing::error!("Failed to serialize topics: {}", e);
-            tutorial.topics.clone()
-        })
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Failed to update tutorial".to_string(),
+                }),
+            )
+        })?;
+
+        (serialized, sanitized)
     } else {
-        tutorial.topics
+        let existing_topics: Vec<String> = serde_json::from_str(&tutorial.topics).unwrap_or_default();
+        let sanitized = if existing_topics.is_empty() {
+            vec!["Allgemein".to_string()]
+        } else {
+            existing_topics
+        };
+        let serialized = serde_json::to_string(&sanitized).map_err(|e| {
+            tracing::error!("Failed to serialize topics: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Failed to update tutorial".to_string(),
+                }),
+            )
+        })?;
+        (serialized, sanitized)
     };
     let now = chrono::Utc::now().to_rfc3339();
 
@@ -265,7 +307,7 @@ pub async fn update_tutorial(
     .bind(&description)
     .bind(&icon)
     .bind(&color)
-    .bind(&topics)
+    .bind(&topics_json)
     .bind(&content)
     .bind(&now)
     .bind(&id)
@@ -280,8 +322,6 @@ pub async fn update_tutorial(
             }),
         )
     })?;
-
-    let topics_vec: Vec<String> = serde_json::from_str(&topics).unwrap_or_default();
 
     Ok(Json(TutorialResponse {
         id,

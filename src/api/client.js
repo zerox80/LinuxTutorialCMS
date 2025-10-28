@@ -57,8 +57,15 @@ class ApiClient {
       signal: controller.signal,
     }
 
-    if (config.body && !config.headers['Content-Type']) {
+    const isJsonBody =
+      config.body &&
+      !(config.body instanceof FormData) &&
+      !(config.body instanceof URLSearchParams) &&
+      typeof config.body === 'object'
+
+    if (isJsonBody && !config.headers['Content-Type']) {
       config.headers['Content-Type'] = 'application/json'
+      config.body = JSON.stringify(config.body)
     }
 
     try {
@@ -91,7 +98,14 @@ class ApiClient {
       let payload
 
       if (contentType.includes('application/json')) {
-        payload = await response.json()
+        try {
+          payload = await response.json()
+        } catch (parseError) {
+          const error = new Error('Ungültige JSON-Antwort vom Server')
+          error.status = response.status
+          error.cause = parseError
+          throw error
+        }
       } else {
         const text = await response.text()
         payload = text ? { message: text } : null
@@ -117,8 +131,8 @@ class ApiClient {
       }
       
       if (error.name === 'AbortError') {
-        const timeoutError = new Error('Request timed out')
-        timeoutError.status = 408
+        const timeoutError = new Error(userSignal?.aborted ? 'Request aborted' : 'Request timed out')
+        timeoutError.status = userSignal?.aborted ? 499 : 408
         console.error('API Error:', timeoutError)
         throw timeoutError
       }
@@ -128,10 +142,11 @@ class ApiClient {
   }
 
   // Auth endpoints
-  async login(username, password) {
+  async login(username, password, options = {}) {
     const data = await this.request('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ username, password }),
+      body: { username, password },
+      ...options,
     })
     if (data.token) {
       this.setToken(data.token)
@@ -139,36 +154,39 @@ class ApiClient {
     return data
   }
 
-  async me() {
-    return this.request('/auth/me')
+  async me(options = {}) {
+    return this.request('/auth/me', options)
   }
 
   // Tutorial endpoints
-  async getTutorials() {
-    return this.request('/tutorials')
+  async getTutorials(options = {}) {
+    return this.request('/tutorials', options)
   }
 
-  async getTutorial(id) {
-    return this.request(`/tutorials/${id}`)
+  async getTutorial(id, options = {}) {
+    return this.request(`/tutorials/${id}`, options)
   }
 
-  async createTutorial(tutorial) {
+  async createTutorial(tutorial, options = {}) {
     return this.request('/tutorials', {
       method: 'POST',
-      body: JSON.stringify(tutorial),
+      body: tutorial,
+      ...options,
     })
   }
 
-  async updateTutorial(id, tutorial) {
+  async updateTutorial(id, tutorial, options = {}) {
     return this.request(`/tutorials/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(tutorial),
+      body: tutorial,
+      ...options,
     })
   }
 
-  async deleteTutorial(id) {
+  async deleteTutorial(id, options = {}) {
     return this.request(`/tutorials/${id}`, {
       method: 'DELETE',
+      ...options,
     })
   }
 }

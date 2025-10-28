@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTutorials } from '../context/TutorialContext'
-import { X, Save, Plus, Trash2 } from 'lucide-react'
+import { X, Save, Plus, Trash2, AlertCircle } from 'lucide-react'
 
 const TutorialForm = ({ tutorial, onClose }) => {
   const { addTutorial, updateTutorial } = useTutorials()
@@ -12,6 +12,8 @@ const TutorialForm = ({ tutorial, onClose }) => {
     topics: [''],
     content: '',
   })
+  const [submitting, setSubmitting] = useState(false)
+  const [formError, setFormError] = useState('')
 
   useEffect(() => {
     if (tutorial) {
@@ -62,16 +64,37 @@ const TutorialForm = ({ tutorial, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+    if (submitting) {
+      return
+    }
+
     // Filter out empty topics
     const cleanedData = {
-      title: formData.title,
-      description: formData.description,
+      title: formData.title.trim(),
+      description: formData.description.trim(),
       icon: formData.icon,
       color: formData.color,
       topics: formData.topics.filter((t) => t && t.trim() !== ''),
-      content: formData.content,
+      content: formData.content.trim(),
     }
+
+    if (!cleanedData.title) {
+      setFormError('Der Titel darf nicht leer sein.')
+      return
+    }
+
+    if (!cleanedData.description) {
+      setFormError('Die Beschreibung darf nicht leer sein.')
+      return
+    }
+
+    if (cleanedData.topics.length === 0) {
+      setFormError('Füge mindestens ein Thema hinzu.')
+      return
+    }
+
+    setFormError('')
+    setSubmitting(true)
 
     try {
       if (tutorial) {
@@ -82,6 +105,8 @@ const TutorialForm = ({ tutorial, onClose }) => {
       onClose()
     } catch (error) {
       alert('Fehler beim Speichern: ' + error.message)
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -117,6 +142,13 @@ const TutorialForm = ({ tutorial, onClose }) => {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
+        {formError && (
+          <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700" role="alert">
+            <AlertCircle className="w-5 h-5 mt-0.5" aria-hidden="true" />
+            <span className="text-sm">{formError}</span>
+          </div>
+        )}
+
         {/* Title */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -241,10 +273,11 @@ const TutorialForm = ({ tutorial, onClose }) => {
         <div className="flex space-x-4 pt-4 border-t border-gray-200">
           <button
             type="submit"
-            className="flex-1 flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-200 shadow-lg hover:shadow-xl"
+            className="flex-1 flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-60"
+            disabled={submitting}
           >
             <Save className="w-5 h-5" />
-            <span>{tutorial ? 'Änderungen speichern' : 'Tutorial erstellen'}</span>
+            <span>{submitting ? 'Speichere…' : tutorial ? 'Änderungen speichern' : 'Tutorial erstellen'}</span>
           </button>
           <button
             type="button"

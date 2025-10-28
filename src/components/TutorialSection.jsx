@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import TutorialCard from './TutorialCard'
 import { useTutorials } from '../context/TutorialContext'
 import { AlertCircle } from 'lucide-react'
+import { scrollToSection } from '../utils/scrollToSection'
 
 const TutorialSection = () => {
   const { tutorials, getIconComponent, loading, error } = useTutorials()
@@ -15,7 +16,11 @@ const TutorialSection = () => {
   }, [tutorials])
 
   return (
-    <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <section
+      className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
+      data-section="tutorials"
+      id="tutorials"
+    >
       <div className="text-center mb-12">
         <h2 className="section-title">Tutorial Inhalte</h2>
         <p className="text-gray-600 text-lg max-w-2xl mx-auto">
@@ -24,11 +29,11 @@ const TutorialSection = () => {
       </div>
 
       {error && (
-        <div className="mb-8 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+        <div className="mb-8 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700" role="alert">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
           <div>
             <p className="font-semibold">Fehler beim Laden der Tutorials</p>
-            <p className="text-sm">{error.message || 'Bitte versuche es später erneut.'}</p>
+            <p className="text-sm">{error?.message || String(error)}</p>
           </div>
         </div>
       )}
@@ -55,13 +60,13 @@ const TutorialSection = () => {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button 
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            onClick={() => scrollToSection('home')}
             className="px-8 py-3 bg-white text-primary-700 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200"
           >
             Tutorial starten
           </button>
           <button 
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            onClick={() => scrollToSection('home')}
             className="px-8 py-3 bg-primary-700 text-white rounded-lg font-semibold hover:bg-primary-800 border-2 border-white/20 transition-colors duration-200"
           >
             Mehr erfahren

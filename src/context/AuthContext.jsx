@@ -40,10 +40,17 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const response = await api.login(username, password)
-      if (response.token) {
-        api.setToken(response.token)
+      setError(null)
+      setLoading(true)
+
+      const sanitizedUsername = username.trim()
+      const response = await api.login(sanitizedUsername, password)
+
+      if (!response?.token || !response?.user) {
+        throw new Error('Ungültige Antwort vom Server')
       }
+
+      api.setToken(response.token)
       setIsAuthenticated(true)
       setUser(response.user)
       return { success: true }
@@ -51,7 +58,11 @@ export const AuthProvider = ({ children }) => {
       api.setToken(null)
       setIsAuthenticated(false)
       setUser(null)
-      return { success: false, error: error.message || 'Ungültige Anmeldedaten' }
+      const message = error.message || 'Ungültige Anmeldedaten'
+      setError(message)
+      return { success: false, error: message }
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -59,6 +70,7 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false)
     setUser(null)
     api.setToken(null)
+    setError(null)
   }
 
   return (
