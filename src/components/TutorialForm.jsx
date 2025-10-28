@@ -163,8 +163,10 @@ const TutorialForm = ({ tutorial, onClose }) => {
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             placeholder="z.B. Grundlegende Befehle"
+            maxLength={200}
             required
           />
+          <p className="mt-1 text-xs text-gray-500">{formData.title.length}/200 Zeichen</p>
         </div>
 
         {/* Description */}
@@ -178,8 +180,10 @@ const TutorialForm = ({ tutorial, onClose }) => {
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             rows="3"
             placeholder="Kurze Beschreibung des Tutorials"
+            maxLength={1000}
             required
           />
+          <p className="mt-1 text-xs text-gray-500">{formData.description.length}/1000 Zeichen</p>
         </div>
 
         {/* Icon & Color */}
@@ -243,6 +247,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
                   onChange={(e) => handleTopicChange(index, e.target.value)}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder={`Thema ${index + 1}`}
+                  maxLength={100}
                 />
                 {formData.topics.length > 1 && (
                   <button
@@ -269,7 +274,9 @@ const TutorialForm = ({ tutorial, onClose }) => {
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm"
             rows="10"
             placeholder="Hier kannst du den vollständigen Tutorial-Inhalt eingeben..."
+            maxLength={100000}
           />
+          <p className="mt-1 text-xs text-gray-500">{formData.content.length}/100000 Zeichen</p>
         </div>
 
         {/* Actions */}

@@ -22,6 +22,7 @@ use tower_http::limit::RequestBodyLimitLayer;
 use tower_governor::{GovernorConfigBuilder, governor::GovernorConfig};
 use std::time::Duration;
 use tracing_subscriber;
+use tokio::signal;
 
 // Security headers middleware
 async fn security_headers(
@@ -39,10 +40,18 @@ async fn security_headers(
     let mut response = next.run(request).await;
     let headers = response.headers_mut();
     
-    // Content Security Policy - More restrictive, no unsafe-inline for scripts
+    // Content Security Policy - Environment-dependent for dev mode support
+    let csp = if cfg!(debug_assertions) {
+        // Development mode: Allow WebSocket for Vite HMR
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'self'; form-action 'self';"
+    } else {
+        // Production mode: Strict CSP
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';"
+    };
+    
     headers.insert(
         CONTENT_SECURITY_POLICY,
-        HeaderValue::from_static("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self';"),
+        HeaderValue::from_static(csp),
     );
     
     // HSTS - Only set if request came via HTTPS
@@ -86,6 +95,7 @@ async fn main() {
 
     // Configure CORS
     let allowed_origins_env = env::var("FRONTEND_ORIGINS").unwrap_or_else(|_| {
+        tracing::warn!("FRONTEND_ORIGINS not set, using development defaults. This should not happen in production!");
         "http://localhost:5173,http://localhost:3000".to_string()
     });
     let mut allowed_origins: Vec<HeaderValue> = allowed_origins_env
@@ -137,7 +147,7 @@ async fn main() {
 
     tracing::info!(origins = ?allowed_origins, "Configured CORS origins");
 
-    // Configure rate limiting (5 requests per minute for login)
+    // Configure rate limiting (5 requests per 5 seconds for login, with burst of 5)
     let rate_limit_config = Box::new(
         GovernorConfigBuilder::default()
             .per_second(1)
@@ -168,10 +178,9 @@ async fn main() {
         
         // Health check
         .route("/api/health", get(|| async { "OK" }))
-        .route("/health", get(|| async { "OK" }))
         
+        .layer(RequestBodyLimitLayer::new(10 * 1024 * 1024)) // 10 MB limit (before CORS to avoid applying to OPTIONS)
         .layer(cors)
-        .layer(RequestBodyLimitLayer::new(10 * 1024 * 1024)) // 10 MB limit
         .layer(middleware::from_fn(security_headers))
         .with_state(pool);
 
@@ -194,8 +203,46 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(&addr)
         .await
         .expect("Failed to bind to address");
+    
+    // Graceful shutdown handler
+    let server = axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal());
         
-    axum::serve(listener, app)
-        .await
-        .expect("Failed to start server");
+    tracing::info!("Server is ready to accept connections");
+    
+    if let Err(e) = server.await {
+        tracing::error!("Server error: {}", e);
+    }
+    
+    tracing::info!("Server shutdown complete");
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("Failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("Failed to install SIGTERM handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {
+            tracing::info!("Received Ctrl+C signal");
+        },
+        _ = terminate => {
+            tracing::info!("Received SIGTERM signal");
+        },
+    }
+    
+    tracing::info!("Starting graceful shutdown...");
 }

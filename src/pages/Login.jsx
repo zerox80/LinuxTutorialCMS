@@ -7,18 +7,53 @@ const Login = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [loginAttempts, setLoginAttempts] = useState(0)
+  const [cooldownUntil, setCooldownUntil] = useState(null)
   const { login } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    
+    // Check cooldown
+    if (cooldownUntil && Date.now() < cooldownUntil) {
+      const remainingSeconds = Math.ceil((cooldownUntil - Date.now()) / 1000)
+      setError(`Zu viele Anmeldeversuche. Bitte warte ${remainingSeconds} Sekunden.`)
+      return
+    }
+    
+    if (isSubmitting) {
+      return
+    }
+    
     setError('')
+    setIsSubmitting(true)
 
-    const result = await login(username, password)
-    if (result.success) {
-      navigate('/admin')
-    } else {
-      setError(result.error)
+    try {
+      const result = await login(username, password)
+      if (result.success) {
+        setLoginAttempts(0)
+        setCooldownUntil(null)
+        navigate('/admin')
+      } else {
+        const newAttempts = loginAttempts + 1
+        setLoginAttempts(newAttempts)
+        setError(result.error)
+        
+        // Progressive cooldown after 3 failed attempts
+        if (newAttempts >= 5) {
+          const cooldown = Date.now() + 60000 // 60 seconds
+          setCooldownUntil(cooldown)
+          setError('Zu viele fehlgeschlagene Versuche. Bitte warte 60 Sekunden.')
+        } else if (newAttempts >= 3) {
+          const cooldown = Date.now() + 10000 // 10 seconds
+          setCooldownUntil(cooldown)
+          setError('Zu viele fehlgeschlagene Versuche. Bitte warte 10 Sekunden.')
+        }
+      }
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -89,9 +124,10 @@ const Login = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-primary-600 to-primary-700 text-white py-3 rounded-lg font-semibold hover:from-primary-700 hover:to-primary-800 transition-all duration-200 shadow-lg hover:shadow-xl"
+              disabled={isSubmitting || (cooldownUntil && Date.now() < cooldownUntil)}
+              className="w-full bg-gradient-to-r from-primary-600 to-primary-700 text-white py-3 rounded-lg font-semibold hover:from-primary-700 hover:to-primary-800 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Anmelden
+              {isSubmitting ? 'Anmelden...' : 'Anmelden'}
             </button>
           </form>
 

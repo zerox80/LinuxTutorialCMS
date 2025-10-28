@@ -34,27 +34,30 @@ services:
     networks:
       - app-network
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
   # nginx Reverse Proxy (innerhalb Docker)
-  # NOTE: External port 8489 must not conflict with backend's internal port 8489
-  # If you need to change the external port, modify the port mapping below
+  # NOTE: Backend uses internal port 8489, nginx exposes external port 80 (mapped to host 8489)
+  # To change the external port, modify "8489:80" below (e.g., "8080:80" for port 8080)
   nginx:
     image: nginx:alpine
     container_name: linux-tutorial-nginx
     restart: unless-stopped
     ports:
-      - "8489:80"  # External:Internal - change external port if 8489 is in use
+      - "8489:80"  # HostPort:ContainerPort
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - nginx-logs:/var/log/nginx
     networks:
       - app-network
     depends_on:
-      - backend
-      - frontend
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health", "||", "exit", "1"]
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost/health || exit 1"]
       interval: 30s
       timeout: 3s
       retries: 3

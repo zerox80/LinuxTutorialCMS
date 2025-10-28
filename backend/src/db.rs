@@ -72,8 +72,8 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
 
     match (admin_username, admin_password) {
         (Some(username), Some(password)) if !username.is_empty() && !password.is_empty() => {
-            if password.len() < 8 {
-                tracing::error!("ADMIN_PASSWORD must be at least 8 characters long!");
+            if password.len() < 12 {
+                tracing::error!("ADMIN_PASSWORD must be at least 12 characters long (NIST recommendation)!");
                 return Err(sqlx::Error::Protocol("Admin password too weak".into()));
             }
             let existing_user: Option<(i64, String)> = sqlx::query_as(

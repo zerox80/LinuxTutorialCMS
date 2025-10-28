@@ -115,6 +115,7 @@ class ApiClient {
           error.status = response.status
           throw error
         }
+        cleanup() // Clean up on success
         return null
       }
 
@@ -143,6 +144,7 @@ class ApiClient {
         throw error
       }
 
+      cleanup() // Clean up on success
       return payload
     } catch (error) {
       // Clean up on error

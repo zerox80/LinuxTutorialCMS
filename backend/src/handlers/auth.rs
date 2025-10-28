@@ -62,8 +62,13 @@ pub async fn login(
         })?;
 
     // Timing attack prevention: Always verify password even if user doesn't exist
-    // Generate a dummy hash with similar computational cost to real verification
-    let dummy_hash = "$2b$12$eImiTXuWVxfM37uY4JANjQPzMzXZjQDzqzQpMv0xoGrTplPPNaE3W"; // Precomputed dummy hash
+    // Use a dummy hash that matches DEFAULT_COST to ensure consistent timing
+    // This hash was generated with bcrypt::DEFAULT_COST for the password "dummy"
+    let dummy_hash = match bcrypt::DEFAULT_COST {
+        12 => "$2b$12$eImiTXuWVxfM37uY4JANjQPzMzXZjQDzqzQpMv0xoGrTplPPNaE3W",
+        10 => "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy",
+        _ => "$2b$12$eImiTXuWVxfM37uY4JANjQPzMzXZjQDzqzQpMv0xoGrTplPPNaE3W", // fallback
+    };
     
     let hash_to_verify = user.as_ref().map(|u| u.password_hash.as_str()).unwrap_or(dummy_hash);
     
@@ -81,8 +86,8 @@ pub async fn login(
     };
 
     // Variable delay based on operation to prevent timing attacks
-    // Add random jitter to make timing analysis harder
-    let jitter = (chrono::Utc::now().timestamp_subsec_millis() % 50) as u64;
+    // Add significant random jitter (100-300ms) to make timing analysis harder
+    let jitter = (chrono::Utc::now().timestamp_subsec_millis() % 200) as u64;
     tokio::time::sleep(Duration::from_millis(100 + jitter)).await;
 
     if !password_valid {

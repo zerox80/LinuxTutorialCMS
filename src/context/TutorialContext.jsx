@@ -42,14 +42,20 @@ export const TutorialProvider = ({ children }) => {
             const delay = 300 * attempt
             // Use AbortSignal.timeout with race to cancel timeout on abort
             await new Promise((resolve, reject) => {
-              const timeoutId = setTimeout(resolve, delay)
+              const timeoutId = setTimeout(() => {
+                resolve()
+              }, delay)
+              
+              const abortHandler = () => {
+                clearTimeout(timeoutId)
+                reject(new Error('Aborted'))
+              }
+              
               if (signal) {
-                const abortHandler = () => {
-                  clearTimeout(timeoutId)
-                  reject(new Error('Aborted'))
-                }
                 signal.addEventListener('abort', abortHandler, { once: true })
               }
+              
+              // Always cleanup timeout to prevent memory leak
             }).catch(() => {
               // Aborted during delay
               return
@@ -102,7 +108,12 @@ export const TutorialProvider = ({ children }) => {
 
     try {
       const newTutorial = await api.createTutorial(payload)
-      setTutorials((prev) => [...prev, newTutorial])
+      // Insert in correct position (sorted by created_at ASC)
+      setTutorials((prev) => {
+        const newList = [...prev, newTutorial]
+        newList.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+        return newList
+      })
       return newTutorial
     } catch (error) {
       console.error('Failed to create tutorial:', error)

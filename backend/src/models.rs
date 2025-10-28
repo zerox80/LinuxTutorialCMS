@@ -81,13 +81,13 @@ impl From<Tutorial> for TutorialResponse {
     fn from(tutorial: Tutorial) -> Self {
         let topics: Vec<String> = serde_json::from_str(&tutorial.topics).unwrap_or_else(|e| {
             tracing::error!(
-                "Failed to parse topics JSON for tutorial {}: {}. Topics JSON: {}. Using default topic.", 
+                "Failed to parse topics JSON for tutorial {}: {}. Topics JSON: '{}'. Returning empty array - data corruption detected!", 
                 tutorial.id, 
                 e,
                 tutorial.topics
             );
-            // Provide a default topic instead of empty array to prevent data loss visibility
-            vec!["Allgemein".to_string()]
+            // Return empty array to signal corruption rather than masking data loss
+            vec![]
         });
         
         TutorialResponse {

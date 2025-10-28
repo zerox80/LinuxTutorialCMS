@@ -247,7 +247,7 @@ pub async fn create_tutorial(
         description: payload.description,
         icon: payload.icon,
         color: payload.color,
-        topics: payload.topics,
+        topics: sanitized_topics,
         content: payload.content,
         version: 1,
         created_at: now.clone(),
@@ -329,7 +329,16 @@ pub async fn update_tutorial(
             Json(ErrorResponse { error: e }),
         ));
     }
-    let new_version = tutorial.version + 1;
+    // Check for version overflow (extremely unlikely but theoretically possible)
+    let new_version = tutorial.version.checked_add(1).ok_or_else(|| {
+        tracing::error!("Tutorial version overflow for id: {}", id);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                error: "Tutorial version overflow".to_string(),
+            }),
+        )
+    })?;
     
     let (topics_json, topics_vec) = if let Some(t) = payload.topics {
         let sanitized = sanitize_topics(&t).map_err(|e| {
