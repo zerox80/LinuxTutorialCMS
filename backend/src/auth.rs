@@ -1,9 +1,12 @@
 use axum::{
     async_trait,
-    extract::{FromRequestParts, TypedHeader},
-    headers::{authorization::Bearer, Authorization},
+    extract::FromRequestParts,
     http::{request::Parts, StatusCode},
     RequestPartsExt,
+};
+use axum_extra::{
+    extract::TypedHeader,
+    headers::{authorization::Bearer, Authorization},
 };
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
