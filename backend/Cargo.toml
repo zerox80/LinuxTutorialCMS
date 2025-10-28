@@ -19,3 +19,6 @@ dotenv = "0.15"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 uuid = { version = "1.6", features = ["v4", "serde"] }
+
+[patch.crates-io]
+base64ct = "1.7.1"
