@@ -22,6 +22,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 uuid = { version = "1.6", features = ["v4", "serde"] }
 url = "2.5"
+idna_adapter = "=1.2.0"
 
 [dependencies.home]
 version = "=0.5.11"
@@ -30,6 +31,3 @@ version = "=0.5.11"
 version = "=1.6.0"
 default-features = false
 features = ["alloc"]
-
-[patch.crates-io]
-idna_adapter = "=1.2.0"
