@@ -10,9 +10,16 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Dependencies cachen - copy both Cargo.toml and Cargo.lock
-# NOTE: Cargo.lock is required for reproducible builds
-COPY Cargo.toml Cargo.lock ./
+# Dependencies cachen - copy Cargo.toml and optionally Cargo.lock
+COPY Cargo.toml Cargo.lock* ./
+
+# Generate Cargo.lock if it doesn't exist (for reproducible builds)
+RUN if [ ! -f Cargo.lock ]; then \
+        echo "INFO: Cargo.lock not found, generating..."; \
+        cargo generate-lockfile; \
+    fi
+
+# Build dependencies (cached layer)
 RUN mkdir src && \
     echo "fn main() {}" > src/main.rs && \
     cargo build --release && \
