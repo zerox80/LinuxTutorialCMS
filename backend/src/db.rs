@@ -1,5 +1,6 @@
 use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
 use std::env;
+use std::path::{Path, PathBuf};
 
 pub type DbPool = SqlitePool;
 
@@ -9,6 +10,8 @@ pub async fn create_pool() -> Result<DbPool, sqlx::Error> {
         "sqlite:./database.db".to_string()
     });
     
+    ensure_sqlite_directory(&database_url)?;
+
     let pool = SqlitePoolOptions::new()
         .max_connections(5)
         .acquire_timeout(std::time::Duration::from_secs(10))
@@ -19,6 +22,53 @@ pub async fn create_pool() -> Result<DbPool, sqlx::Error> {
     
     tracing::info!("Database pool created successfully");
     Ok(pool)
+}
+
+fn ensure_sqlite_directory(database_url: &str) -> Result<(), sqlx::Error> {
+    if let Some(db_path) = sqlite_file_path(database_url) {
+        if let Some(parent) = db_path.parent() {
+            if parent != Path::new("") && parent != Path::new(".") {
+                if let Err(err) = std::fs::create_dir_all(parent) {
+                    tracing::error!(error = %err, path = ?parent, "Failed to create SQLite directory");
+                    return Err(sqlx::Error::Io(err));
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn sqlite_file_path(database_url: &str) -> Option<PathBuf> {
+    const PREFIX: &str = "sqlite:";
+
+    if !database_url.starts_with(PREFIX) {
+        return None;
+    }
+
+    let mut remainder = &database_url[PREFIX.len()..];
+
+    if remainder.starts_with(':') || remainder.is_empty() {
+        return None;
+    }
+
+    if let Some((path_part, _)) = remainder.split_once('?') {
+        remainder = path_part;
+    }
+
+    let normalized = if remainder.starts_with("///") {
+        &remainder[2..]
+    } else if remainder.starts_with("//") {
+        &remainder[1..]
+    } else {
+        remainder
+    };
+
+    if normalized.trim().is_empty() {
+        return None;
+    }
+
+    Some(PathBuf::from(normalized))
 }
 
 pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
