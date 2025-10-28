@@ -70,7 +70,11 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
                 let password_matches =
                     bcrypt::verify(&admin_password, &current_hash).unwrap_or(false);
                 if !password_matches {
-                    let new_hash = bcrypt::hash(&admin_password, bcrypt::DEFAULT_COST)?;
+                    let new_hash = bcrypt::hash(&admin_password, bcrypt::DEFAULT_COST)
+                        .map_err(|e| {
+                            tracing::error!("Failed to hash admin password: {}", e);
+                            sqlx::Error::Protocol("Failed to hash admin password".into())
+                        })?;
                     sqlx::query("UPDATE users SET password_hash = ? WHERE id = ?")
                         .bind(new_hash)
                         .bind(user_id)
@@ -83,7 +87,11 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
                 }
             }
             None => {
-                let password_hash = bcrypt::hash(&admin_password, bcrypt::DEFAULT_COST)?;
+                let password_hash = bcrypt::hash(&admin_password, bcrypt::DEFAULT_COST)
+                    .map_err(|e| {
+                        tracing::error!("Failed to hash admin password: {}", e);
+                        sqlx::Error::Protocol("Failed to hash admin password".into())
+                    })?;
                 sqlx::query("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)")
                     .bind(&admin_username)
                     .bind(password_hash)
