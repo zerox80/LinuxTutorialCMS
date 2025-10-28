@@ -45,9 +45,6 @@ RUN apt-get update && apt-get install -y \
 # Binary kopieren
 COPY --from=builder /app/target/release/linux-tutorial-backend /app/backend
 
-# .env Template
-COPY .env.docker .env
-
 # Expose port
 EXPOSE 8489
 
