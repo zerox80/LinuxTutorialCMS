@@ -30,3 +30,6 @@ version = "=0.5.11"
 version = "=1.6.0"
 default-features = false
 features = ["alloc"]
+
+[patch.crates-io]
+idna_adapter = "=1.2.0"
