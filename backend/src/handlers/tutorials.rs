@@ -73,7 +73,10 @@ pub async fn create_tutorial(
     }
 
     let id = Uuid::new_v4().to_string();
-    let topics_json = serde_json::to_string(&payload.topics).unwrap_or_else(|_| "[]".to_string());
+    let topics_json = serde_json::to_string(&payload.topics).unwrap_or_else(|e| {
+        tracing::error!("Failed to serialize topics: {}", e);
+        "[]".to_string()
+    });
     let now = chrono::Utc::now().to_rfc3339();
 
     sqlx::query(
@@ -160,7 +163,10 @@ pub async fn update_tutorial(
     let icon = payload.icon.unwrap_or(tutorial.icon);
     let color = payload.color.unwrap_or(tutorial.color);
     let topics = if let Some(t) = payload.topics {
-        serde_json::to_string(&t).unwrap_or(tutorial.topics)
+        serde_json::to_string(&t).unwrap_or_else(|e| {
+            tracing::error!("Failed to serialize topics: {}", e);
+            tutorial.topics.clone()
+        })
     } else {
         tutorial.topics
     };

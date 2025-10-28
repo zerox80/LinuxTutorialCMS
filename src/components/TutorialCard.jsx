@@ -41,7 +41,10 @@ const TutorialCard = ({ icon: Icon, title, description, topics, color }) => {
       </div>
 
       {/* Action Button with gradient and hover effect */}
-      <button className="relative w-full mt-auto py-3.5 px-6 bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 rounded-xl font-semibold hover:from-primary-600 hover:to-primary-700 hover:text-white group-hover:shadow-2xl transition-all duration-300 flex items-center justify-center overflow-hidden group/button">
+      <button 
+        onClick={() => console.log('Tutorial selected - implement navigation')}
+        className="relative w-full mt-auto py-3.5 px-6 bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 rounded-xl font-semibold hover:from-primary-600 hover:to-primary-700 hover:text-white group-hover:shadow-2xl transition-all duration-300 flex items-center justify-center overflow-hidden group/button"
+      >
         <span className="relative z-10 flex items-center gap-2">
           Zum Tutorial
           <ChevronRight className="w-5 h-5 group-hover/button:translate-x-1 transition-transform duration-300" />

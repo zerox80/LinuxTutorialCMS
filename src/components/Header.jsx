@@ -36,7 +36,16 @@ const Header = ({ activeSection, setActiveSection }) => {
             {navItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => setActiveSection(item.id)}
+                onClick={() => {
+                  setActiveSection(item.id)
+                  if (item.id === 'home') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  } else {
+                    // Scroll to tutorial section for all other items
+                    const tutorialSection = document.querySelector('section:nth-of-type(2)')
+                    tutorialSection?.scrollIntoView({ behavior: 'smooth' })
+                  }
+                }}
                 className={`nav-link font-medium ${
                   activeSection === item.id ? 'text-primary-600' : ''
                 }`}
@@ -72,6 +81,12 @@ const Header = ({ activeSection, setActiveSection }) => {
                 onClick={() => {
                   setActiveSection(item.id)
                   setMobileMenuOpen(false)
+                  if (item.id === 'home') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  } else {
+                    const tutorialSection = document.querySelector('section:nth-of-type(2)')
+                    tutorialSection?.scrollIntoView({ behavior: 'smooth' })
+                  }
                 }}
                 className={`block w-full text-left px-4 py-2 rounded-md ${
                   activeSection === item.id

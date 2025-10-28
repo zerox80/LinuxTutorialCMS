@@ -1,5 +1,5 @@
 # Multi-stage build für kleines Image
-FROM rustlang/rust:nightly as builder
+FROM rust:1.75 as builder
 
 WORKDIR /app
 
@@ -30,6 +30,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     libssl3 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Binary kopieren

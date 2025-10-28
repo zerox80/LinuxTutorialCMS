@@ -27,6 +27,7 @@ export const TutorialProvider = ({ children }) => {
     try {
       const data = await api.getTutorials()
       setTutorials(Array.isArray(data) ? data : [])
+      setError(null)
     } catch (err) {
       console.error('Failed to load tutorials:', err)
       setTutorials([])

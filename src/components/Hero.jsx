@@ -51,7 +51,13 @@ const Hero = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16 animate-slide-up" style={{animationDelay: '0.2s'}}>
-            <button className="group relative px-8 py-4 bg-white text-primary-700 rounded-xl font-semibold shadow-2xl hover:shadow-white/20 transition-all duration-300 hover:scale-105 hover:-translate-y-1 overflow-hidden">
+            <button 
+              onClick={() => {
+                const tutorialSection = document.querySelector('section:nth-of-type(2)')
+                tutorialSection?.scrollIntoView({ behavior: 'smooth' })
+              }}
+              className="group relative px-8 py-4 bg-white text-primary-700 rounded-xl font-semibold shadow-2xl hover:shadow-white/20 transition-all duration-300 hover:scale-105 hover:-translate-y-1 overflow-hidden"
+            >
               <span className="relative z-10 flex items-center gap-2">
                 Los geht's
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -59,7 +65,13 @@ const Hero = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-yellow-100 to-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </button>
             
-            <button className="group px-8 py-4 bg-white/10 backdrop-blur-xl text-white rounded-xl font-semibold border-2 border-white/30 hover:bg-white/20 hover:border-white/50 transition-all duration-300 hover:scale-105 hover:-translate-y-1">
+            <button 
+              onClick={() => {
+                const tutorialSection = document.querySelector('section:nth-of-type(2)')
+                tutorialSection?.scrollIntoView({ behavior: 'smooth' })
+              }}
+              className="group px-8 py-4 bg-white/10 backdrop-blur-xl text-white rounded-xl font-semibold border-2 border-white/30 hover:bg-white/20 hover:border-white/50 transition-all duration-300 hover:scale-105 hover:-translate-y-1"
+            >
               <span className="flex items-center gap-2">
                 Mehr erfahren
                 <Book className="w-5 h-5 group-hover:rotate-12 transition-transform" />

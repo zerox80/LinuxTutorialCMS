@@ -88,8 +88,10 @@ class ApiClient {
     } catch (error) {
       clearTimeout(timeoutId)
       if (error.name === 'AbortError') {
-        error = new Error('Request timed out')
-        error.status = 408
+        const timeoutError = new Error('Request timed out')
+        timeoutError.status = 408
+        console.error('API Error:', timeoutError)
+        throw timeoutError
       }
       console.error('API Error:', error)
       throw error

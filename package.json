@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "echo 'Linting not configured yet'",
+    "test": "echo 'No tests specified yet'"
   },
   "dependencies": {
     "lucide-react": "^0.292.0",

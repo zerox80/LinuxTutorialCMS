@@ -77,7 +77,10 @@ pub struct TutorialResponse {
 
 impl From<Tutorial> for TutorialResponse {
     fn from(tutorial: Tutorial) -> Self {
-        let topics: Vec<String> = serde_json::from_str(&tutorial.topics).unwrap_or_default();
+        let topics: Vec<String> = serde_json::from_str(&tutorial.topics).unwrap_or_else(|e| {
+            tracing::error!("Failed to parse topics JSON for tutorial {}: {}", tutorial.id, e);
+            Vec::new()
+        });
         
         TutorialResponse {
             id: tutorial.id,

@@ -25,24 +25,36 @@ const Footer = () => {
             <h4 className="text-white font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="hover:text-primary-400 transition-colors duration-200">
+                <button 
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  className="hover:text-primary-400 transition-colors duration-200"
+                >
                   Grundlagen
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#" className="hover:text-primary-400 transition-colors duration-200">
+                <button 
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  className="hover:text-primary-400 transition-colors duration-200"
+                >
                   Befehle
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#" className="hover:text-primary-400 transition-colors duration-200">
+                <button 
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  className="hover:text-primary-400 transition-colors duration-200"
+                >
                   Praxis
-                </a>
+                </button>
               </li>
               <li>
-                <a href="#" className="hover:text-primary-400 transition-colors duration-200">
+                <button 
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  className="hover:text-primary-400 transition-colors duration-200"
+                >
                   Advanced
-                </a>
+                </button>
               </li>
             </ul>
           </div>
@@ -52,14 +64,16 @@ const Footer = () => {
             <h4 className="text-white font-semibold mb-4">Kontakt</h4>
             <div className="space-y-3">
               <a
-                href="#"
+                href="https://github.com"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center space-x-2 hover:text-primary-400 transition-colors duration-200"
               >
                 <Github className="w-5 h-5" />
                 <span>GitHub</span>
               </a>
               <a
-                href="#"
+                href="mailto:info@example.com"
                 className="flex items-center space-x-2 hover:text-primary-400 transition-colors duration-200"
               >
                 <Mail className="w-5 h-5" />

@@ -36,7 +36,10 @@ impl Claims {
 
 pub fn create_jwt(username: String, role: String) -> Result<String, jsonwebtoken::errors::Error> {
     let claims = Claims::new(username, role);
-    let secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+    let secret = env::var("JWT_SECRET").unwrap_or_else(|_| {
+        tracing::error!("JWT_SECRET not set in environment! Using insecure default.");
+        "insecure-default-secret-change-in-production".to_string()
+    });
     
     encode(
         &Header::default(),
@@ -46,7 +49,10 @@ pub fn create_jwt(username: String, role: String) -> Result<String, jsonwebtoken
 }
 
 pub fn verify_jwt(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
-    let secret = env::var("JWT_SECRET").expect("JWT_SECRET must be set");
+    let secret = env::var("JWT_SECRET").unwrap_or_else(|_| {
+        tracing::error!("JWT_SECRET not set in environment! Using insecure default.");
+        "insecure-default-secret-change-in-production".to_string()
+    });
     
     let token_data = decode::<Claims>(
         token,
