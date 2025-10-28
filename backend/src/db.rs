@@ -11,9 +11,14 @@ pub async fn create_pool() -> Result<DbPool, sqlx::Error> {
     
     let pool = SqlitePoolOptions::new()
         .max_connections(5)
+        .acquire_timeout(std::time::Duration::from_secs(10))
+        .connect_timeout(std::time::Duration::from_secs(5))
+        .max_lifetime(std::time::Duration::from_secs(3600))
+        .idle_timeout(std::time::Duration::from_secs(600))
         .connect(&database_url)
         .await?;
     
+    tracing::info!("Database pool created successfully");
     Ok(pool)
 }
 
@@ -53,83 +58,88 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     .await?;
 
     // Create or update default admin user from environment variables
-    let admin_username = env::var("ADMIN_USERNAME").unwrap_or_else(|_| {
-        tracing::warn!("ADMIN_USERNAME not set; using insecure default 'admin'. Change this in production.");
-        "admin".to_string()
-    });
-    let admin_password = env::var("ADMIN_PASSWORD").unwrap_or_else(|_| {
-        tracing::warn!("ADMIN_PASSWORD not set; using insecure default. Change this in production.");
-        "admin123".to_string()
-    });
+    let admin_username = env::var("ADMIN_USERNAME").ok();
+    let admin_password = env::var("ADMIN_PASSWORD").ok();
 
-    if admin_username.is_empty() {
-        tracing::warn!("ADMIN_USERNAME is empty; skipping default admin provisioning");
-    } else if admin_password.is_empty() {
-        tracing::warn!("ADMIN_PASSWORD is empty; skipping default admin provisioning");
-    } else {
-        let existing_user: Option<(i64, String)> = sqlx::query_as(
-            "SELECT id, password_hash FROM users WHERE username = ?",
-        )
-        .bind(&admin_username)
-        .fetch_optional(pool)
-        .await?;
+    match (admin_username, admin_password) {
+        (Some(username), Some(password)) if !username.is_empty() && !password.is_empty() => {
+            if password.len() < 8 {
+                tracing::error!("ADMIN_PASSWORD must be at least 8 characters long!");
+                return Err(sqlx::Error::Protocol("Admin password too weak".into()));
+            }
+            let existing_user: Option<(i64, String)> = sqlx::query_as(
+                "SELECT id, password_hash FROM users WHERE username = ?",
+            )
+            .bind(&username)
+            .fetch_optional(pool)
+            .await?;
 
-        match existing_user {
-            Some((user_id, current_hash)) => {
-                let password_matches =
-                    bcrypt::verify(&admin_password, &current_hash).unwrap_or(false);
-                if !password_matches {
-                    let new_hash = bcrypt::hash(&admin_password, bcrypt::DEFAULT_COST)
+            match existing_user {
+                Some((user_id, current_hash)) => {
+                    match bcrypt::verify(&password, &current_hash) {
+                        Ok(true) => {
+                            tracing::info!("Admin user '{}' already exists with correct password", username);
+                        }
+                        Ok(false) => {
+                            let new_hash = bcrypt::hash(&password, bcrypt::DEFAULT_COST)
+                                .map_err(|e| {
+                                    tracing::error!("Failed to hash admin password: {}", e);
+                                    sqlx::Error::Protocol("Failed to hash admin password".into())
+                                })?;
+                            sqlx::query("UPDATE users SET password_hash = ? WHERE id = ?")
+                                .bind(new_hash)
+                                .bind(user_id)
+                                .execute(pool)
+                                .await?;
+                            tracing::info!("Updated password for admin user '{}'", username);
+                        }
+                        Err(e) => {
+                            tracing::error!("Password verification failed: {}", e);
+                            return Err(sqlx::Error::Protocol("Password verification error".into()));
+                        }
+                    }
+                }
+                None => {
+                    let password_hash = bcrypt::hash(&password, bcrypt::DEFAULT_COST)
                         .map_err(|e| {
                             tracing::error!("Failed to hash admin password: {}", e);
                             sqlx::Error::Protocol("Failed to hash admin password".into())
                         })?;
-                    sqlx::query("UPDATE users SET password_hash = ? WHERE id = ?")
-                        .bind(new_hash)
-                        .bind(user_id)
+                    sqlx::query("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)")
+                        .bind(&username)
+                        .bind(password_hash)
+                        .bind("admin")
                         .execute(pool)
                         .await?;
-                    tracing::info!(
-                        "Updated password for existing admin user (username: {})",
-                        admin_username
-                    );
+
+                    tracing::info!("Created admin user '{}'", username);
                 }
             }
-            None => {
-                let password_hash = bcrypt::hash(&admin_password, bcrypt::DEFAULT_COST)
-                    .map_err(|e| {
-                        tracing::error!("Failed to hash admin password: {}", e);
-                        sqlx::Error::Protocol("Failed to hash admin password".into())
-                    })?;
-                sqlx::query("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)")
-                    .bind(&admin_username)
-                    .bind(password_hash)
-                    .bind("admin")
-                    .execute(pool)
-                    .await?;
-
-                tracing::info!(
-                    "Created default admin user from environment (username: {})",
-                    admin_username
-                );
-            }
+        }
+        _ => {
+            tracing::warn!("ADMIN_USERNAME and ADMIN_PASSWORD not set or empty. No admin user created.");
+            tracing::warn!("Set these environment variables to create an admin user on startup.");
         }
     }
 
-    // Insert default tutorials if none exist
+    // Insert default tutorials if none exist (using transaction to prevent race condition)
+    let mut tx = pool.begin().await?;
+    
     let tutorial_count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM tutorials")
-        .fetch_one(pool)
+        .fetch_one(&mut *tx)
         .await?;
 
     if tutorial_count.0 == 0 {
-        insert_default_tutorials(pool).await?;
+        insert_default_tutorials_tx(&mut tx).await?;
         tracing::info!("Inserted default tutorials");
     }
+    
+    tx.commit().await?;
 
     Ok(())
 }
 
-async fn insert_default_tutorials(pool: &DbPool) -> Result<(), sqlx::Error> {
+async fn insert_default_tutorials_tx(tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>) -> Result<(), sqlx::Error> {
     let tutorials = vec![
         ("1", "Grundlegende Befehle", "Lerne die wichtigsten Linux-Befehle für die tägliche Arbeit im Terminal.", "Terminal", "from-blue-500 to-cyan-500", r#"["ls, cd, pwd","mkdir, rm, cp, mv","cat, grep, find","chmod, chown"]"#),
         ("2", "Dateisystem & Navigation", "Verstehe die Linux-Dateistruktur und navigiere effizient durch Verzeichnisse.", "FolderTree", "from-green-500 to-emerald-500", r#"["Verzeichnisstruktur","Absolute vs. Relative Pfade","Symlinks","Mount Points"]"#),
@@ -152,7 +162,7 @@ async fn insert_default_tutorials(pool: &DbPool) -> Result<(), sqlx::Error> {
         .bind(color)
         .bind(topics)
         .bind("")
-        .execute(pool)
+        .execute(&mut **tx)
         .await?;
     }
 

@@ -6,6 +6,38 @@ use axum::{
 };
 use uuid::Uuid;
 
+// Input validation
+fn validate_tutorial_id(id: &str) -> Result<(), String> {
+    // UUID format or numeric ID
+    if id.is_empty() || id.len() > 100 {
+        return Err("Invalid tutorial ID".to_string());
+    }
+    // Allow alphanumeric and hyphens (for UUIDs)
+    if !id.chars().all(|c| c.is_alphanumeric() || c == '-') {
+        return Err("Tutorial ID contains invalid characters".to_string());
+    }
+    Ok(())
+}
+
+fn validate_tutorial_data(title: &str, description: &str, content: &str) -> Result<(), String> {
+    if title.is_empty() {
+        return Err("Title cannot be empty".to_string());
+    }
+    if title.len() > 200 {
+        return Err("Title too long (max 200 characters)".to_string());
+    }
+    if description.is_empty() {
+        return Err("Description cannot be empty".to_string());
+    }
+    if description.len() > 1000 {
+        return Err("Description too long (max 1000 characters)".to_string());
+    }
+    if content.len() > 100_000 {
+        return Err("Content too long (max 100,000 characters)".to_string());
+    }
+    Ok(())
+}
+
 pub async fn list_tutorials(
     State(pool): State<DbPool>,
 ) -> Result<Json<Vec<TutorialResponse>>, (StatusCode, Json<ErrorResponse>)> {
@@ -31,6 +63,14 @@ pub async fn get_tutorial(
     State(pool): State<DbPool>,
     Path(id): Path<String>,
 ) -> Result<Json<TutorialResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Validate ID
+    if let Err(e) = validate_tutorial_id(&id) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse { error: e }),
+        ));
+    }
+
     let tutorial = sqlx::query_as::<_, Tutorial>("SELECT * FROM tutorials WHERE id = ?")
         .bind(&id)
         .fetch_optional(&pool)
@@ -68,6 +108,23 @@ pub async fn create_tutorial(
             StatusCode::FORBIDDEN,
             Json(ErrorResponse {
                 error: "Insufficient permissions".to_string(),
+            }),
+        ));
+    }
+
+    // Validate input
+    if let Err(e) = validate_tutorial_data(&payload.title, &payload.description, &payload.content) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse { error: e }),
+        ));
+    }
+
+    if payload.topics.len() > 20 {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse {
+                error: "Too many topics (max 20)".to_string(),
             }),
         ));
     }
@@ -135,6 +192,14 @@ pub async fn update_tutorial(
         ));
     }
 
+    // Validate ID
+    if let Err(e) = validate_tutorial_id(&id) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse { error: e }),
+        ));
+    }
+
     // Fetch existing tutorial
     let tutorial = sqlx::query_as::<_, Tutorial>("SELECT * FROM tutorials WHERE id = ?")
         .bind(&id)
@@ -158,11 +223,28 @@ pub async fn update_tutorial(
             )
         })?;
 
-    let title = payload.title.unwrap_or(tutorial.title);
-    let description = payload.description.unwrap_or(tutorial.description);
+    let title = payload.title.unwrap_or(tutorial.title.clone());
+    let description = payload.description.unwrap_or(tutorial.description.clone());
     let icon = payload.icon.unwrap_or(tutorial.icon);
     let color = payload.color.unwrap_or(tutorial.color);
+    let content = payload.content.unwrap_or(tutorial.content);
+
+    // Validate updated data
+    if let Err(e) = validate_tutorial_data(&title, &description, &content) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse { error: e }),
+        ));
+    }
     let topics = if let Some(t) = payload.topics {
+        if t.len() > 20 {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse {
+                    error: "Too many topics (max 20)".to_string(),
+                }),
+            ));
+        }
         serde_json::to_string(&t).unwrap_or_else(|e| {
             tracing::error!("Failed to serialize topics: {}", e);
             tutorial.topics.clone()
@@ -170,7 +252,6 @@ pub async fn update_tutorial(
     } else {
         tutorial.topics
     };
-    let content = payload.content.unwrap_or(tutorial.content);
     let now = chrono::Utc::now().to_rfc3339();
 
     sqlx::query(
@@ -227,6 +308,14 @@ pub async fn delete_tutorial(
             Json(ErrorResponse {
                 error: "Insufficient permissions".to_string(),
             }),
+        ));
+    }
+
+    // Validate ID
+    if let Err(e) = validate_tutorial_id(&id) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse { error: e }),
         ));
     }
 

@@ -1,9 +1,18 @@
+import { useMemo } from 'react'
 import TutorialCard from './TutorialCard'
 import { useTutorials } from '../context/TutorialContext'
 import { AlertCircle } from 'lucide-react'
 
 const TutorialSection = () => {
   const { tutorials, getIconComponent, loading, error } = useTutorials()
+
+  // Memoize normalized tutorials to avoid recalculating on every render
+  const normalizedTutorials = useMemo(() => {
+    return tutorials.map((tutorial) => ({
+      ...tutorial,
+      topics: Array.isArray(tutorial.topics) ? tutorial.topics : [],
+    }))
+  }, [tutorials])
 
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -24,15 +33,14 @@ const TutorialSection = () => {
         </div>
       )}
 
-      {loading && tutorials.length === 0 ? (
+      {loading && normalizedTutorials.length === 0 ? (
         <div className="text-center text-gray-600 py-12">Lade Tutorials…</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {tutorials.map((tutorial) => (
+          {normalizedTutorials.map((tutorial) => (
             <TutorialCard
               key={tutorial.id}
               {...tutorial}
-              topics={Array.isArray(tutorial.topics) ? tutorial.topics : []}
               icon={getIconComponent(tutorial.icon)}
             />
           ))}

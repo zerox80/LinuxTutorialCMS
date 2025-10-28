@@ -4,17 +4,57 @@ mod handlers;
 mod models;
 
 use axum::{
+    body::Body,
+    extract::Request,
+    middleware::{self, Next},
+    response::Response,
     routing::{delete, get, post, put},
     Router,
 };
 use dotenv::dotenv;
 use std::env;
 use http::{
-    header::{AUTHORIZATION, CONTENT_TYPE},
-    HeaderValue, Method,
+    header::{AUTHORIZATION, CONTENT_TYPE, CONTENT_SECURITY_POLICY, STRICT_TRANSPORT_SECURITY, X_CONTENT_TYPE_OPTIONS, X_FRAME_OPTIONS},
+    HeaderValue, Method, StatusCode,
 };
 use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
+use tower_http::limit::RequestBodyLimitLayer;
 use tracing_subscriber;
+
+// Security headers middleware
+async fn security_headers(
+    request: Request,
+    next: Next,
+) -> Response {
+    let mut response = next.run(request).await;
+    let headers = response.headers_mut();
+    
+    // Content Security Policy
+    headers.insert(
+        CONTENT_SECURITY_POLICY,
+        HeaderValue::from_static("default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;"),
+    );
+    
+    // HSTS - Enforce HTTPS
+    headers.insert(
+        STRICT_TRANSPORT_SECURITY,
+        HeaderValue::from_static("max-age=31536000; includeSubDomains"),
+    );
+    
+    // Prevent MIME sniffing
+    headers.insert(
+        X_CONTENT_TYPE_OPTIONS,
+        HeaderValue::from_static("nosniff"),
+    );
+    
+    // Prevent clickjacking
+    headers.insert(
+        X_FRAME_OPTIONS,
+        HeaderValue::from_static("DENY"),
+    );
+    
+    response
+}
 
 #[tokio::main]
 async fn main() {
@@ -23,6 +63,10 @@ async fn main() {
     
     // Initialize tracing
     tracing_subscriber::fmt::init();
+
+    // Initialize JWT secret (fail-fast if not set correctly)
+    auth::init_jwt_secret().expect("Failed to initialize JWT secret");
+    tracing::info!("JWT secret initialized successfully");
 
     // Initialize database
     let pool = db::create_pool().await.expect("Failed to create database pool");
@@ -86,10 +130,21 @@ async fn main() {
         .route("/health", get(|| async { "OK" }))
         
         .layer(cors)
+        .layer(RequestBodyLimitLayer::new(10 * 1024 * 1024)) // 10 MB limit
+        .layer(middleware::from_fn(security_headers))
         .with_state(pool);
 
     // Get port from environment or use default
-    let port = env::var("PORT").unwrap_or_else(|_| "8489".to_string());
+    let port_str = env::var("PORT").unwrap_or_else(|_| "8489".to_string());
+    let port: u16 = port_str.parse().unwrap_or_else(|e| {
+        tracing::error!("Invalid PORT '{}': {}. Using default 8489", port_str, e);
+        8489
+    });
+    
+    if port < 1024 {
+        tracing::warn!("PORT {} is in privileged range (< 1024). May require elevated permissions.", port);
+    }
+    
     let addr = format!("0.0.0.0:{}", port);
     
     tracing::info!("Starting server on {}", addr);

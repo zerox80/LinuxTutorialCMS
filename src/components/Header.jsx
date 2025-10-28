@@ -3,10 +3,20 @@ import { useNavigate } from 'react-router-dom'
 import { Terminal, Menu, X, Lock } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
-const Header = ({ activeSection, setActiveSection }) => {
+const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const navigate = useNavigate()
   const { isAuthenticated } = useAuth()
+
+  const scrollToSection = (sectionId) => {
+    if (sectionId === 'home') {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } else {
+      // Scroll to tutorial section for all other items
+      const tutorialSection = document.querySelector('section:nth-of-type(2)')
+      tutorialSection?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
 
   const navItems = [
     { id: 'home', label: 'Home' },
@@ -36,19 +46,8 @@ const Header = ({ activeSection, setActiveSection }) => {
             {navItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => {
-                  setActiveSection(item.id)
-                  if (item.id === 'home') {
-                    window.scrollTo({ top: 0, behavior: 'smooth' })
-                  } else {
-                    // Scroll to tutorial section for all other items
-                    const tutorialSection = document.querySelector('section:nth-of-type(2)')
-                    tutorialSection?.scrollIntoView({ behavior: 'smooth' })
-                  }
-                }}
-                className={`nav-link font-medium ${
-                  activeSection === item.id ? 'text-primary-600' : ''
-                }`}
+                onClick={() => scrollToSection(item.id)}
+                className="nav-link font-medium hover:text-primary-600"
               >
                 {item.label}
               </button>
@@ -79,20 +78,10 @@ const Header = ({ activeSection, setActiveSection }) => {
               <button
                 key={item.id}
                 onClick={() => {
-                  setActiveSection(item.id)
+                  scrollToSection(item.id)
                   setMobileMenuOpen(false)
-                  if (item.id === 'home') {
-                    window.scrollTo({ top: 0, behavior: 'smooth' })
-                  } else {
-                    const tutorialSection = document.querySelector('section:nth-of-type(2)')
-                    tutorialSection?.scrollIntoView({ behavior: 'smooth' })
-                  }
                 }}
-                className={`block w-full text-left px-4 py-2 rounded-md ${
-                  activeSection === item.id
-                    ? 'bg-primary-50 text-primary-600'
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`}
+                className="block w-full text-left px-4 py-2 rounded-md text-gray-600 hover:bg-gray-50 hover:text-primary-600"
               >
                 {item.label}
               </button>

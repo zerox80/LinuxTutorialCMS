@@ -7,6 +7,7 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   // Check if user is already logged in on mount
   useEffect(() => {
@@ -22,10 +23,14 @@ export const AuthProvider = ({ children }) => {
           const userData = await api.me()
           setIsAuthenticated(true)
           setUser(userData)
+          setError(null)
         } catch (error) {
           console.error('Auth check failed:', error)
           localStorage.removeItem('token')
           api.setToken(null)
+          setIsAuthenticated(false)
+          setUser(null)
+          // Don't set error here as it's just an expired/invalid token
         }
       }
       setLoading(false)
@@ -57,7 +62,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout, loading }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, logout, loading, error }}>
       {children}
     </AuthContext.Provider>
   )

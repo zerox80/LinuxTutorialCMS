@@ -22,7 +22,7 @@ export default defineConfig({
       },
     },
     sourcemap: false,
-    minify: 'terser',
+    minify: 'esbuild', // esbuild is faster than terser
     chunkSizeWarningLimit: 1000,
   },
 })

@@ -11,6 +11,27 @@ use axum_extra::{
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use std::env;
+use std::sync::OnceLock;
+
+static JWT_SECRET: OnceLock<String> = OnceLock::new();
+
+pub fn init_jwt_secret() -> Result<(), String> {
+    let secret = env::var("JWT_SECRET")
+        .map_err(|_| "JWT_SECRET environment variable is not set".to_string())?;
+    
+    if secret.len() < 32 {
+        return Err("JWT_SECRET must be at least 32 characters long".to_string());
+    }
+    
+    JWT_SECRET.set(secret)
+        .map_err(|_| "JWT_SECRET already initialized".to_string())?;
+    
+    Ok(())
+}
+
+fn get_jwt_secret() -> &'static str {
+    JWT_SECRET.get().expect("JWT_SECRET not initialized. Call init_jwt_secret() first.")
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
@@ -36,10 +57,7 @@ impl Claims {
 
 pub fn create_jwt(username: String, role: String) -> Result<String, jsonwebtoken::errors::Error> {
     let claims = Claims::new(username, role);
-    let secret = env::var("JWT_SECRET").unwrap_or_else(|_| {
-        tracing::error!("JWT_SECRET not set in environment! Using insecure default.");
-        "insecure-default-secret-change-in-production".to_string()
-    });
+    let secret = get_jwt_secret();
     
     encode(
         &Header::default(),
@@ -49,15 +67,16 @@ pub fn create_jwt(username: String, role: String) -> Result<String, jsonwebtoken
 }
 
 pub fn verify_jwt(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
-    let secret = env::var("JWT_SECRET").unwrap_or_else(|_| {
-        tracing::error!("JWT_SECRET not set in environment! Using insecure default.");
-        "insecure-default-secret-change-in-production".to_string()
-    });
+    let secret = get_jwt_secret();
+    
+    let mut validation = Validation::default();
+    validation.leeway = 60; // 60 seconds leeway for clock skew
+    validation.validate_exp = true;
     
     let token_data = decode::<Claims>(
         token,
         &DecodingKey::from_secret(secret.as_bytes()),
-        &Validation::default(),
+        &validation,
     )?;
     
     Ok(token_data.claims)

@@ -16,14 +16,14 @@ const TutorialForm = ({ tutorial, onClose }) => {
   useEffect(() => {
     if (tutorial) {
       const validTopics = Array.isArray(tutorial.topics) 
-        ? tutorial.topics.filter(t => t != null && t !== '') 
+        ? tutorial.topics.filter(t => t && t.trim() !== '') 
         : []
       setFormData({
         title: tutorial.title || '',
         description: tutorial.description || '',
         icon: tutorial.icon || 'Terminal',
         color: tutorial.color || 'from-blue-500 to-cyan-500',
-        topics: validTopics.length > 0 ? [...validTopics] : [''],
+        topics: validTopics.length > 0 ? validTopics : [''],
         content: tutorial.content || '',
       })
     } else {
@@ -63,13 +63,13 @@ const TutorialForm = ({ tutorial, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    // Filter out empty, null, and undefined topics
+    // Filter out empty topics
     const cleanedData = {
       title: formData.title,
       description: formData.description,
       icon: formData.icon,
       color: formData.color,
-      topics: formData.topics.filter((t) => t != null && t.trim() !== ''),
+      topics: formData.topics.filter((t) => t && t.trim() !== ''),
       content: formData.content,
     }
 

@@ -15,6 +15,9 @@ class ApiClient {
       return
     }
     if (token) {
+      // NOTE: localStorage is vulnerable to XSS attacks
+      // For production, consider using httpOnly cookies instead
+      // This would require backend changes to send cookies
       localStorage.setItem('token', token)
     } else {
       localStorage.removeItem('token')
@@ -31,9 +34,19 @@ class ApiClient {
 
   async request(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`
-    const { timeout = 15000, headers: optionHeaders, signal, ...rest } = options
+    const { timeout = 15000, headers: optionHeaders, signal: userSignal, ...rest } = options
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), timeout)
+    let timeoutId = null
+
+    // Handle both user signal and internal timeout
+    const handleAbort = () => controller.abort()
+    if (userSignal) {
+      userSignal.addEventListener('abort', handleAbort)
+    }
+
+    timeoutId = setTimeout(() => {
+      controller.abort()
+    }, timeout)
 
     const config = {
       ...rest,
@@ -41,7 +54,7 @@ class ApiClient {
         ...this.getHeaders(),
         ...optionHeaders,
       },
-      signal: signal || controller.signal,
+      signal: controller.signal,
     }
 
     if (config.body && !config.headers['Content-Type']) {
@@ -50,7 +63,15 @@ class ApiClient {
 
     try {
       const response = await fetch(url, config)
-      clearTimeout(timeoutId)
+      
+      // Clean up immediately on success
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId)
+        timeoutId = null
+      }
+      if (userSignal) {
+        userSignal.removeEventListener('abort', handleAbort)
+      }
 
       const isEmptyBody =
         response.status === 204 ||
@@ -86,7 +107,15 @@ class ApiClient {
 
       return payload
     } catch (error) {
-      clearTimeout(timeoutId)
+      // Clean up on error
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId)
+        timeoutId = null
+      }
+      if (userSignal) {
+        userSignal.removeEventListener('abort', handleAbort)
+      }
+      
       if (error.name === 'AbortError') {
         const timeoutError = new Error('Request timed out')
         timeoutError.status = 408
