@@ -1,61 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import rehypeHighlight from 'rehype-highlight'
-import { AlertCircle, ArrowLeft, Loader2, CalendarDays } from 'lucide-react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { AlertCircle, ArrowLeft, ArrowRight, Loader2, CalendarDays } from 'lucide-react'
 import { useContent } from '../context/ContentContext'
-
-const normalizeTitle = (title, fallback) => {
-  if (!title) return fallback
-  if (typeof title === 'string') return title
-  if (Array.isArray(title)) {
-    return title.filter(Boolean).join(' ')
-  }
-  if (typeof title === 'object') {
-    const values = Object.values(title).filter((part) => typeof part === 'string' && part.trim())
-    if (values.length) {
-      return values.join(' ')
-    }
-  }
-  return fallback
-}
-
-const normalizeText = (value, fallback = '') => {
-  if (!value) return fallback
-  if (typeof value === 'string') return value
-  if (Array.isArray(value)) {
-    return value.filter((part) => typeof part === 'string').join('\n')
-  }
-  if (typeof value === 'object') {
-    if (value.text && typeof value.text === 'string') {
-      return value.text
-    }
-    const values = Object.values(value).filter((part) => typeof part === 'string')
-    if (values.length) {
-      return values.join('\n')
-    }
-  }
-  return fallback
-}
-
-const formatDate = (isoString) => {
-  if (!isoString) return null
-  const date = new Date(isoString)
-  if (Number.isNaN(date.getTime())) return null
-  return new Intl.DateTimeFormat('de-DE', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  }).format(date)
-}
+import {
+  normalizeTitle,
+  normalizeText,
+  buildPreviewText,
+  formatDate,
+  normalizeSlug,
+} from '../utils/postUtils'
 
 const DynamicPage = () => {
   const { slug = '' } = useParams()
   const navigate = useNavigate()
   const { pages } = useContent()
 
-  const normalizedSlug = useMemo(() => slug.trim().toLowerCase(), [slug])
+  const normalizedSlug = useMemo(() => normalizeSlug(slug), [slug])
 
   const cachedPage = pages.cache?.[normalizedSlug]
   const [pageData, setPageData] = useState(cachedPage ?? null)
@@ -181,7 +141,8 @@ const DynamicPage = () => {
                 <div className="space-y-10">
                   {posts.map((post) => {
                     const publishedDate = formatDate(post.published_at)
-                    const excerpt = normalizeText(post.excerpt)
+                    const previewText = buildPreviewText(post)
+                    const postSlug = normalizeSlug(post?.slug)
 
                     return (
                       <article
@@ -198,14 +159,26 @@ const DynamicPage = () => {
                                 </span>
                               )}
                             </div>
-                            <h3 className="text-2xl font-semibold text-gray-900">{post.title}</h3>
-                            {excerpt && <p className="text-gray-600 leading-relaxed">{excerpt}</p>}
+                            <h3 className="text-2xl font-semibold text-gray-900 break-words">{post.title}</h3>
+                            {previewText && (
+                              <p className="text-gray-600 leading-relaxed break-words line-clamp-3">
+                                {previewText}
+                              </p>
+                            )}
                           </header>
-
-                          <div className="prose prose-slate max-w-none prose-headings:font-semibold prose-a:text-primary-600">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
-                              {post.content_markdown || 'Kein Inhalt verfügbar.'}
-                            </ReactMarkdown>
+                          <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-gray-100">
+                            <span className="text-sm text-gray-500">
+                              {previewText ? 'Kurzvorschau' : 'Mehr Details verfügbar'}
+                            </span>
+                            {postSlug ? (
+                              <Link
+                                to={`/pages/${normalizedSlug}/posts/${postSlug}`}
+                                className="inline-flex items-center gap-2 text-primary-700 font-semibold hover:text-primary-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:rounded-lg"
+                              >
+                                Weiterlesen
+                                <ArrowRight className="w-4 h-4" />
+                              </Link>
+                            ) : null}
                           </div>
                         </div>
                       </article>
