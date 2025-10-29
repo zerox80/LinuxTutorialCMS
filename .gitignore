@@ -55,20 +55,6 @@ bench/
 
 # Environment files (NEVER commit secrets!)
 .env
-.env.local
-.env.development
-.env.development.local
-.env.test
-.env.test.local
-.env.production
-.env.production.local
-*.env.backup
-
-# Ignore .env files everywhere except examples
-**/.env
-!.env.example
-!.env.docker.example
-!**/*.env.example
 
 
 # ==================== Database ====================
