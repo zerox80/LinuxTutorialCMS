@@ -10,6 +10,7 @@ import Grundlagen from './pages/Grundlagen'
 import Login from './pages/Login'
 import TutorialDetail from './pages/TutorialDetail'
 import DynamicPage from './pages/DynamicPage'
+import PostDetail from './pages/PostDetail'
 import AdminDashboard from './pages/AdminDashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -51,6 +52,17 @@ function App() {
                     <>
                       <Header />
                       <TutorialDetail />
+                      <Footer />
+                    </>
+                  }
+                />
+
+                <Route
+                  path="/pages/:pageSlug/posts/:postSlug"
+                  element={
+                    <>
+                      <Header />
+                      <PostDetail />
                       <Footer />
                     </>
                   }
