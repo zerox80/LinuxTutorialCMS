@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use std::convert::TryFrom;
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct User {
@@ -77,20 +78,18 @@ pub struct TutorialResponse {
     pub updated_at: String,
 }
 
-impl From<Tutorial> for TutorialResponse {
-    fn from(tutorial: Tutorial) -> Self {
-        let topics: Vec<String> = serde_json::from_str(&tutorial.topics).unwrap_or_else(|e| {
-            tracing::error!(
-                "Failed to parse topics JSON for tutorial {}: {}. Topics JSON: '{}'. Returning empty array - data corruption detected!", 
-                tutorial.id, 
-                e,
-                tutorial.topics
-            );
-            // Return empty array to signal corruption rather than masking data loss
-            vec![]
-        });
-        
-        TutorialResponse {
+impl TryFrom<Tutorial> for TutorialResponse {
+    type Error = String;
+
+    fn try_from(tutorial: Tutorial) -> Result<Self, Self::Error> {
+        let topics: Vec<String> = serde_json::from_str(&tutorial.topics).map_err(|e| {
+            format!(
+                "Failed to parse topics JSON for tutorial {}: {}. Topics JSON: '{}'",
+                tutorial.id, e, tutorial.topics
+            )
+        })?;
+
+        Ok(TutorialResponse {
             id: tutorial.id,
             title: tutorial.title,
             description: tutorial.description,
@@ -101,7 +100,7 @@ impl From<Tutorial> for TutorialResponse {
             version: tutorial.version,
             created_at: tutorial.created_at,
             updated_at: tutorial.updated_at,
-        }
+        })
     }
 }
 

@@ -20,25 +20,39 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl()
 
-const hasStorage = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
+const hasLocalStorage = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
+const hasSessionStorage = typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined'
 
 class ApiClient {
   constructor() {
-    this.token = hasStorage ? localStorage.getItem('token') : null
+    if (hasSessionStorage && window.sessionStorage.getItem('token')) {
+      this.token = window.sessionStorage.getItem('token')
+    } else if (hasLocalStorage) {
+      this.token = window.localStorage.getItem('token')
+    } else {
+      this.token = null
+    }
   }
 
   setToken(token) {
     this.token = token
-    if (!hasStorage) {
+    if (!hasSessionStorage && !hasLocalStorage) {
       return
     }
     if (token) {
-      // NOTE: localStorage is vulnerable to XSS attacks
-      // For production, consider using httpOnly cookies instead
-      // This would require backend changes to send cookies
-      localStorage.setItem('token', token)
+      // Prefer sessionStorage to avoid persistence across browser restarts
+      if (hasSessionStorage) {
+        window.sessionStorage.setItem('token', token)
+      } else if (hasLocalStorage) {
+        window.localStorage.setItem('token', token)
+      }
     } else {
-      localStorage.removeItem('token')
+      if (hasSessionStorage) {
+        window.sessionStorage.removeItem('token')
+      }
+      if (hasLocalStorage) {
+        window.localStorage.removeItem('token')
+      }
     }
   }
 

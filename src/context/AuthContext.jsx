@@ -31,7 +31,10 @@ export const AuthProvider = ({ children }) => {
         
         // Check JWT expiration before making API call
         try {
-          const payload = JSON.parse(atob(jwtParts[1]))
+          const base64Url = jwtParts[1]
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+          const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=')
+          const payload = JSON.parse(atob(padded))
           if (payload.exp && payload.exp * 1000 < Date.now()) {
             console.warn('JWT expired, removing token')
             localStorage.removeItem('token')
@@ -81,8 +84,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(true)
 
       const sanitizedUsername = username.trim()
-      const sanitizedPassword = password.trim()
-      const response = await api.login(sanitizedUsername, sanitizedPassword)
+      const response = await api.login(sanitizedUsername, password)
 
       if (!response?.token || !response?.user) {
         throw new Error('Ungültige Antwort vom Server')

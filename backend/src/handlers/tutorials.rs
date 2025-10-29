@@ -4,6 +4,9 @@ use axum::{
     http::StatusCode,
     Json,
 };
+use regex::Regex;
+use std::convert::TryInto;
+use std::sync::OnceLock;
 use uuid::Uuid;
 
 // Input validation
@@ -52,21 +55,16 @@ fn validate_icon(icon: &str) -> Result<(), String> {
 }
 
 fn validate_color(color: &str) -> Result<(), String> {
-    const ALLOWED_COLORS: &[&str] = &[
-        "from-blue-500 to-cyan-500",
-        "from-green-500 to-emerald-500",
-        "from-purple-500 to-pink-500",
-        "from-orange-500 to-red-500",
-        "from-indigo-500 to-blue-500",
-        "from-teal-500 to-green-500",
-        "from-yellow-500 to-orange-500",
-        "from-red-500 to-pink-500"
-    ];
-    
-    if ALLOWED_COLORS.contains(&color) {
+    static COLOR_REGEX: OnceLock<Regex> = OnceLock::new();
+    let regex = COLOR_REGEX.get_or_init(|| {
+        Regex::new(r"^from-[A-Za-z0-9-]+(?:\s+via-[A-Za-z0-9-]+)?\s+to-[A-Za-z0-9-]+$")
+            .expect("Failed to compile gradient regex")
+    });
+
+    if regex.is_match(color) {
         Ok(())
     } else {
-        Err(format!("Invalid color gradient. Must be one of the predefined options"))
+        Err("Invalid color gradient. Expected Tailwind style 'from-… [via-…] to-…' format.".to_string())
     }
 }
 
@@ -99,10 +97,8 @@ fn sanitize_topics(topics: &[String]) -> Result<Vec<String>, String> {
 pub async fn list_tutorials(
     State(pool): State<DbPool>,
 ) -> Result<Json<Vec<TutorialResponse>>, (StatusCode, Json<ErrorResponse>)> {
-    // Add LIMIT to prevent loading too many tutorials at once
-    // For now, set a reasonable limit of 100
     let tutorials = sqlx::query_as::<_, Tutorial>(
-        "SELECT * FROM tutorials ORDER BY created_at ASC LIMIT 100"
+        "SELECT * FROM tutorials ORDER BY created_at ASC"
     )
         .fetch_all(&pool)
         .await
@@ -116,9 +112,23 @@ pub async fn list_tutorials(
             )
         })?;
 
-    let response: Vec<TutorialResponse> = tutorials.into_iter().map(|t| t.into()).collect();
+    let mut responses = Vec::with_capacity(tutorials.len());
+    for tutorial in tutorials {
+        let response: TutorialResponse = tutorial
+            .try_into()
+            .map_err(|err: String| {
+                tracing::error!("Tutorial data corruption detected: {}", err);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse {
+                        error: "Failed to parse stored tutorial data".to_string(),
+                    }),
+                )
+            })?;
+        responses.push(response);
+    }
 
-    Ok(Json(response))
+    Ok(Json(responses))
 }
 
 pub async fn get_tutorial(
@@ -156,7 +166,17 @@ pub async fn get_tutorial(
         )
     })?;
 
-    Ok(Json(tutorial.into()))
+    let response: TutorialResponse = tutorial.try_into().map_err(|err: String| {
+        tracing::error!("Tutorial data corruption detected: {}", err);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                error: "Failed to parse stored tutorial data".to_string(),
+            }),
+        )
+    })?;
+
+    Ok(Json(response))
 }
 
 pub async fn create_tutorial(
@@ -360,13 +380,19 @@ pub async fn update_tutorial(
 
         (serialized, sanitized)
     } else {
-        let existing_topics: Vec<String> = serde_json::from_str(&tutorial.topics).unwrap_or_default();
-        let sanitized = if existing_topics.is_empty() {
-            vec!["Allgemein".to_string()]
-        } else {
-            existing_topics
-        };
-        let serialized = serde_json::to_string(&sanitized).map_err(|e| {
+        let existing_topics: Vec<String> = serde_json::from_str(&tutorial.topics).map_err(|e| {
+            tracing::error!(
+                "Failed to deserialize topics for tutorial {}: {}",
+                tutorial.id, e
+            );
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Failed to read stored tutorial topics".to_string(),
+                }),
+            )
+        })?;
+        let serialized = serde_json::to_string(&existing_topics).map_err(|e| {
             tracing::error!("Failed to serialize topics: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -375,7 +401,7 @@ pub async fn update_tutorial(
                 }),
             )
         })?;
-        (serialized, sanitized)
+        (serialized, existing_topics)
     };
     let now = chrono::Utc::now().to_rfc3339();
 

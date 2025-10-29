@@ -8,18 +8,14 @@ use axum_extra::{
     extract::TypedHeader,
     headers::{authorization::Bearer, Authorization},
 };
+use chrono::{DateTime, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::sync::OnceLock;
+use crate::models::UserResponse;
 
-static JWT_SECRET: OnceLock<String> = OnceLock::new();
-
-pub fn init_jwt_secret() -> Result<(), String> {
-    let secret = env::var("JWT_SECRET")
-        .map_err(|_| "JWT_SECRET environment variable is not set".to_string())?;
-    
-    if secret.len() < 32 {
+pub static JWT_SECRET: OnceLock<Vec<u8>> = OnceLock::new();
         return Err("JWT_SECRET must be at least 32 characters long".to_string());
     }
     
@@ -48,7 +44,6 @@ impl Claims {
             .map(|dt| dt.timestamp())
             .and_then(|ts| usize::try_from(ts).ok())
             .unwrap_or_else(|| {
-                tracing::error!("Timestamp overflow when creating JWT, using 24h from epoch");
                 // Fallback: use current time as best effort (will likely fail validation)
                 // This should never happen in practice with modern timestamps
                 let now = chrono::Utc::now().timestamp() as usize;

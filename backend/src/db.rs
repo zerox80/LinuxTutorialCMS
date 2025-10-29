@@ -95,6 +95,19 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    // Track login attempts for server-side cooldowns
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS login_attempts (
+            username TEXT PRIMARY KEY,
+            fail_count INTEGER NOT NULL DEFAULT 0,
+            blocked_until TEXT
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
     // Create tutorials table
     sqlx::query(
         r#"
@@ -123,6 +136,38 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
         .execute(pool)
         .await?;
 
+    // Metadata store for one-off setup flags
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS app_metadata (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Normalized topics table for efficient querying
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS tutorial_topics (
+            tutorial_id TEXT NOT NULL,
+            topic TEXT NOT NULL,
+            FOREIGN KEY (tutorial_id) REFERENCES tutorials(id) ON DELETE CASCADE ON UPDATE CASCADE
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorial_topics_tutorial ON tutorial_topics(tutorial_id)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorial_topics_topic ON tutorial_topics(topic)")
+        .execute(pool)
+        .await?;
+
     // Create or update default admin user from environment variables
     let admin_username = env::var("ADMIN_USERNAME").ok();
     let admin_password = env::var("ADMIN_PASSWORD").ok();
@@ -141,23 +186,13 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
             .await?;
 
             match existing_user {
-                Some((user_id, current_hash)) => {
+                Some((_, current_hash)) => {
                     match bcrypt::verify(&password, &current_hash) {
                         Ok(true) => {
                             tracing::info!("Admin user '{}' already exists with correct password", username);
                         }
                         Ok(false) => {
-                            let new_hash = bcrypt::hash(&password, bcrypt::DEFAULT_COST)
-                                .map_err(|e| {
-                                    tracing::error!("Failed to hash admin password: {}", e);
-                                    sqlx::Error::Protocol("Failed to hash admin password".into())
-                                })?;
-                            sqlx::query("UPDATE users SET password_hash = ? WHERE id = ?")
-                                .bind(new_hash)
-                                .bind(user_id)
-                                .execute(pool)
-                                .await?;
-                            tracing::info!("Updated password for admin user '{}'", username);
+                            tracing::warn!("ADMIN_PASSWORD for '{}' differs from stored credentials; keeping existing hash to preserve runtime changes.", username);
                         }
                         Err(e) => {
                             tracing::error!("Password verification failed: {}", e);
@@ -189,17 +224,38 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     }
 
     // Insert default tutorials if none exist (using transaction to prevent race condition)
+    let seed_enabled = env::var("ENABLE_DEFAULT_TUTORIALS")
+        .map(|v| v.trim().eq_ignore_ascii_case("true"))
+        .unwrap_or(true);
+
     let mut tx = pool.begin().await?;
-    
-    let tutorial_count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM tutorials")
-        .fetch_one(&mut *tx)
+
+    if seed_enabled {
+        let already_seeded: Option<(String,)> = sqlx::query_as(
+            "SELECT value FROM app_metadata WHERE key = 'default_tutorials_seeded'",
+        )
+        .fetch_optional(&mut *tx)
         .await?;
 
-    if tutorial_count.0 == 0 {
-        insert_default_tutorials_tx(&mut tx).await?;
-        tracing::info!("Inserted default tutorials");
+        let tutorial_count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM tutorials")
+            .fetch_one(&mut *tx)
+            .await?;
+
+        if already_seeded.is_none() && tutorial_count.0 == 0 {
+            insert_default_tutorials_tx(&mut tx).await?;
+            sqlx::query(
+                "INSERT INTO app_metadata (key, value) VALUES ('default_tutorials_seeded', ?) \
+                 ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            )
+            .bind(chrono::Utc::now().to_rfc3339())
+            .execute(&mut *tx)
+            .await?;
+            tracing::info!("Inserted default tutorials");
+        }
+    } else {
+        tracing::info!("ENABLE_DEFAULT_TUTORIALS disabled – skipping default tutorial seeding");
     }
-    
+
     tx.commit().await?;
 
     Ok(())
@@ -218,8 +274,30 @@ async fn insert_default_tutorials_tx(tx: &mut sqlx::Transaction<'_, sqlx::Sqlite
     ];
 
     for (id, title, description, icon, color, topics) in tutorials {
-        let topics_json = serde_json::to_string(&topics)
-            .map_err(|e| sqlx::Error::Protocol(format!("Failed to serialize topics: {}", e).into()))?;
+        if sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM tutorials WHERE id = ?")
+            .bind(id)
+            .fetch_one(&mut **tx)
+            .await?
+            > 0
+        {
+            continue;
+        }
+
+        if let Err(err) = crate::handlers::tutorials::validate_icon(icon) {
+            tracing::warn!("Skipping default tutorial '{}' due to invalid icon: {}", id, err);
+            continue;
+        }
+
+        if let Err(err) = crate::handlers::tutorials::validate_color(color) {
+            tracing::warn!("Skipping default tutorial '{}' due to invalid color: {}", id, err);
+            continue;
+        }
+
+        let topics_json = serde_json::to_string(&topics).map_err(|e| {
+            sqlx::Error::Protocol(
+                format!("Failed to serialize topics for default tutorial '{}': {}", id, e).into(),
+            )
+        })?;
         
         sqlx::query(
             "INSERT INTO tutorials (id, title, description, icon, color, topics, content, version) VALUES (?, ?, ?, ?, ?, ?, ?, 1)"
@@ -233,6 +311,29 @@ async fn insert_default_tutorials_tx(tx: &mut sqlx::Transaction<'_, sqlx::Sqlite
         .bind("")
         .execute(&mut **tx)
         .await?;
+
+        replace_tutorial_topics_tx(tx, id, &topics).await?;
+    }
+
+    Ok(())
+}
+
+async fn replace_tutorial_topics_tx(
+    tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+    tutorial_id: &str,
+    topics: &[String],
+) -> Result<(), sqlx::Error> {
+    sqlx::query("DELETE FROM tutorial_topics WHERE tutorial_id = ?")
+        .bind(tutorial_id)
+        .execute(&mut **tx)
+        .await?;
+
+    for topic in topics {
+        sqlx::query("INSERT INTO tutorial_topics (tutorial_id, topic) VALUES (?, ?)")
+            .bind(tutorial_id)
+            .bind(topic)
+            .execute(&mut **tx)
+            .await?;
     }
 
     Ok(())

@@ -17,9 +17,10 @@ const Login = () => {
     e.preventDefault()
     
     // Check cooldown
-    if (cooldownUntil && Date.now() < cooldownUntil) {
-      const remainingSeconds = Math.ceil((cooldownUntil - Date.now()) / 1000)
-      setError(`Zu viele Anmeldeversuche. Bitte warte ${remainingSeconds} Sekunden.`)
+    const now = Date.now()
+    if (cooldownUntil && now < cooldownUntil) {
+      const remainingSeconds = Math.ceil((cooldownUntil - now) / 1000)
+      setError(`Zu viele Anmeldeversuche. Bitte warte ${remainingSeconds} Sekunde${remainingSeconds === 1 ? '' : 'n'}.`)
       return
     }
     
@@ -43,11 +44,11 @@ const Login = () => {
         
         // Progressive cooldown after 3 failed attempts
         if (newAttempts >= 5) {
-          const cooldown = Date.now() + 60000 // 60 seconds
+          const cooldown = now + 60000 // 60 seconds
           setCooldownUntil(cooldown)
           setError('Zu viele fehlgeschlagene Versuche. Bitte warte 60 Sekunden.')
         } else if (newAttempts >= 3) {
-          const cooldown = Date.now() + 10000 // 10 seconds
+          const cooldown = now + 10000 // 10 seconds
           setCooldownUntil(cooldown)
           setError('Zu viele fehlgeschlagene Versuche. Bitte warte 10 Sekunden.')
         }

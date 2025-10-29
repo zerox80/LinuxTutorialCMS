@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import rehypeRaw from 'rehype-raw'
 import rehypeHighlight from 'rehype-highlight'
 import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react'
 import { useTutorials } from '../context/TutorialContext'
@@ -11,17 +10,13 @@ import { api } from '../api/client'
 const TutorialDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { getTutorial } = useTutorials()
+  const { getTutorial, tutorials } = useTutorials()
 
   const [tutorial, setTutorial] = useState(() => getTutorial(id))
-  const [loading, setLoading] = useState(!tutorial)
+  const [loading, setLoading] = useState(!getTutorial(id))
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    if (tutorial) {
-      return
-    }
-
     const controller = new AbortController()
     const fetchTutorial = async () => {
       try {
@@ -47,7 +42,16 @@ const TutorialDetail = () => {
     return () => {
       controller.abort()
     }
-  }, [id, tutorial])
+  }, [id])
+
+  useEffect(() => {
+    if (!Array.isArray(tutorials)) {
+      setTutorial(null)
+      return
+    }
+    const cached = tutorials.find((item) => item.id === id)
+    setTutorial(cached || null)
+  }, [id, tutorials])
 
   const topics = useMemo(() => {
     if (!tutorial?.topics) {
@@ -129,7 +133,7 @@ const TutorialDetail = () => {
                 <div className="prose prose-slate max-w-none prose-headings:font-semibold prose-a:text-primary-600">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[rehypeRaw, rehypeHighlight]}
+                    rehypePlugins={[rehypeHighlight]}
                   >
                     {tutorial.content || 'Für dieses Tutorial liegt noch kein Inhalt vor.'}
                   </ReactMarkdown>

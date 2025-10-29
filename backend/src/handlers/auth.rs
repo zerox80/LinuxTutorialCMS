@@ -1,7 +1,14 @@
 use crate::{auth, db::DbPool, models::*};
 use axum::{extract::State, http::StatusCode, Json};
-use sqlx;
+use chrono::{Duration as ChronoDuration, Utc};
+use sqlx::{self, FromRow};
 use std::time::Duration;
+
+#[derive(Debug, FromRow, Clone)]
+struct LoginAttempt {
+    fail_count: i64,
+    blocked_until: Option<String>,
+}
 
 // Input validation
 fn validate_username(username: &str) -> Result<(), String> {
@@ -44,6 +51,55 @@ pub async fn login(
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse { error: e }),
         ));
+    }
+
+    // Load login attempt metadata to enforce server-side cooldowns
+    let mut attempt_record = sqlx::query_as::<_, LoginAttempt>(
+        "SELECT fail_count, blocked_until FROM login_attempts WHERE username = ?",
+    )
+    .bind(&payload.username)
+    .fetch_optional(&pool)
+    .await
+    .map_err(|e| {
+        tracing::error!("Failed to load login attempts for {}: {}", payload.username, e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                error: "Internal server error".to_string(),
+            }),
+        )
+    })?;
+
+    if let Some(record) = &attempt_record {
+        if let Some(ref blocked_until_str) = record.blocked_until {
+            match chrono::DateTime::parse_from_rfc3339(blocked_until_str) {
+                Ok(parsed) => {
+                    let blocked_until = parsed.with_timezone(&Utc);
+                    let now = Utc::now();
+                    if blocked_until > now {
+                        let remaining = (blocked_until - now).num_seconds().max(0);
+                        let jitter = (chrono::Utc::now().timestamp_subsec_millis() % 200) as u64;
+                        tokio::time::sleep(Duration::from_millis(100 + jitter)).await;
+                        return Err((
+                            StatusCode::TOO_MANY_REQUESTS,
+                            Json(ErrorResponse {
+                                error: format!(
+                                    "Zu viele fehlgeschlagene Versuche. Bitte warte {} Sekunde{}.",
+                                    remaining,
+                                    if remaining == 1 { "" } else { "n" }
+                                ),
+                            }),
+                        ));
+                    }
+                }
+                Err(err) => {
+                    tracing::warn!(
+                        "Invalid blocked_until value for '{}': {}",
+                        payload.username, err
+                    );
+                }
+            }
+        }
     }
 
     // Find user by username
@@ -91,12 +147,63 @@ pub async fn login(
     tokio::time::sleep(Duration::from_millis(100 + jitter)).await;
 
     if !password_valid {
+        let new_fail_count = attempt_record
+            .as_ref()
+            .map(|record| record.fail_count + 1)
+            .unwrap_or(1);
+
+        let cooldown_until = if new_fail_count >= 5 {
+            Some((Utc::now() + ChronoDuration::seconds(60)).to_rfc3339())
+        } else if new_fail_count >= 3 {
+            Some((Utc::now() + ChronoDuration::seconds(10)).to_rfc3339())
+        } else {
+            None
+        };
+
+        attempt_record = Some(LoginAttempt {
+            fail_count: new_fail_count,
+            blocked_until: cooldown_until.clone(),
+        });
+
+        sqlx::query(
+            "INSERT INTO login_attempts (username, fail_count, blocked_until) VALUES (?, ?, ?) \
+             ON CONFLICT(username) DO UPDATE SET fail_count = excluded.fail_count, blocked_until = excluded.blocked_until",
+        )
+        .bind(&payload.username)
+        .bind(new_fail_count)
+        .bind(cooldown_until.as_deref())
+        .execute(&pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to record login attempt for {}: {}", payload.username, e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Internal server error".to_string(),
+                }),
+            )
+        })?;
+
         return Err((
             StatusCode::UNAUTHORIZED,
             Json(ErrorResponse {
                 error: "Ungültige Anmeldedaten".to_string(),
             }),
         ));
+    }
+
+    // Successful login: reset attempt counter
+    if attempt_record.is_some() {
+        if let Err(e) = sqlx::query("DELETE FROM login_attempts WHERE username = ?")
+            .bind(&payload.username)
+            .execute(&pool)
+            .await
+        {
+            tracing::warn!(
+                "Failed to clear login attempts for {} after successful login: {}",
+                payload.username, e
+            );
+        }
     }
 
     // Generate JWT token
