@@ -24,7 +24,7 @@ use tower_governor::{
 };
 use tracing_subscriber;
 use tokio::signal;
-use std::{net::SocketAddr, time::Duration};
+use std::net::SocketAddr;
 
 // Security headers middleware
 async fn security_headers(

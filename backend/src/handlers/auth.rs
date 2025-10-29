@@ -54,7 +54,7 @@ pub async fn login(
     }
 
     // Load login attempt metadata to enforce server-side cooldowns
-    let mut attempt_record = sqlx::query_as::<_, LoginAttempt>(
+    let attempt_record = sqlx::query_as::<_, LoginAttempt>(
         "SELECT fail_count, blocked_until FROM login_attempts WHERE username = ?",
     )
     .bind(&payload.username)
@@ -159,11 +159,6 @@ pub async fn login(
         } else {
             None
         };
-
-        attempt_record = Some(LoginAttempt {
-            fail_count: new_fail_count,
-            blocked_until: cooldown_until.clone(),
-        });
 
         sqlx::query(
             "INSERT INTO login_attempts (username, fail_count, blocked_until) VALUES (?, ?, ?) \

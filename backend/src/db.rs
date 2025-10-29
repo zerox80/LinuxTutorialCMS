@@ -170,7 +170,7 @@ pub async fn update_site_page(
         existing.description = description;
     }
     if let Some(nav_label) = payload.nav_label {
-        existing.nav_label = nav_label;
+        existing.nav_label = Some(nav_label);
     }
     if let Some(show_in_nav) = payload.show_in_nav {
         existing.show_in_nav = show_in_nav;
