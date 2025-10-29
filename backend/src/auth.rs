@@ -8,25 +8,34 @@ use axum_extra::{
     extract::TypedHeader,
     headers::{authorization::Bearer, Authorization},
 };
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::sync::OnceLock;
-use crate::models::UserResponse;
 
-pub static JWT_SECRET: OnceLock<Vec<u8>> = OnceLock::new();
+pub static JWT_SECRET: OnceLock<String> = OnceLock::new();
+
+pub fn init_jwt_secret() -> Result<(), String> {
+    let secret = env::var("JWT_SECRET")
+        .map_err(|_| "JWT_SECRET environment variable not set".to_string())?;
+
+    if secret.len() < 32 {
         return Err("JWT_SECRET must be at least 32 characters long".to_string());
     }
-    
-    JWT_SECRET.set(secret)
+
+    JWT_SECRET
+        .set(secret)
         .map_err(|_| "JWT_SECRET already initialized".to_string())?;
-    
+
     Ok(())
 }
 
 fn get_jwt_secret() -> &'static str {
-    JWT_SECRET.get().expect("JWT_SECRET not initialized. Call init_jwt_secret() first.")
+    JWT_SECRET
+        .get()
+        .expect("JWT_SECRET not initialized. Call init_jwt_secret() first.")
+        .as_str()
 }
 
 #[derive(Debug, Serialize, Deserialize)]
