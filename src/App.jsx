@@ -7,6 +7,7 @@ import Footer from './components/Footer'
 import Home from './pages/Home'
 import Grundlagen from './pages/Grundlagen'
 import Login from './pages/Login'
+import TutorialDetail from './pages/TutorialDetail'
 import AdminDashboard from './pages/AdminDashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -36,6 +37,17 @@ function App() {
                     <>
                       <Header />
                       <Grundlagen />
+                      <Footer />
+                    </>
+                  }
+                />
+
+                <Route
+                  path="/tutorials/:id"
+                  element={
+                    <>
+                      <Header />
+                      <TutorialDetail />
                       <Footer />
                     </>
                   }

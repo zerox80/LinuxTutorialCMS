@@ -1,0 +1,150 @@
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import rehypeRaw from 'rehype-raw'
+import rehypeHighlight from 'rehype-highlight'
+import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react'
+import { useTutorials } from '../context/TutorialContext'
+import { api } from '../api/client'
+
+const TutorialDetail = () => {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { getTutorial } = useTutorials()
+
+  const [tutorial, setTutorial] = useState(() => getTutorial(id))
+  const [loading, setLoading] = useState(!tutorial)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    if (tutorial) {
+      return
+    }
+
+    const controller = new AbortController()
+    const fetchTutorial = async () => {
+      try {
+        setLoading(true)
+        const data = await api.getTutorial(id, { signal: controller.signal })
+        if (!controller.signal.aborted) {
+          setTutorial(data)
+          setError(null)
+        }
+      } catch (err) {
+        if (!controller.signal.aborted) {
+          setError(err)
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchTutorial()
+
+    return () => {
+      controller.abort()
+    }
+  }, [id, tutorial])
+
+  const topics = useMemo(() => {
+    if (!tutorial?.topics) {
+      return []
+    }
+    return Array.isArray(tutorial.topics) ? tutorial.topics : []
+  }, [tutorial])
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1)
+      return
+    }
+    navigate('/')
+  }
+
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 py-16">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <button
+          onClick={handleBack}
+          className="group inline-flex items-center gap-2 text-primary-700 font-medium mb-8"
+        >
+          <ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-1" />
+          Zurück
+        </button>
+
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-24 text-gray-500">
+            <Loader2 className="w-10 h-10 animate-spin mb-4" />
+            <p>Inhalt wird geladen…</p>
+          </div>
+        ) : error ? (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700 flex gap-3">
+            <AlertCircle className="w-6 h-6 flex-shrink-0" />
+            <div>
+              <h2 className="font-semibold mb-1">Tutorial konnte nicht geladen werden</h2>
+              <p className="text-sm">{error?.message || 'Unbekannter Fehler'}</p>
+            </div>
+          </div>
+        ) : tutorial ? (
+          <article className="bg-white rounded-3xl shadow-xl overflow-hidden">
+            <header className="bg-gradient-to-r from-primary-600 to-primary-700 text-white px-8 py-10">
+              <div className="flex flex-col gap-4">
+                <span className="inline-flex items-center gap-2 bg-white/15 px-4 py-2 rounded-full text-sm font-medium w-fit">
+                  Linux Tutorial
+                </span>
+                <h1 className="text-3xl sm:text-4xl font-bold leading-tight">
+                  {tutorial.title}
+                </h1>
+                <p className="text-primary-100 text-lg max-w-2xl">
+                  {tutorial.description}
+                </p>
+              </div>
+            </header>
+
+            <div className="px-8 py-10 space-y-12">
+              {topics.length > 0 && (
+                <section>
+                  <h2 className="text-2xl font-semibold text-gray-900 mb-4">Was du lernen wirst</h2>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {topics.map((topic, index) => (
+                      <div
+                        key={`${topic}-${index}`}
+                        className="flex items-start gap-3 rounded-2xl border border-gray-200 bg-gray-50/60 px-4 py-3"
+                      >
+                        <span className="mt-1 h-6 w-6 shrink-0 rounded-full bg-primary-600/10 text-primary-700 font-semibold flex items-center justify-center text-sm">
+                          {index + 1}
+                        </span>
+                        <span className="text-gray-700 leading-relaxed">{topic}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              <section>
+                <h2 className="text-2xl font-semibold text-gray-900 mb-4">Inhalt</h2>
+                <div className="prose prose-slate max-w-none prose-headings:font-semibold prose-a:text-primary-600">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw, rehypeHighlight]}
+                  >
+                    {tutorial.content || 'Für dieses Tutorial liegt noch kein Inhalt vor.'}
+                  </ReactMarkdown>
+                </div>
+              </section>
+            </div>
+          </article>
+        ) : (
+          <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-6 text-yellow-800">
+            Das gewünschte Tutorial wurde nicht gefunden.
+          </div>
+        )}
+      </div>
+    </main>
+  )
+}
+
+export default TutorialDetail

@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import TutorialCard from './TutorialCard'
 import { useTutorials } from '../context/TutorialContext'
 import { AlertCircle } from 'lucide-react'
@@ -6,6 +7,7 @@ import { scrollToSection } from '../utils/scrollToSection'
 
 const TutorialSection = () => {
   const { tutorials, getIconComponent, loading, error } = useTutorials()
+  const navigate = useNavigate()
 
   // Memoize normalized tutorials to avoid recalculating on every render
   const normalizedTutorials = useMemo(() => {
@@ -47,6 +49,7 @@ const TutorialSection = () => {
               key={tutorial.id}
               {...tutorial}
               icon={getIconComponent(tutorial.icon)}
+              onSelect={() => navigate(`/tutorials/${tutorial.id}`)}
             />
           ))}
         </div>
