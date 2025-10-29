@@ -1,4 +1,12 @@
-import { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import PropTypes from 'prop-types'
 import { api } from '../api/client'
 
@@ -163,6 +171,14 @@ export const ContentProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [savingSections, setSavingSections] = useState({})
+  const [navLoading, setNavLoading] = useState(true)
+  const [navError, setNavError] = useState(null)
+  const [dynamicNavItems, setDynamicNavItems] = useState([])
+  const [publishedPageSlugs, setPublishedPageSlugs] = useState([])
+  const [publishedPagesLoading, setPublishedPagesLoading] = useState(true)
+  const [publishedPagesError, setPublishedPagesError] = useState(null)
+  const [pageCache, setPageCache] = useState({})
+  const pageCacheRef = useRef({})
 
   const loadContent = useCallback(async () => {
     try {
@@ -188,9 +204,75 @@ export const ContentProvider = ({ children }) => {
     }
   }, [])
 
+  const loadNavigation = useCallback(async () => {
+    try {
+      setNavLoading(true)
+      setNavError(null)
+      const data = await api.getNavigation()
+      const items = Array.isArray(data?.items) ? data.items : []
+      setDynamicNavItems(items)
+    } catch (err) {
+      console.error('Failed to load dynamic navigation:', err)
+      setNavError(err)
+    } finally {
+      setNavLoading(false)
+    }
+  }, [])
+
+  const loadPublishedPages = useCallback(async () => {
+    try {
+      setPublishedPagesLoading(true)
+      setPublishedPagesError(null)
+      const data = await api.listPublishedPages()
+      const items = Array.isArray(data) ? data : []
+      setPublishedPageSlugs(items)
+    } catch (err) {
+      console.error('Failed to load published pages:', err)
+      setPublishedPagesError(err)
+    } finally {
+      setPublishedPagesLoading(false)
+    }
+  }, [])
+
+  const fetchPublishedPage = useCallback(
+    async (slug, { force = false, signal } = {}) => {
+      if (!slug || typeof slug !== 'string') {
+        throw new Error('Slug is required')
+      }
+
+      const normalizedSlug = slug.trim().toLowerCase()
+      if (!normalizedSlug) {
+        throw new Error('Slug is required')
+      }
+
+      if (!force && pageCacheRef.current[normalizedSlug]) {
+        return pageCacheRef.current[normalizedSlug]
+      }
+
+      try {
+        const data = await api.getPublishedPage(normalizedSlug, { signal })
+        const nextCache = { ...pageCacheRef.current, [normalizedSlug]: data }
+        pageCacheRef.current = nextCache
+        setPageCache(nextCache)
+        return data
+      } catch (err) {
+        if (!force && pageCacheRef.current[normalizedSlug]) {
+          return pageCacheRef.current[normalizedSlug]
+        }
+        throw err
+      }
+    },
+    [],
+  )
+
   useEffect(() => {
     loadContent()
   }, [loadContent])
+
+  useEffect(() => {
+    loadNavigation()
+    loadPublishedPages()
+  }, [loadNavigation, loadPublishedPages])
 
   const updateSection = useCallback(async (section, newContent) => {
     if (!section) {
@@ -218,6 +300,39 @@ export const ContentProvider = ({ children }) => {
     }
   }, [])
 
+  const navigationData = useMemo(() => {
+    const headerContent = content?.header ?? DEFAULT_CONTENT.header
+    const staticNavItems = Array.isArray(headerContent?.navItems) ? headerContent.navItems : []
+
+    const staticNormalized = staticNavItems.map((item, index) => ({
+      ...item,
+      id: item.id || item.slug || item.path || `static-${index}`,
+      source: item.source || 'static',
+    }))
+
+    const filteredDynamic = Array.isArray(dynamicNavItems)
+      ? dynamicNavItems.filter((item) => item && item.slug)
+      : []
+    const sortedDynamic = [...filteredDynamic].sort(
+      (a, b) => (a?.order_index ?? 0) - (b?.order_index ?? 0),
+    )
+    const dynamicNormalized = sortedDynamic.map((item, index) => ({
+      id: item.id || `page-${item.slug}-${index}`,
+      label: item.label || item.slug || 'Seite',
+      type: 'route',
+      path: `/pages/${item.slug}`,
+      slug: item.slug,
+      source: 'dynamic',
+      order_index: item.order_index ?? index,
+    }))
+
+    return {
+      static: staticNormalized,
+      dynamic: dynamicNormalized,
+      items: [...staticNormalized, ...dynamicNormalized],
+    }
+  }, [content, dynamicNavItems])
+
   const value = useMemo(
     () => ({
       content,
@@ -228,12 +343,43 @@ export const ContentProvider = ({ children }) => {
       getDefaultSection: (section) => DEFAULT_CONTENT[section],
       updateSection,
       savingSections,
+      navigation: {
+        ...navigationData,
+        loading: navLoading,
+        error: navError,
+        refresh: loadNavigation,
+      },
+      pages: {
+        cache: pageCache,
+        fetch: fetchPublishedPage,
+        publishedSlugs: publishedPageSlugs,
+        loading: publishedPagesLoading,
+        error: publishedPagesError,
+        refresh: loadPublishedPages,
+      },
     }),
-    [content, loading, error, loadContent, updateSection, savingSections],
-  )
+    [
+      content,
+      loading,
+      error,
+      loadContent,
+      updateSection,
+      savingSections,
+      navigationData,
+      navLoading,
+      navError,
+      loadNavigation,
+      pageCache,
+      fetchPublishedPage,
+      publishedPageSlugs,
+      publishedPagesLoading,
+      publishedPagesError,
+      loadPublishedPages,
+    ],
+  );
 
-  return <ContentContext.Provider value={value}>{children}</ContentContext.Provider>
-}
+  return <ContentContext.Provider value={value}>{children}</ContentContext.Provider>;
+};
 
 ContentProvider.propTypes = {
   children: PropTypes.node,

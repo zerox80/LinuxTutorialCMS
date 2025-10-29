@@ -2,6 +2,7 @@ use sqlx::{
     sqlite::{SqliteConnectOptions, SqlitePoolOptions},
     SqlitePool,
 };
+use regex::Regex;
 use serde_json::{json, Value};
 use std::env;
 use std::path::{Path, PathBuf};
@@ -27,9 +28,415 @@ pub async fn create_pool() -> Result<DbPool, sqlx::Error> {
         .idle_timeout(std::time::Duration::from_secs(600))
         .connect_with(connect_options)
         .await?;
-    
+
+    run_migrations(&pool).await?;
+
     tracing::info!("Database pool created successfully");
     Ok(pool)
+}
+
+fn slug_regex() -> &'static Regex {
+    use std::sync::OnceLock;
+
+    static SLUG_RE: OnceLock<Regex> = OnceLock::new();
+    SLUG_RE.get_or_init(|| Regex::new(r"^[a-z0-9]+(?:-[a-z0-9]+)*$").expect("valid slug regex"))
+}
+
+pub fn validate_slug(slug: &str) -> Result<(), sqlx::Error> {
+    if slug_regex().is_match(slug) {
+        Ok(())
+    } else {
+        Err(sqlx::Error::Protocol(
+            format!("Invalid slug. Only lowercase letters, numbers and single hyphens allowed: '{slug}'")
+                .into(),
+        ))
+    }
+}
+
+fn serialize_json_value(value: &Value) -> Result<String, sqlx::Error> {
+    serde_json::to_string(value).map_err(|e| sqlx::Error::Protocol(format!("Failed to serialize JSON: {e}").into()))
+}
+
+fn deserialize_json_value(value: &str) -> Result<Value, sqlx::Error> {
+    serde_json::from_str(value).map_err(|e| sqlx::Error::Protocol(format!("Failed to deserialize JSON: {e}").into()))
+}
+
+pub async fn list_site_pages(pool: &DbPool) -> Result<Vec<crate::models::SitePage>, sqlx::Error> {
+    sqlx::query_as::<_, crate::models::SitePage>(
+        "SELECT id, slug, title, description, nav_label, show_in_nav, order_index, is_published, hero_json, layout_json, created_at, updated_at FROM site_pages ORDER BY order_index, title",
+    )
+    .fetch_all(pool)
+    .await
+}
+
+pub async fn list_nav_pages(pool: &DbPool) -> Result<Vec<crate::models::SitePage>, sqlx::Error> {
+    sqlx::query_as::<_, crate::models::SitePage>(
+        "SELECT id, slug, title, description, nav_label, show_in_nav, order_index, is_published, hero_json, layout_json, created_at, updated_at
+         FROM site_pages
+         WHERE show_in_nav = 1 AND is_published = 1
+         ORDER BY order_index, title",
+    )
+    .fetch_all(pool)
+    .await
+}
+
+pub async fn list_published_pages(pool: &DbPool) -> Result<Vec<crate::models::SitePage>, sqlx::Error> {
+    sqlx::query_as::<_, crate::models::SitePage>(
+        "SELECT id, slug, title, description, nav_label, show_in_nav, order_index, is_published, hero_json, layout_json, created_at, updated_at
+         FROM site_pages
+         WHERE is_published = 1
+         ORDER BY order_index, title",
+    )
+    .fetch_all(pool)
+    .await
+}
+
+pub async fn get_site_page_by_id(
+    pool: &DbPool,
+    id: &str,
+) -> Result<Option<crate::models::SitePage>, sqlx::Error> {
+    sqlx::query_as::<_, crate::models::SitePage>(
+        "SELECT id, slug, title, description, nav_label, show_in_nav, order_index, is_published, hero_json, layout_json, created_at, updated_at FROM site_pages WHERE id = ?",
+    )
+    .bind(id)
+    .fetch_optional(pool)
+    .await
+}
+
+pub async fn get_site_page_by_slug(
+    pool: &DbPool,
+    slug: &str,
+) -> Result<Option<crate::models::SitePage>, sqlx::Error> {
+    sqlx::query_as::<_, crate::models::SitePage>(
+        "SELECT id, slug, title, description, nav_label, show_in_nav, order_index, is_published, hero_json, layout_json, created_at, updated_at FROM site_pages WHERE slug = ?",
+    )
+    .bind(slug)
+    .fetch_optional(pool)
+    .await
+}
+
+pub async fn create_site_page(
+    pool: &DbPool,
+    page: crate::models::CreateSitePageRequest,
+) -> Result<crate::models::SitePage, sqlx::Error> {
+    validate_slug(&page.slug)?;
+
+    let id = uuid::Uuid::new_v4().to_string();
+    let hero_json = serialize_json_value(&page.hero)?;
+    let layout_json = serialize_json_value(&page.layout)?;
+    let description = page.description.unwrap_or_default();
+    let order_index = page.order_index.unwrap_or(0);
+
+    sqlx::query(
+        "INSERT INTO site_pages (id, slug, title, description, nav_label, show_in_nav, order_index, is_published, hero_json, layout_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    )
+    .bind(&id)
+    .bind(&page.slug)
+    .bind(&page.title)
+    .bind(description)
+    .bind(page.nav_label)
+    .bind(if page.show_in_nav { 1 } else { 0 })
+    .bind(order_index)
+    .bind(if page.is_published { 1 } else { 0 })
+    .bind(hero_json)
+    .bind(layout_json)
+    .execute(pool)
+    .await?;
+
+    get_site_page_by_id(pool, &id)
+        .await?
+        .ok_or_else(|| sqlx::Error::RowNotFound)
+}
+
+pub async fn update_site_page(
+    pool: &DbPool,
+    id: &str,
+    payload: crate::models::UpdateSitePageRequest,
+) -> Result<crate::models::SitePage, sqlx::Error> {
+    if let Some(slug) = payload.slug.as_deref() {
+        validate_slug(slug)?;
+    }
+
+    let mut existing = get_site_page_by_id(pool, id).await?.ok_or(sqlx::Error::RowNotFound)?;
+
+    if let Some(slug) = payload.slug {
+        existing.slug = slug;
+    }
+    if let Some(title) = payload.title {
+        existing.title = title;
+    }
+    if let Some(description) = payload.description {
+        existing.description = description;
+    }
+    if let Some(nav_label) = payload.nav_label {
+        existing.nav_label = nav_label;
+    }
+    if let Some(show_in_nav) = payload.show_in_nav {
+        existing.show_in_nav = show_in_nav;
+    }
+    if let Some(order_index) = payload.order_index {
+        existing.order_index = order_index;
+    }
+    if let Some(is_published) = payload.is_published {
+        existing.is_published = is_published;
+    }
+    if let Some(hero) = payload.hero {
+        existing.hero_json = serialize_json_value(&hero)?;
+    }
+    if let Some(layout) = payload.layout {
+        existing.layout_json = serialize_json_value(&layout)?;
+    }
+
+    sqlx::query(
+        "UPDATE site_pages
+         SET slug = ?, title = ?, description = ?, nav_label = ?, show_in_nav = ?, order_index = ?, is_published = ?, hero_json = ?, layout_json = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?",
+    )
+    .bind(&existing.slug)
+    .bind(&existing.title)
+    .bind(&existing.description)
+    .bind(&existing.nav_label)
+    .bind(if existing.show_in_nav { 1 } else { 0 })
+    .bind(existing.order_index)
+    .bind(if existing.is_published { 1 } else { 0 })
+    .bind(&existing.hero_json)
+    .bind(&existing.layout_json)
+    .bind(id)
+    .execute(pool)
+    .await?;
+
+    get_site_page_by_id(pool, id)
+        .await?
+        .ok_or_else(|| sqlx::Error::RowNotFound)
+}
+
+pub async fn delete_site_page(pool: &DbPool, id: &str) -> Result<(), sqlx::Error> {
+    let result = sqlx::query("DELETE FROM site_pages WHERE id = ?")
+        .bind(id)
+        .execute(pool)
+        .await?;
+
+    if result.rows_affected() == 0 {
+        Err(sqlx::Error::RowNotFound)
+    } else {
+        Ok(())
+    }
+}
+
+pub async fn list_site_posts_for_page(
+    pool: &DbPool,
+    page_id: &str,
+) -> Result<Vec<crate::models::SitePost>, sqlx::Error> {
+    sqlx::query_as::<_, crate::models::SitePost>(
+        "SELECT id, page_id, title, slug, excerpt, content_markdown, is_published, published_at, order_index, created_at, updated_at
+         FROM site_posts
+         WHERE page_id = ?
+         ORDER BY order_index, created_at",
+    )
+    .bind(page_id)
+    .fetch_all(pool)
+    .await
+}
+
+pub async fn list_published_posts_for_page(
+    pool: &DbPool,
+    page_id: &str,
+) -> Result<Vec<crate::models::SitePost>, sqlx::Error> {
+    sqlx::query_as::<_, crate::models::SitePost>(
+        "SELECT id, page_id, title, slug, excerpt, content_markdown, is_published, published_at, order_index, created_at, updated_at
+         FROM site_posts
+         WHERE page_id = ? AND is_published = 1
+         ORDER BY order_index, COALESCE(published_at, created_at)",
+    )
+    .bind(page_id)
+    .fetch_all(pool)
+    .await
+}
+
+pub async fn get_site_post_by_id(
+    pool: &DbPool,
+    id: &str,
+) -> Result<Option<crate::models::SitePost>, sqlx::Error> {
+    sqlx::query_as::<_, crate::models::SitePost>(
+        "SELECT id, page_id, title, slug, excerpt, content_markdown, is_published, published_at, order_index, created_at, updated_at
+         FROM site_posts WHERE id = ?",
+    )
+    .bind(id)
+    .fetch_optional(pool)
+    .await
+}
+
+pub async fn create_site_post(
+    pool: &DbPool,
+    page_id: &str,
+    payload: crate::models::CreateSitePostRequest,
+) -> Result<crate::models::SitePost, sqlx::Error> {
+    validate_slug(&payload.slug)?;
+
+    let id = uuid::Uuid::new_v4().to_string();
+    let excerpt = payload.excerpt.unwrap_or_default();
+    let order_index = payload.order_index.unwrap_or(0);
+
+    sqlx::query(
+        "INSERT INTO site_posts (id, page_id, title, slug, excerpt, content_markdown, is_published, published_at, order_index)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    )
+    .bind(&id)
+    .bind(page_id)
+    .bind(&payload.title)
+    .bind(&payload.slug)
+    .bind(excerpt)
+    .bind(&payload.content_markdown)
+    .bind(if payload.is_published { 1 } else { 0 })
+    .bind(payload.published_at)
+    .bind(order_index)
+    .execute(pool)
+    .await?;
+
+    get_site_post_by_id(pool, &id)
+        .await?
+        .ok_or_else(|| sqlx::Error::RowNotFound)
+}
+
+pub async fn update_site_post(
+    pool: &DbPool,
+    id: &str,
+    payload: crate::models::UpdateSitePostRequest,
+) -> Result<crate::models::SitePost, sqlx::Error> {
+    let mut existing = get_site_post_by_id(pool, id).await?.ok_or(sqlx::Error::RowNotFound)?;
+
+    if let Some(slug) = payload.slug.as_deref() {
+        validate_slug(slug)?;
+    }
+
+    if let Some(title) = payload.title {
+        existing.title = title;
+    }
+    if let Some(slug) = payload.slug {
+        existing.slug = slug;
+    }
+    if let Some(excerpt) = payload.excerpt {
+        existing.excerpt = excerpt;
+    }
+    if let Some(content) = payload.content_markdown {
+        existing.content_markdown = content;
+    }
+    if let Some(is_published) = payload.is_published {
+        existing.is_published = is_published;
+    }
+    if let Some(published_at) = payload.published_at {
+        existing.published_at = published_at;
+    }
+    if let Some(order_index) = payload.order_index {
+        existing.order_index = order_index;
+    }
+
+    sqlx::query(
+        "UPDATE site_posts
+         SET title = ?, slug = ?, excerpt = ?, content_markdown = ?, is_published = ?, published_at = ?, order_index = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?",
+    )
+    .bind(&existing.title)
+    .bind(&existing.slug)
+    .bind(&existing.excerpt)
+    .bind(&existing.content_markdown)
+    .bind(if existing.is_published { 1 } else { 0 })
+    .bind(&existing.published_at)
+    .bind(existing.order_index)
+    .bind(id)
+    .execute(pool)
+    .await?;
+
+    get_site_post_by_id(pool, id)
+        .await?
+        .ok_or_else(|| sqlx::Error::RowNotFound)
+}
+
+pub async fn delete_site_post(pool: &DbPool, id: &str) -> Result<(), sqlx::Error> {
+    let result = sqlx::query("DELETE FROM site_posts WHERE id = ?")
+        .bind(id)
+        .execute(pool)
+        .await?;
+
+    if result.rows_affected() == 0 {
+        Err(sqlx::Error::RowNotFound)
+    } else {
+        Ok(())
+    }
+}
+
+async fn ensure_site_page_schema(pool: &DbPool) -> Result<(), sqlx::Error> {
+    let mut tx = pool.begin().await?;
+
+    // Base site content table exists from previous migrations; ensure it's present.
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS site_content (
+            section TEXT PRIMARY KEY,
+            content_json TEXT NOT NULL,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )",
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    // New dynamic pages table
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS site_pages (
+            id TEXT PRIMARY KEY,
+            slug TEXT NOT NULL UNIQUE,
+            title TEXT NOT NULL,
+            description TEXT NOT NULL DEFAULT '',
+            nav_label TEXT,
+            show_in_nav INTEGER NOT NULL DEFAULT 0,
+            order_index INTEGER NOT NULL DEFAULT 0,
+            is_published INTEGER NOT NULL DEFAULT 0,
+            hero_json TEXT NOT NULL DEFAULT '{}',
+            layout_json TEXT NOT NULL DEFAULT '{}',
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )",
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_site_pages_nav ON site_pages(show_in_nav, order_index)")
+        .execute(&mut *tx)
+        .await?;
+
+    // Posts table referencing pages
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS site_posts (
+            id TEXT PRIMARY KEY,
+            page_id TEXT NOT NULL,
+            title TEXT NOT NULL,
+            slug TEXT NOT NULL,
+            excerpt TEXT DEFAULT '',
+            content_markdown TEXT NOT NULL,
+            is_published INTEGER NOT NULL DEFAULT 0,
+            published_at TEXT,
+            order_index INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(page_id) REFERENCES site_pages(id) ON DELETE CASCADE
+        )",
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    sqlx::query("CREATE UNIQUE INDEX IF NOT EXISTS idx_site_posts_unique_slug ON site_posts(page_id, slug)")
+        .execute(&mut *tx)
+        .await?;
+
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_site_posts_page_published ON site_posts(page_id, is_published, published_at)",
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    tx.commit().await?;
+
+    Ok(())
 }
 
 pub async fn fetch_all_site_content(pool: &DbPool) -> Result<Vec<crate::models::SiteContent>, sqlx::Error> {
@@ -311,93 +718,101 @@ fn sqlite_file_path(database_url: &str) -> Option<PathBuf> {
 }
 
 pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
-    // Create users table
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL UNIQUE,
-            password_hash TEXT NOT NULL,
-            role TEXT NOT NULL DEFAULT 'admin',
-            created_at TEXT NOT NULL DEFAULT (datetime('now'))
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
+    {
+        let mut tx = pool.begin().await?;
 
-    // Track login attempts for server-side cooldowns
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS login_attempts (
-            username TEXT PRIMARY KEY,
-            fail_count INTEGER NOT NULL DEFAULT 0,
-            blocked_until TEXT
+        // Create users table
+        sqlx::query(
+            r#"
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'admin',
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+            "#,
         )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    // Create tutorials table
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS tutorials (
-            id TEXT PRIMARY KEY,
-            title TEXT NOT NULL,
-            description TEXT NOT NULL,
-            icon TEXT NOT NULL,
-            color TEXT NOT NULL,
-            topics TEXT NOT NULL,
-            content TEXT NOT NULL DEFAULT '',
-            version INTEGER NOT NULL DEFAULT 1,
-            created_at TEXT NOT NULL DEFAULT (datetime('now')),
-            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-    
-    // Create indexes for better query performance
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorials_created_at ON tutorials(created_at)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorials_updated_at ON tutorials(updated_at)")
-        .execute(pool)
+        .execute(&mut *tx)
         .await?;
 
-    // Metadata store for one-off setup flags
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS app_metadata (
-            key TEXT PRIMARY KEY,
-            value TEXT NOT NULL
+        // Track login attempts for server-side cooldowns
+        sqlx::query(
+            r#"
+            CREATE TABLE IF NOT EXISTS login_attempts (
+                username TEXT PRIMARY KEY,
+                fail_count INTEGER NOT NULL DEFAULT 0,
+                blocked_until TEXT
+            )
+            "#,
         )
-        "#,
-    )
-    .execute(pool)
-    .await?;
+        .execute(&mut *tx)
+        .await?;
 
-    // Normalized topics table for efficient querying
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS tutorial_topics (
-            tutorial_id TEXT NOT NULL,
-            topic TEXT NOT NULL,
-            FOREIGN KEY (tutorial_id) REFERENCES tutorials(id) ON DELETE CASCADE ON UPDATE CASCADE
+        // Create tutorials table
+        sqlx::query(
+            r#"
+            CREATE TABLE IF NOT EXISTS tutorials (
+                id TEXT PRIMARY KEY,
+                title TEXT NOT NULL,
+                description TEXT NOT NULL,
+                icon TEXT NOT NULL,
+                color TEXT NOT NULL,
+                topics TEXT NOT NULL,
+                content TEXT NOT NULL DEFAULT '',
+                version INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+            "#,
         )
-        "#,
-    )
-    .execute(pool)
-    .await?;
+        .execute(&mut *tx)
+        .await?;
+        
+        // Create indexes for better query performance
+        sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorials_created_at ON tutorials(created_at)")
+            .execute(&mut *tx)
+            .await?;
+        sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorials_updated_at ON tutorials(updated_at)")
+            .execute(&mut *tx)
+            .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorial_topics_tutorial ON tutorial_topics(tutorial_id)")
-        .execute(pool)
+        // Metadata store for one-off setup flags
+        sqlx::query(
+            r#"
+            CREATE TABLE IF NOT EXISTS app_metadata (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )
+            "#,
+        )
+        .execute(&mut *tx)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorial_topics_topic ON tutorial_topics(topic)")
-        .execute(pool)
+
+        // Normalized topics table for efficient querying
+        sqlx::query(
+            r#"
+            CREATE TABLE IF NOT EXISTS tutorial_topics (
+                tutorial_id TEXT NOT NULL,
+                topic TEXT NOT NULL,
+                FOREIGN KEY (tutorial_id) REFERENCES tutorials(id) ON DELETE CASCADE ON UPDATE CASCADE
+            )
+            "#,
+        )
+        .execute(&mut *tx)
         .await?;
+
+        sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorial_topics_tutorial ON tutorial_topics(tutorial_id)")
+            .execute(&mut *tx)
+            .await?;
+        sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorial_topics_topic ON tutorial_topics(topic)")
+            .execute(&mut *tx)
+            .await?;
+
+        tx.commit().await?;
+    }
+
+    ensure_site_page_schema(pool).await?;
 
     // Create or update default admin user from environment variables
     let admin_username = env::var("ADMIN_USERNAME").ok();
@@ -486,8 +901,6 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     } else {
         tracing::info!("ENABLE_DEFAULT_TUTORIALS disabled – skipping default tutorial seeding");
     }
-
-    seed_site_content_tx(&mut tx).await?;
 
     tx.commit().await?;
 

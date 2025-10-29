@@ -9,6 +9,7 @@ import Home from './pages/Home'
 import Grundlagen from './pages/Grundlagen'
 import Login from './pages/Login'
 import TutorialDetail from './pages/TutorialDetail'
+import DynamicPage from './pages/DynamicPage'
 import AdminDashboard from './pages/AdminDashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -54,6 +55,17 @@ function App() {
                     </>
                   }
                 />
+
+                <Route
+                  path="/pages/:slug"
+                  element={
+                    <>
+                      <Header />
+                      <DynamicPage />
+                      <Footer />
+                    </>
+                  }
+                />
                 
                 {/* Login Route (no Header/Footer) */}
                 <Route path="/login" element={<Login />} />
@@ -65,6 +77,16 @@ function App() {
                     <ProtectedRoute>
                       <AdminDashboard />
                     </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="*"
+                  element={
+                    <>
+                      <Header />
+                      <Home />
+                      <Footer />
+                    </>
                   }
                 />
                 </Routes>

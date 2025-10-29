@@ -14,9 +14,11 @@ import {
   AlertCircle,
   LayoutDashboard,
   Paintbrush,
+  FileText,
 } from 'lucide-react'
 import TutorialForm from '../components/TutorialForm'
 import SiteContentEditor from '../components/SiteContentEditor'
+import PageManager from '../components/PageManager'
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('tutorials')
@@ -173,6 +175,18 @@ const AdminDashboard = () => {
             >
               <Paintbrush className="h-4 w-4" />
               Seiteninhalte
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('pages')}
+              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                activeTab === 'pages'
+                  ? 'bg-primary-600 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <FileText className="h-4 w-4" />
+              Seiten & Beiträge
             </button>
           </div>
         </div>
@@ -358,6 +372,9 @@ const AdminDashboard = () => {
             )}
             <SiteContentEditor />
           </div>
+        )}
+        {activeTab === 'pages' && (
+          <PageManager />
         )}
       </main>
     </div>

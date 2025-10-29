@@ -20,17 +20,41 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl()
 
-const hasLocalStorage = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
 const hasSessionStorage = typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined'
+const hasLocalStorage = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
+
+const readStoredToken = () => {
+  if (typeof window === 'undefined') return null
+
+  const stored = hasSessionStorage && window.sessionStorage.getItem('token')
+  if (stored) return stored
+
+  const local = hasLocalStorage && window.localStorage.getItem('token')
+  return local || null
+}
+
+const removeStoredToken = () => {
+  if (typeof window === 'undefined') return
+  if (hasSessionStorage) {
+    window.sessionStorage.removeItem('token')
+  }
+  if (hasLocalStorage) {
+    window.localStorage.removeItem('token')
+  }
+}
+
+const isLikelyJwt = (token) => {
+  if (typeof token !== 'string') return false
+  const parts = token.split('.')
+  return parts.length === 3 && parts.every((part) => part.length > 0)
+}
 
 class ApiClient {
   constructor() {
-    if (hasSessionStorage && window.sessionStorage.getItem('token')) {
-      this.token = window.sessionStorage.getItem('token')
-    } else if (hasLocalStorage) {
-      this.token = window.localStorage.getItem('token')
-    } else {
-      this.token = null
+    const stored = readStoredToken()
+    this.token = isLikelyJwt(stored) ? stored : null
+    if (stored && !this.token) {
+      removeStoredToken()
     }
   }
 
@@ -40,19 +64,19 @@ class ApiClient {
       return
     }
     if (token) {
+      if (!isLikelyJwt(token)) {
+        console.warn('Attempted to store invalid JWT token; ignoring')
+        return
+      }
       // Prefer sessionStorage to avoid persistence across browser restarts
       if (hasSessionStorage) {
         window.sessionStorage.setItem('token', token)
-      } else if (hasLocalStorage) {
+      }
+      if (hasLocalStorage) {
         window.localStorage.setItem('token', token)
       }
     } else {
-      if (hasSessionStorage) {
-        window.sessionStorage.removeItem('token')
-      }
-      if (hasLocalStorage) {
-        window.localStorage.removeItem('token')
-      }
+      removeStoredToken()
     }
   }
 
@@ -239,6 +263,83 @@ class ApiClient {
       body: { content },
       ...options,
     })
+  }
+
+  // Site pages (admin)
+  async listPages(options = {}) {
+    return this.request('/pages', options)
+  }
+
+  async createPage(payload, options = {}) {
+    return this.request('/pages', {
+      method: 'POST',
+      body: payload,
+      ...options,
+    })
+  }
+
+  async getPage(id, options = {}) {
+    return this.request(`/pages/${id}`, options)
+  }
+
+  async updatePage(id, payload, options = {}) {
+    return this.request(`/pages/${id}`, {
+      method: 'PUT',
+      body: payload,
+      ...options,
+    })
+  }
+
+  async deletePage(id, options = {}) {
+    return this.request(`/pages/${id}`, {
+      method: 'DELETE',
+      ...options,
+    })
+  }
+
+  // Site posts (admin)
+  async listPosts(pageId, options = {}) {
+    return this.request(`/pages/${pageId}/posts`, options)
+  }
+
+  async createPost(pageId, payload, options = {}) {
+    return this.request(`/pages/${pageId}/posts`, {
+      method: 'POST',
+      body: payload,
+      ...options,
+    })
+  }
+
+  async getPost(id, options = {}) {
+    return this.request(`/posts/${id}`, options)
+  }
+
+  async updatePost(id, payload, options = {}) {
+    return this.request(`/posts/${id}`, {
+      method: 'PUT',
+      body: payload,
+      ...options,
+    })
+  }
+
+  async deletePost(id, options = {}) {
+    return this.request(`/posts/${id}`, {
+      method: 'DELETE',
+      ...options,
+    })
+  }
+
+  // Public site pages & navigation
+  async getPublishedPage(slug, options = {}) {
+    return this.request(`/public/pages/${slug}`, options)
+  }
+
+  async getNavigation(options = {}) {
+    return this.request('/public/navigation', options)
+  }
+
+  async listPublishedPages(options = {}) {
+    return this.request('/public/published-pages', options)
   }
 }
 

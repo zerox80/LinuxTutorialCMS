@@ -11,7 +11,7 @@ Eine moderne, responsive Website für Linux-Tutorials mit perfektem Design und A
 - **Schnelle Performance** durch Vite
 - **Professionelle UI** mit Lucide Icons
 - **Admin Panel** mit Login-System
-- **CMS-Funktionalität** - Tutorials erstellen, bearbeiten, löschen
+- **CMS-Funktionalität** - Tutorials, Seiten & Beiträge erstellen, bearbeiten, löschen
 - **Geschützte Routen** mit React Router
 
 ### Backend (Rust + AXUM)
@@ -19,7 +19,7 @@ Eine moderne, responsive Website für Linux-Tutorials mit perfektem Design und A
 - **Type-Safe** mit Rust
 - **JWT Authentication**
 - **SQLite Datenbank**
-- **CRUD Operations** für Tutorials
+- **CRUD Operations** für Tutorials, Seiten & Beiträge
 - **Async/Await** mit Tokio
 
 ## 📦 Installation
@@ -75,6 +75,9 @@ Im Admin Panel kannst du:
 - 📝 Bestehende Tutorials bearbeiten
 - 🗑️ Tutorials löschen
 - 👁️ Vorschau aller Tutorials
+- 🗂️ Dynamische Seiten mit Hero/Layout JSON konfigurieren
+- 📰 Beiträge pro Seite verwalten und veröffentlichen
+- 🧭 Navigationseinträge automatisch durch veröffentlichte Seiten aktualisieren
 
 ## 🎨 Struktur
 
@@ -91,12 +94,17 @@ Linux Tutorial/
 │   │   └── Footer.jsx          # Footer mit Links
 │   ├── context/
 │   │   ├── AuthContext.jsx     # Authentication State
-│   │   └── TutorialContext.jsx # Tutorial Management
+│   │   ├── TutorialContext.jsx # Tutorial Management
+│   │   └── ContentContext.jsx  # Statische Inhalte, Navigation & dynamische Seiten
 │   ├── pages/
 │   │   ├── Home.jsx            # Startseite
 │   │   ├── Login.jsx           # Login-Seite
+│   │   ├── DynamicPage.jsx     # Dynamische Detailseiten
 │   │   └── AdminDashboard.jsx  # Admin Panel
-│   ├── App.jsx                 # Haupt-App mit Routing
+│   ├── components/
+│   │   ├── PageManager.jsx     # Admin UI für Seiten & Beiträge
+│   │   └── SiteContentEditor/  # Editor für statische Content-Sektionen
+│   ├── App.jsx                 # Haupt-App mit Routing (inkl. dynamischer Seiten)
 │   ├── main.jsx                # React Entry Point
 │   └── index.css               # TailwindCSS Styles
 ├── index.html
@@ -145,6 +153,27 @@ Um alle Tutorials auf die Standard-Werte zurückzusetzen:
 2. Gehe zu "Application" → "Local Storage"
 3. Lösche den Eintrag `tutorials`
 4. Lade die Seite neu
+
+## ✅ Verifikation & Smoke Tests
+
+1. **Backend starten** (`cd backend && cargo run`). Warten bis `Server is ready to accept connections` erscheint.
+2. **Frontend starten** (`npm run dev`) und `http://localhost:5173` öffnen.
+3. **Login testen**:
+   - `/login` aufrufen, mit `admin / admin123` anmelden.
+   - Sicherstellen, dass das Admin-Dashboard geladen wird.
+4. **Seitenverwaltung**:
+   - Tab „Seiten & Beiträge“ öffnen.
+   - Neue Seite anlegen (Slug `test-seite`, veröffentlicht & „In Navigation anzeigen“ aktivieren).
+   - Beitrag für diese Seite erstellen und veröffentlichen.
+   - Navigations-Tab aktualisieren & prüfen, dass `test-seite` dort erscheint.
+5. **Frontend-Routing**:
+   - In neuem Tab `http://localhost:5173/pages/test-seite` öffnen.
+   - Hero-Abschnitt, Beschreibung & veröffentlichter Beitrag sollten angezeigt werden.
+6. **Navigation**:
+   - Auf der Startseite sicherstellen, dass ein Menüeintrag auf `/pages/test-seite` verweist.
+7. **Aufräumen**:
+   - Seite & Beitrag im Admin-Dashboard wieder löschen.
+   - Navigation aktualisieren und prüfen, dass der Menüeintrag verschwindet.
 
 ## 🎨 Design Anpassungen
 

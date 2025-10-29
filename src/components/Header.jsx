@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -12,7 +12,7 @@ const Header = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { isAuthenticated } = useAuth()
-  const { getSection } = useContent()
+  const { getSection, navigation } = useContent()
 
   const headerContent = getSection('header') ?? {}
   const contentNavItems = Array.isArray(headerContent.navItems) ? headerContent.navItems : []
@@ -36,7 +36,15 @@ const Header = () => {
     { id: 'advanced', label: 'Advanced', type: 'section' },
   ]
 
-  const computedNavItems = contentNavItems.length > 0 ? contentNavItems : fallbackNavItems
+  const computedNavItems = useMemo(() => {
+    if (navigation?.items?.length) {
+      return navigation.items
+    }
+    if (contentNavItems.length > 0) {
+      return contentNavItems
+    }
+    return fallbackNavItems
+  }, [navigation?.items, contentNavItems])
 
   const handleNavigation = (item) => {
     if (!item) return
@@ -63,9 +71,10 @@ const Header = () => {
 
       if (location.pathname !== '/') {
         navigate('/', { state: { scrollTo: sectionId } })
-      } else {
-        scrollToSection(sectionId)
+        return
       }
+
+      scrollToSection(sectionId)
     }
   }
 
@@ -81,7 +90,7 @@ const Header = () => {
   return (
     <header className="bg-white/80 backdrop-blur-xl shadow-soft sticky top-0 z-50 border-b border-gray-100/50">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-18">
+        <div className="flex justify-between items-center h-20">
           {/* Logo */}
           <div className="flex items-center space-x-3 group">
             <div className="relative">
@@ -97,9 +106,9 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            {computedNavItems.map((item) => (
+            {computedNavItems.map((item, index) => (
               <button
-                key={item.id || item.label}
+                key={item.id || `${item.label ?? 'nav'}-${index}`}
                 onClick={() => handleNavigation(item)}
                 className="nav-link font-medium hover:text-primary-600"
               >
@@ -128,9 +137,9 @@ const Header = () => {
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div className="md:hidden pb-4 space-y-2">
-            {computedNavItems.map((item) => (
+            {computedNavItems.map((item, index) => (
               <button
-                key={item.id || item.label}
+                key={item.id || `${item.label ?? 'nav'}-${index}`}
                 onClick={() => {
                   handleNavigation(item)
                   setMobileMenuOpen(false)

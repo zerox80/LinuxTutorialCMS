@@ -30,22 +30,30 @@ export const TutorialProvider = ({ children }) => {
             const delay = 300 * attempt
             // Use AbortSignal.timeout with race to cancel timeout on abort
             await new Promise((resolve, reject) => {
-              const timeoutId = setTimeout(() => {
-                resolve()
-              }, delay)
-              
+              let timeoutId
+              const cleanup = () => {
+                if (timeoutId !== undefined) {
+                  clearTimeout(timeoutId)
+                }
+                if (signal) {
+                  signal.removeEventListener('abort', abortHandler)
+                }
+              }
+
               const abortHandler = () => {
-                clearTimeout(timeoutId)
+                cleanup()
                 reject(new Error('Aborted'))
               }
-              
+
+              timeoutId = setTimeout(() => {
+                cleanup()
+                resolve()
+              }, delay)
+
               if (signal) {
-                signal.addEventListener('abort', abortHandler, { once: true })
+                signal.addEventListener('abort', abortHandler)
               }
-              
-              // Always cleanup timeout to prevent memory leak
             }).catch(() => {
-              // Aborted during delay
               return
             })
             
@@ -89,6 +97,12 @@ export const TutorialProvider = ({ children }) => {
       ? tutorial.topics.filter((topic) => typeof topic === 'string' && topic.trim() !== '')
       : []
 
+    if (sanitizedTopics.length === 0) {
+      const error = new Error('Mindestens ein Thema muss angegeben werden.')
+      error.code = 'validation'
+      throw error
+    }
+
     const payload = {
       ...tutorial,
       topics: sanitizedTopics,
@@ -113,6 +127,12 @@ export const TutorialProvider = ({ children }) => {
     const sanitizedTopics = Array.isArray(updatedTutorial.topics)
       ? updatedTutorial.topics.filter((topic) => typeof topic === 'string' && topic.trim() !== '')
       : undefined
+
+    if (Array.isArray(updatedTutorial.topics) && (!sanitizedTopics || sanitizedTopics.length === 0)) {
+      const error = new Error('Mindestens ein Thema muss angegeben werden.')
+      error.code = 'validation'
+      throw error
+    }
 
     const payload = {
       ...updatedTutorial,

@@ -1,6 +1,12 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { api } from '../api/client'
 
+const removeTokenFromStorage = () => {
+  if (typeof window === 'undefined') return
+  window.sessionStorage?.removeItem('token')
+  window.localStorage?.removeItem('token')
+}
+
 const AuthContext = createContext(null)
 
 export const AuthProvider = ({ children }) => {
@@ -18,13 +24,13 @@ export const AuthProvider = ({ children }) => {
         setLoading(false)
         return
       }
-      const token = localStorage.getItem('token')
+      const token = (window.sessionStorage?.getItem('token') || localStorage.getItem('token'))
       if (token) {
         // Basic JWT format validation (should have 3 parts separated by dots)
         const jwtParts = token.split('.')
         if (jwtParts.length !== 3) {
-          console.warn('Invalid JWT format in localStorage, removing token')
-          localStorage.removeItem('token')
+          console.warn('Invalid JWT format in storage, removing token')
+          removeTokenFromStorage()
           setLoading(false)
           return
         }
@@ -37,13 +43,13 @@ export const AuthProvider = ({ children }) => {
           const payload = JSON.parse(atob(padded))
           if (payload.exp && payload.exp * 1000 < Date.now()) {
             console.warn('JWT expired, removing token')
-            localStorage.removeItem('token')
+            removeTokenFromStorage()
             setLoading(false)
             return
           }
         } catch (e) {
           console.warn('Failed to parse JWT payload, removing token')
-          localStorage.removeItem('token')
+          removeTokenFromStorage()
           setLoading(false)
           return
         }
@@ -59,7 +65,7 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
           if (!controller.signal.aborted) {
             console.error('Auth check failed:', error)
-            localStorage.removeItem('token')
+            removeTokenFromStorage()
             api.setToken(null)
             setIsAuthenticated(false)
             setUser(null)

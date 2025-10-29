@@ -93,7 +93,6 @@ async fn main() {
 
     // Initialize database
     let pool = db::create_pool().await.expect("Failed to create database pool");
-    db::run_migrations(&pool).await.expect("Failed to run migrations");
 
     // Configure CORS
     let allowed_origins_env = env::var("FRONTEND_ORIGINS").unwrap_or_else(|_| {
@@ -165,6 +164,39 @@ async fn main() {
         .layer(GovernorLayer {
             config: rate_limit_config,
         });
+
+    let write_limit_config = std::sync::Arc::new(
+        GovernorConfigBuilder::default()
+            .per_second(1)
+            .burst_size(3)
+            .finish()
+            .expect("Failed to build governor config for write routes"),
+    );
+
+    let write_routes = Router::new()
+        // Tutorial mutations
+        .route("/api/tutorials", post(handlers::tutorials::create_tutorial))
+        .route("/api/tutorials/:id", put(handlers::tutorials::update_tutorial))
+        .route("/api/tutorials/:id", delete(handlers::tutorials::delete_tutorial))
+        // Site content mutations
+        .route(
+            "/api/content/:section",
+            put(handlers::site_content::update_site_content),
+        )
+        // Site page mutations
+        .route("/api/pages", post(handlers::site_pages::create_site_page))
+        .route("/api/pages/:id", put(handlers::site_pages::update_site_page))
+        .route("/api/pages/:id", delete(handlers::site_pages::delete_site_page))
+        // Site post mutations
+        .route(
+            "/api/pages/:page_id/posts",
+            post(handlers::site_posts::create_post),
+        )
+        .route("/api/posts/:id", put(handlers::site_posts::update_post))
+        .route("/api/posts/:id", delete(handlers::site_posts::delete_post))
+        .layer(GovernorLayer {
+            config: write_limit_config.clone(),
+        });
     
     let app = Router::new()
         .merge(login_router)
@@ -173,15 +205,34 @@ async fn main() {
         
         // Tutorial routes
         .route("/api/tutorials", get(handlers::tutorials::list_tutorials))
-        .route("/api/tutorials", post(handlers::tutorials::create_tutorial))
         .route("/api/tutorials/:id", get(handlers::tutorials::get_tutorial))
-        .route("/api/tutorials/:id", put(handlers::tutorials::update_tutorial))
-        .route("/api/tutorials/:id", delete(handlers::tutorials::delete_tutorial))
 
         // Site content routes
         .route("/api/content", get(handlers::site_content::list_site_content))
         .route("/api/content/:section", get(handlers::site_content::get_site_content))
-        .route("/api/content/:section", put(handlers::site_content::update_site_content))
+
+        // Site pages routes (admin)
+        .route("/api/pages", get(handlers::site_pages::list_site_pages))
+        .route("/api/pages/:id", get(handlers::site_pages::get_site_page))
+
+        // Site posts routes (admin)
+        .route(
+            "/api/pages/:page_id/posts",
+            get(handlers::site_posts::list_posts_for_page),
+        )
+        .route("/api/posts/:id", get(handlers::site_posts::get_post))
+        .merge(write_routes)
+
+        // Public page routes
+        .route(
+            "/api/public/pages/:slug",
+            get(handlers::site_pages::get_published_page_by_slug),
+        )
+        .route("/api/public/navigation", get(handlers::site_pages::get_navigation))
+        .route(
+            "/api/public/published-pages",
+            get(handlers::site_pages::list_published_page_slugs),
+        )
 
         // Health check
         .route("/api/health", get(|| async { "OK" }))
