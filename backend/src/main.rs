@@ -24,6 +24,7 @@ use tower_governor::{
 };
 use tracing_subscriber;
 use tokio::signal;
+use std::net::SocketAddr;
 
 // Security headers middleware
 async fn security_headers(
@@ -206,7 +207,9 @@ async fn main() {
         .expect("Failed to bind to address");
     
     // Graceful shutdown handler
-    let server = axum::serve(listener, app)
+    let make_service = app.into_make_service_with_connect_info::<SocketAddr>();
+
+    let server = axum::serve(listener, make_service)
         .with_graceful_shutdown(shutdown_signal());
         
     tracing::info!("Server is ready to accept connections");
