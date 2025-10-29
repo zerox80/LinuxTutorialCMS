@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
         setLoading(false)
         return
       }
-      const token = (window.sessionStorage?.getItem('token') || localStorage.getItem('token'))
+      const token = (window.sessionStorage?.getItem('token') || window.localStorage.getItem('token'))
       if (token) {
         // Basic JWT format validation (should have 3 parts separated by dots)
         const jwtParts = token.split('.')

@@ -261,6 +261,19 @@ pub async fn create_tutorial(
         )
     })?;
 
+    // Sync tutorial_topics table
+    crate::db::replace_tutorial_topics(&pool, &id, &sanitized_topics)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to update tutorial topics: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Failed to create tutorial".to_string(),
+                }),
+            )
+        })?;
+
     Ok(Json(TutorialResponse {
         id,
         title: payload.title,
@@ -444,6 +457,19 @@ pub async fn update_tutorial(
             }),
         ));
     }
+
+    // Sync tutorial_topics table
+    crate::db::replace_tutorial_topics(&pool, &id, &topics_vec)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to update tutorial topics: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Failed to update tutorial".to_string(),
+                }),
+            )
+        })?;
 
     Ok(Json(TutorialResponse {
         id,

@@ -237,7 +237,7 @@ async fn main() {
         // Health check
         .route("/api/health", get(|| async { "OK" }))
         
-        .layer(RequestBodyLimitLayer::new(10 * 1024 * 1024)) // 10 MB limit (before CORS to avoid applying to OPTIONS)
+        .layer(RequestBodyLimitLayer::new(10 * 1024 * 1024)) // 10 MB limit
         .layer(cors)
         .layer(middleware::from_fn(security_headers))
         .with_state(pool);

@@ -50,14 +50,8 @@ impl Claims {
         // Use checked arithmetic to prevent overflow
         let expiration = Utc::now()
             .checked_add_signed(Duration::hours(24))
-            .map(|dt| dt.timestamp())
-            .and_then(|ts| usize::try_from(ts).ok())
-            .unwrap_or_else(|| {
-                // Fallback: use current time as best effort (will likely fail validation)
-                // This should never happen in practice with modern timestamps
-                let now = Utc::now().timestamp() as usize;
-                now.saturating_add(86400) // 24 hours in seconds
-            });
+            .and_then(|dt| usize::try_from(dt.timestamp()).ok())
+            .expect("Failed to calculate JWT expiration timestamp. System time may be misconfigured.");
 
         Claims {
             sub: username,

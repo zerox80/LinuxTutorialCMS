@@ -469,8 +469,8 @@ pub async fn upsert_site_content(
     })?;
 
     sqlx::query(
-        "INSERT INTO site_content (section, content_json, updated_at) VALUES (?, ?, datetime('now')) \
-         ON CONFLICT(section) DO UPDATE SET content_json = excluded.content_json, updated_at = datetime('now')",
+        "INSERT INTO site_content (section, content_json, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) \
+         ON CONFLICT(section) DO UPDATE SET content_json = excluded.content_json, updated_at = CURRENT_TIMESTAMP",
     )
     .bind(section)
     .bind(serialized)
@@ -814,6 +814,13 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
 
     ensure_site_page_schema(pool).await?;
 
+    // Seed default site content if not already present
+    {
+        let mut tx = pool.begin().await?;
+        seed_site_content_tx(&mut tx).await?;
+        tx.commit().await?;
+    }
+
     // Create or update default admin user from environment variables
     let admin_username = env::var("ADMIN_USERNAME").ok();
     let admin_password = env::var("ADMIN_PASSWORD").ok();
@@ -889,11 +896,12 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
 
         if already_seeded.is_none() && tutorial_count.0 == 0 {
             insert_default_tutorials_tx(&mut tx).await?;
+            let timestamp = chrono::Utc::now().to_rfc3339();
             sqlx::query(
                 "INSERT INTO app_metadata (key, value) VALUES ('default_tutorials_seeded', ?) \
                  ON CONFLICT(key) DO UPDATE SET value = excluded.value",
             )
-            .bind(chrono::Utc::now().to_rfc3339())
+            .bind(timestamp)
             .execute(&mut *tx)
             .await?;
             tracing::info!("Inserted default tutorials");
@@ -909,12 +917,12 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
 
 async fn insert_default_tutorials_tx(tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>) -> Result<(), sqlx::Error> {
     let tutorials = vec![
-        ("1", "Grundlegende Befehle", "Lerne die wichtigsten Linux-Befehle für die tägliche Arbeit im Terminal.", "Terminal", "from-blue-500 to-cyan-500", vec!["ls, cd, pwd", "mkdir, rm, cp, mv", "cat, grep, find", "chmod, chown"]),
+        ("1", "Grundlegende Befehle", "Lerne die wichtigsten Linux-Befehle für die tägliche Arbeit im Terminal.", "Terminal", "from-blue-500 to-cyan-500", vec!["ls", "cd", "pwd", "mkdir", "rm", "cp", "mv", "cat", "grep", "find", "chmod", "chown"]),
         ("2", "Dateisystem & Navigation", "Verstehe die Linux-Dateistruktur und navigiere effizient durch Verzeichnisse.", "FolderTree", "from-green-500 to-emerald-500", vec!["Verzeichnisstruktur", "Absolute vs. Relative Pfade", "Symlinks", "Mount Points"]),
         ("3", "Text-Editoren", "Beherrsche vim, nano und andere Editoren für die Arbeit in der Kommandozeile.", "FileText", "from-purple-500 to-pink-500", vec!["vim Basics", "nano Befehle", "sed & awk", "Regex Patterns"]),
-        ("4", "Prozessverwaltung", "Verwalte und überwache Prozesse effektiv in deinem Linux-System.", "Settings", "from-orange-500 to-red-500", vec!["ps, top, htop", "kill, pkill", "Background Jobs", "systemctl"]),
+        ("4", "Prozessverwaltung", "Verwalte und überwache Prozesse effektiv in deinem Linux-System.", "Settings", "from-orange-500 to-red-500", vec!["ps", "top", "htop", "kill", "pkill", "Background Jobs", "systemctl"]),
         ("5", "Berechtigungen & Sicherheit", "Verstehe Benutzerrechte, Gruppen und Sicherheitskonzepte.", "Shield", "from-indigo-500 to-blue-500", vec!["User & Groups", "chmod & chown", "sudo & su", "SSH & Keys"]),
-        ("6", "Netzwerk-Grundlagen", "Konfiguriere Netzwerke und nutze wichtige Netzwerk-Tools.", "Network", "from-teal-500 to-green-500", vec!["ip & ifconfig", "ping, traceroute", "netstat, ss", "curl & wget"]),
+        ("6", "Netzwerk-Grundlagen", "Konfiguriere Netzwerke und nutze wichtige Netzwerk-Tools.", "Network", "from-teal-500 to-green-500", vec!["ip & ifconfig", "ping", "traceroute", "netstat", "ss", "curl & wget"]),
         ("7", "Bash Scripting", "Automatisiere Aufgaben mit Shell-Scripts und Bash-Programmierung.", "Database", "from-yellow-500 to-orange-500", vec!["Variables & Loops", "If-Statements", "Functions", "Cron Jobs"]),
         ("8", "System Administration", "Erweiterte Admin-Aufgaben und Systemwartung.", "Server", "from-red-500 to-pink-500", vec!["Package Manager", "Logs & Monitoring", "Backup & Recovery", "Performance Tuning"]),
     ];
@@ -984,5 +992,16 @@ async fn replace_tutorial_topics_tx(
             .await?;
     }
 
+    Ok(())
+}
+
+pub async fn replace_tutorial_topics(
+    pool: &DbPool,
+    tutorial_id: &str,
+    topics: &[String],
+) -> Result<(), sqlx::Error> {
+    let mut tx = pool.begin().await?;
+    replace_tutorial_topics_tx(&mut tx, tutorial_id, topics).await?;
+    tx.commit().await?;
     Ok(())
 }
