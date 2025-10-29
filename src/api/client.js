@@ -223,6 +223,23 @@ class ApiClient {
       ...options,
     })
   }
+
+  // Site content endpoints
+  async getSiteContent(options = {}) {
+    return this.request('/content', options)
+  }
+
+  async getSiteContentSection(section, options = {}) {
+    return this.request(`/content/${section}`, options)
+  }
+
+  async updateSiteContentSection(section, content, options = {}) {
+    return this.request(`/content/${section}`, {
+      method: 'PUT',
+      body: { content },
+      ...options,
+    })
+  }
 }
 
 export const api = new ApiClient()

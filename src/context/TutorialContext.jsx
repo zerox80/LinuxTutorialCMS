@@ -1,20 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { Terminal, FolderTree, FileText, Settings, Shield, Network, Database, Server } from 'lucide-react'
 import { api } from '../api/client'
+import { getIconComponent as getIconComponentFromMap } from '../utils/iconMap'
 
 const TutorialContext = createContext(null)
-
-// Icon mapping
-const iconMap = {
-  Terminal,
-  FolderTree,
-  FileText,
-  Settings,
-  Shield,
-  Network,
-  Database,
-  Server,
-}
 
 export const TutorialProvider = ({ children }) => {
   const [tutorials, setTutorials] = useState([])
@@ -155,12 +143,7 @@ export const TutorialProvider = ({ children }) => {
     return tutorials.find((t) => t.id === id)
   }
 
-  const getIconComponent = (iconName) => {
-    if (!iconMap[iconName]) {
-      console.warn(`Unknown icon: ${iconName}, falling back to Terminal`)
-    }
-    return iconMap[iconName] || Terminal
-  }
+  const getIconComponent = (iconName) => getIconComponentFromMap(iconName)
 
   return (
     <TutorialContext.Provider

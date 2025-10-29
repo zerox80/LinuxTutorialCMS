@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { ContentProvider } from './context/ContentContext'
 import { TutorialProvider } from './context/TutorialContext'
 import ErrorBoundary from './components/ErrorBoundary'
 import Header from './components/Header'
@@ -16,9 +17,10 @@ function App() {
     <ErrorBoundary>
       <Router>
         <AuthProvider>
-          <TutorialProvider>
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-              <Routes>
+          <ContentProvider>
+            <TutorialProvider>
+              <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+                <Routes>
                 {/* Public Routes with Header & Footer */}
                 <Route
                   path="/"
@@ -65,9 +67,10 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
-              </Routes>
-            </div>
-          </TutorialProvider>
+                </Routes>
+              </div>
+            </TutorialProvider>
+          </ContentProvider>
         </AuthProvider>
       </Router>
     </ErrorBoundary>

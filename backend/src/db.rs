@@ -2,6 +2,7 @@ use sqlx::{
     sqlite::{SqliteConnectOptions, SqlitePoolOptions},
     SqlitePool,
 };
+use serde_json::{json, Value};
 use std::env;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
@@ -31,6 +32,236 @@ pub async fn create_pool() -> Result<DbPool, sqlx::Error> {
     Ok(pool)
 }
 
+pub async fn fetch_all_site_content(pool: &DbPool) -> Result<Vec<crate::models::SiteContent>, sqlx::Error> {
+    sqlx::query_as::<_, crate::models::SiteContent>(
+        "SELECT section, content_json, updated_at FROM site_content ORDER BY section",
+    )
+    .fetch_all(pool)
+    .await
+}
+
+pub async fn fetch_site_content_by_section(
+    pool: &DbPool,
+    section: &str,
+) -> Result<Option<crate::models::SiteContent>, sqlx::Error> {
+    sqlx::query_as::<_, crate::models::SiteContent>(
+        "SELECT section, content_json, updated_at FROM site_content WHERE section = ?",
+    )
+    .bind(section)
+    .fetch_optional(pool)
+    .await
+}
+
+pub async fn upsert_site_content(
+    pool: &DbPool,
+    section: &str,
+    content: &Value,
+) -> Result<crate::models::SiteContent, sqlx::Error> {
+    let serialized = serde_json::to_string(content).map_err(|e| {
+        sqlx::Error::Protocol(format!("Failed to serialize content JSON: {}", e).into())
+    })?;
+
+    sqlx::query(
+        "INSERT INTO site_content (section, content_json, updated_at) VALUES (?, ?, datetime('now')) \
+         ON CONFLICT(section) DO UPDATE SET content_json = excluded.content_json, updated_at = datetime('now')",
+    )
+    .bind(section)
+    .bind(serialized)
+    .execute(pool)
+    .await?;
+
+    fetch_site_content_by_section(pool, section)
+        .await?
+        .ok_or_else(|| sqlx::Error::RowNotFound)
+}
+
+async fn seed_site_content_tx(
+    tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+) -> Result<(), sqlx::Error> {
+    for (section, content) in default_site_content() {
+        let exists: Option<(String,)> = sqlx::query_as(
+            "SELECT section FROM site_content WHERE section = ?",
+        )
+        .bind(section)
+        .fetch_optional(&mut **tx)
+        .await?;
+
+        if exists.is_some() {
+            continue;
+        }
+
+        sqlx::query(
+            "INSERT INTO site_content (section, content_json) VALUES (?, ?)",
+        )
+        .bind(section)
+        .bind(content.to_string())
+        .execute(&mut **tx)
+        .await?;
+    }
+
+    Ok(())
+}
+
+fn default_site_content() -> Vec<(&'static str, serde_json::Value)> {
+    vec![
+        (
+            "hero",
+            json!({
+                "badgeText": "Professionelles Linux Training",
+                "title": {
+                    "line1": "Lerne Linux",
+                    "line2": "von Grund auf"
+                },
+                "subtitle": "Dein umfassendes Tutorial für Linux - von den Basics bis zu Advanced Techniken.",
+                "subline": "Interaktiv, modern und praxisnah.",
+                "primaryCta": {
+                    "label": "Los geht's",
+                    "target": { "type": "section", "value": "tutorials" }
+                },
+                "secondaryCta": {
+                    "label": "Mehr erfahren",
+                    "target": { "type": "section", "value": "tutorials" }
+                },
+                "features": [
+                    {
+                        "icon": "Book",
+                        "title": "Schritt für Schritt",
+                        "description": "Strukturiert lernen mit klaren Beispielen",
+                        "color": "from-blue-500 to-cyan-500"
+                    },
+                    {
+                        "icon": "Code",
+                        "title": "Praktische Befehle",
+                        "description": "Direkt anwendbare Kommandos",
+                        "color": "from-purple-500 to-pink-500"
+                    },
+                    {
+                        "icon": "Zap",
+                        "title": "Modern & Aktuell",
+                        "description": "Neueste Best Practices",
+                        "color": "from-orange-500 to-red-500"
+                    }
+                ]
+            }),
+        ),
+        (
+            "tutorial_section",
+            json!({
+                "title": "Tutorial Inhalte",
+                "description": "Umfassende Lernmodule für alle Erfahrungsstufen - vom Anfänger bis zum Profi",
+                "ctaPrimary": {
+                    "label": "Tutorial starten",
+                    "target": { "type": "section", "value": "home" }
+                },
+                "ctaSecondary": {
+                    "label": "Mehr erfahren",
+                    "target": { "type": "section", "value": "home" }
+                },
+                "ctaDescription": "Wähle ein Thema aus und starte deine Linux-Lernreise noch heute!"
+            }),
+        ),
+        (
+            "header",
+            json!({
+                "brand": {
+                    "name": "Linux Tutorial",
+                    "tagline": "",
+                    "icon": "Terminal"
+                },
+                "navItems": [
+                    { "id": "home", "label": "Home", "type": "section" },
+                    { "id": "grundlagen", "label": "Grundlagen", "type": "route", "path": "/grundlagen" },
+                    { "id": "befehle", "label": "Befehle", "type": "section" },
+                    { "id": "praxis", "label": "Praxis", "type": "section" },
+                    { "id": "advanced", "label": "Advanced", "type": "section" }
+                ],
+                "cta": {
+                    "guestLabel": "Login",
+                    "authLabel": "Admin",
+                    "icon": "Lock"
+                }
+            }),
+        ),
+        (
+            "footer",
+            json!({
+                "brand": {
+                    "title": "Linux Tutorial",
+                    "description": "Dein umfassendes Tutorial für Linux - von den Basics bis zu Advanced Techniken.",
+                    "icon": "Terminal"
+                },
+                "quickLinks": [
+                    { "label": "Grundlagen", "target": { "type": "section", "value": "grundlagen" } },
+                    { "label": "Befehle", "target": { "type": "section", "value": "befehle" } },
+                    { "label": "Praxis", "target": { "type": "section", "value": "praxis" } },
+                    { "label": "Advanced", "target": { "type": "section", "value": "advanced" } }
+                ],
+                "contactLinks": [
+                    { "label": "GitHub", "href": "https://github.com", "icon": "Github" },
+                    { "label": "E-Mail", "href": "mailto:info@example.com", "icon": "Mail" }
+                ],
+                "bottom": {
+                    "copyright": "© {year} Linux Tutorial. Alle Rechte vorbehalten.",
+                    "signature": "Gemacht mit ❤️ für die Linux Community"
+                }
+            }),
+        ),
+        (
+            "grundlagen_page",
+            json!({
+                "hero": {
+                    "badge": "Grundlagenkurs",
+                    "title": "Starte deine Linux-Reise mit einem starken Fundament",
+                    "description": "In diesem Grundlagenbereich begleiten wir dich von den allerersten Schritten im Terminal bis hin zu sicheren Arbeitsabläufen. Nach diesem Kurs bewegst du dich selbstbewusst in der Linux-Welt.",
+                    "icon": "BookOpen"
+                },
+                "highlights": [
+                    {
+                        "icon": "BookOpen",
+                        "title": "Terminal Basics verstehen",
+                        "description": "Lerne die wichtigsten Shell-Befehle, arbeite sicher mit Dateien und nutze Pipes, um Aufgaben zu automatisieren."
+                    },
+                    {
+                        "icon": "Compass",
+                        "title": "Linux-Philosophie kennenlernen",
+                        "description": "Verstehe das Zusammenspiel von Kernel, Distribution, Paketverwaltung und warum Linux so flexibel einsetzbar ist."
+                    },
+                    {
+                        "icon": "Layers",
+                        "title": "Praxisnahe Übungen",
+                        "description": "Setze das Erlernte direkt in kleinen Projekten um – von der Benutzerverwaltung bis zum Einrichten eines Webservers."
+                    },
+                    {
+                        "icon": "ShieldCheck",
+                        "title": "Sicher arbeiten",
+                        "description": "Erhalte Best Practices für Benutzerrechte, sudo, SSH und weitere Sicherheitsmechanismen."
+                    }
+                ],
+                "modules": {
+                    "title": "Module im Grundlagenkurs",
+                    "description": "Unsere Tutorials bauen logisch aufeinander auf. Jedes Modul enthält praxisnahe Beispiele, Schritt-für-Schritt Anleitungen und kleine Wissenschecks, damit du deinen Fortschritt direkt sehen kannst.",
+                    "items": [
+                        "Einstieg in die Shell: Navigation, grundlegende Befehle, Dateiverwaltung",
+                        "Linux-Systemaufbau: Kernel, Distributionen, Paketmanager verstehen und nutzen",
+                        "Benutzer & Rechte: Arbeiten mit sudo, Gruppen und Dateiberechtigungen",
+                        "Wichtige Tools: SSH, einfache Netzwerkanalyse und nützliche Utilities für den Alltag"
+                    ],
+                    "summary": [
+                        "Über 40 praxisnahe Lessons",
+                        "Schritt-für-Schritt Guides mit Screenshots & Code-Beispielen",
+                        "Übungen und Checklisten zum Selbstüberprüfen"
+                    ]
+                },
+                "cta": {
+                    "title": "Bereit für den nächsten Schritt?",
+                    "description": "Wechsel zur Startseite und wähle das Modul, das am besten zu dir passt, oder tauche direkt in die Praxis- und Advanced-Themen ein, sobald du die Grundlagen sicher beherrschst.",
+                    "primary": { "label": "Zur Startseite", "href": "/" },
+                    "secondary": { "label": "Tutorials verwalten", "href": "/admin" }
+                }
+            }),
+        ),
+    ]
+}
 fn ensure_sqlite_directory(database_url: &str) -> Result<(), sqlx::Error> {
     if let Some(db_path) = sqlite_file_path(database_url) {
         if let Some(parent) = db_path.parent() {
@@ -255,6 +486,8 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     } else {
         tracing::info!("ENABLE_DEFAULT_TUTORIALS disabled – skipping default tutorial seeding");
     }
+
+    seed_site_content_tx(&mut tx).await?;
 
     tx.commit().await?;
 

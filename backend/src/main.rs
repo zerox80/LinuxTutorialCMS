@@ -177,7 +177,12 @@ async fn main() {
         .route("/api/tutorials/:id", get(handlers::tutorials::get_tutorial))
         .route("/api/tutorials/:id", put(handlers::tutorials::update_tutorial))
         .route("/api/tutorials/:id", delete(handlers::tutorials::delete_tutorial))
-        
+
+        // Site content routes
+        .route("/api/content", get(handlers::site_content::list_site_content))
+        .route("/api/content/:section", get(handlers::site_content::get_site_content))
+        .route("/api/content/:section", put(handlers::site_content::update_site_content))
+
         // Health check
         .route("/api/health", get(|| async { "OK" }))
         

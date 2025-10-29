@@ -1,13 +1,18 @@
 import { useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import TutorialCard from './TutorialCard'
 import { useTutorials } from '../context/TutorialContext'
 import { AlertCircle } from 'lucide-react'
-import { scrollToSection } from '../utils/scrollToSection'
+import { useContent } from '../context/ContentContext'
+import { navigateContentTarget } from '../utils/contentNavigation'
 
 const TutorialSection = () => {
   const { tutorials, getIconComponent, loading, error } = useTutorials()
   const navigate = useNavigate()
+  const location = useLocation()
+  const { getSection } = useContent()
+
+  const sectionContent = getSection('tutorial_section') ?? {}
 
   // Memoize normalized tutorials to avoid recalculating on every render
   const normalizedTutorials = useMemo(() => {
@@ -24,9 +29,10 @@ const TutorialSection = () => {
       id="tutorials"
     >
       <div className="text-center mb-12">
-        <h2 className="section-title">Tutorial Inhalte</h2>
+        <h2 className="section-title">{sectionContent.title || 'Tutorial Inhalte'}</h2>
         <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-          Umfassende Lernmodule für alle Erfahrungsstufen - vom Anfänger bis zum Profi
+          {sectionContent.description ||
+            'Umfassende Lernmodule für alle Erfahrungsstufen - vom Anfänger bis zum Profi'}
         </p>
       </div>
 
@@ -57,24 +63,29 @@ const TutorialSection = () => {
 
       {/* Call to Action */}
       <div className="mt-16 bg-gradient-to-r from-primary-600 to-primary-800 rounded-2xl p-8 md:p-12 text-white text-center">
-        <h3 className="text-3xl font-bold mb-4">Bereit anzufangen?</h3>
+        <h3 className="text-3xl font-bold mb-4">{sectionContent.heading || 'Bereit anzufangen?'}</h3>
         <p className="text-xl text-primary-100 mb-6">
-          Wähle ein Thema aus und starte deine Linux-Lernreise noch heute!
+          {sectionContent.ctaDescription ||
+            'Wähle ein Thema aus und starte deine Linux-Lernreise noch heute!'}
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button 
-            onClick={() => scrollToSection('home')}
+            onClick={() =>
+              navigateContentTarget(sectionContent?.ctaPrimary?.target, { navigate, location })
+            }
             className="px-8 py-3 bg-white text-primary-700 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200"
             aria-label="Tutorial starten und nach oben scrollen"
           >
-            Tutorial starten
+            {sectionContent?.ctaPrimary?.label || 'Tutorial starten'}
           </button>
           <button 
-            onClick={() => scrollToSection('home')}
+            onClick={() =>
+              navigateContentTarget(sectionContent?.ctaSecondary?.target, { navigate, location })
+            }
             className="px-8 py-3 bg-primary-700 text-white rounded-lg font-semibold hover:bg-primary-800 border-2 border-white/20 transition-colors duration-200"
             aria-label="Mehr über die Tutorials erfahren"
           >
-            Mehr erfahren
+            {sectionContent?.ctaSecondary?.label || 'Mehr erfahren'}
           </button>
         </div>
       </div>

@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use sqlx::FromRow;
 use std::convert::TryFrom;
 
@@ -107,4 +108,28 @@ impl TryFrom<Tutorial> for TutorialResponse {
 #[derive(Debug, Serialize)]
 pub struct ErrorResponse {
     pub error: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct SiteContent {
+    pub section: String,
+    pub content_json: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SiteContentResponse {
+    pub section: String,
+    pub content: Value,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SiteContentListResponse {
+    pub items: Vec<SiteContentResponse>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateSiteContentRequest {
+    pub content: Value,
 }
