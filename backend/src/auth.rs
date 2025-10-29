@@ -8,7 +8,7 @@ use axum_extra::{
     extract::TypedHeader,
     headers::{authorization::Bearer, Authorization},
 };
-use chrono::Utc;
+use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use std::env;
@@ -48,14 +48,14 @@ pub struct Claims {
 impl Claims {
     pub fn new(username: String, role: String) -> Self {
         // Use checked arithmetic to prevent overflow
-        let expiration = chrono::Utc::now()
-            .checked_add_signed(chrono::Duration::hours(24))
+        let expiration = Utc::now()
+            .checked_add_signed(Duration::hours(24))
             .map(|dt| dt.timestamp())
             .and_then(|ts| usize::try_from(ts).ok())
             .unwrap_or_else(|| {
                 // Fallback: use current time as best effort (will likely fail validation)
                 // This should never happen in practice with modern timestamps
-                let now = chrono::Utc::now().timestamp() as usize;
+                let now = Utc::now().timestamp() as usize;
                 now.saturating_add(86400) // 24 hours in seconds
             });
 

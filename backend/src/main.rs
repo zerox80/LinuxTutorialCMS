@@ -20,11 +20,11 @@ use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tower_http::limit::RequestBodyLimitLayer;
 use tower_governor::{
     governor::GovernorConfigBuilder,
-    GovernorLayer, Quota,
+    GovernorLayer,
 };
 use tracing_subscriber;
 use tokio::signal;
-use std::{net::SocketAddr, num::NonZeroU32, time::Duration};
+use std::{net::SocketAddr, time::Duration};
 
 // Security headers middleware
 async fn security_headers(
@@ -150,12 +150,10 @@ async fn main() {
     tracing::info!(origins = ?allowed_origins, "Configured CORS origins");
 
     // Configure rate limiting (5 requests per 5 seconds for login, with burst of 5)
-    let quota = Quota::with_period(Duration::from_secs(5))
-        .expect("Invalid rate limit period")
-        .allow_burst(NonZeroU32::new(5).expect("Burst size must be non-zero"));
     let rate_limit_config = std::sync::Arc::new(
         GovernorConfigBuilder::default()
-            .with_quota(quota)
+            .per_second(1)
+            .burst_size(5)
             .finish()
             .expect("Failed to build governor config"),
     );

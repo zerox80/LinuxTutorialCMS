@@ -274,6 +274,8 @@ async fn insert_default_tutorials_tx(tx: &mut sqlx::Transaction<'_, sqlx::Sqlite
     ];
 
     for (id, title, description, icon, color, topics) in tutorials {
+        let topics_vec: Vec<String> = topics.into_iter().map(|topic| topic.to_string()).collect();
+
         if sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM tutorials WHERE id = ?")
             .bind(id)
             .fetch_one(&mut **tx)
@@ -293,7 +295,7 @@ async fn insert_default_tutorials_tx(tx: &mut sqlx::Transaction<'_, sqlx::Sqlite
             continue;
         }
 
-        let topics_json = serde_json::to_string(&topics).map_err(|e| {
+        let topics_json = serde_json::to_string(&topics_vec).map_err(|e| {
             sqlx::Error::Protocol(
                 format!("Failed to serialize topics for default tutorial '{}': {}", id, e).into(),
             )
@@ -312,7 +314,7 @@ async fn insert_default_tutorials_tx(tx: &mut sqlx::Transaction<'_, sqlx::Sqlite
         .execute(&mut **tx)
         .await?;
 
-        replace_tutorial_topics_tx(tx, id, &topics).await?;
+        replace_tutorial_topics_tx(tx, id, &topics_vec).await?;
     }
 
     Ok(())

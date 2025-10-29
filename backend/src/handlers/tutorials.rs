@@ -41,7 +41,7 @@ fn validate_tutorial_data(title: &str, description: &str, content: &str) -> Resu
     Ok(())
 }
 
-fn validate_icon(icon: &str) -> Result<(), String> {
+pub(crate) fn validate_icon(icon: &str) -> Result<(), String> {
     const ALLOWED_ICONS: &[&str] = &[
         "Terminal", "FolderTree", "FileText", "Settings",
         "Shield", "Network", "Database", "Server"
@@ -54,7 +54,7 @@ fn validate_icon(icon: &str) -> Result<(), String> {
     }
 }
 
-fn validate_color(color: &str) -> Result<(), String> {
+pub(crate) fn validate_color(color: &str) -> Result<(), String> {
     static COLOR_REGEX: OnceLock<Regex> = OnceLock::new();
     let regex = COLOR_REGEX.get_or_init(|| {
         Regex::new(r"^from-[A-Za-z0-9-]+(?:\s+via-[A-Za-z0-9-]+)?\s+to-[A-Za-z0-9-]+$")
