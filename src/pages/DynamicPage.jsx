@@ -73,7 +73,7 @@ const DynamicPage = () => {
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 pb-16">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <button
-          onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}
+          onClick={() => navigate('/', { state: { scrollTo: null, from: 'dynamic-page' } })}
           className="group inline-flex items-center gap-2 text-primary-700 font-medium mb-6"
         >
           <ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-1" />

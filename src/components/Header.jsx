@@ -7,6 +7,11 @@ import { getIconComponent } from '../utils/iconMap'
 import { navigateContentTarget } from '../utils/contentNavigation'
 import { scrollToSection } from '../utils/scrollToSection'
 
+const FALLBACK_NAV_ITEMS = [
+  { id: 'home', label: 'Home', type: 'section' },
+  { id: 'grundlagen', label: 'Grundlagen', type: 'route', path: '/grundlagen' },
+]
+
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const navigate = useNavigate()
@@ -28,14 +33,6 @@ const Header = () => {
     return null
   }
 
-  const fallbackNavItems = [
-    { id: 'home', label: 'Home', type: 'section' },
-    { id: 'grundlagen', label: 'Grundlagen', type: 'route', path: '/grundlagen' },
-    { id: 'befehle', label: 'Befehle', type: 'section' },
-    { id: 'praxis', label: 'Praxis', type: 'section' },
-    { id: 'advanced', label: 'Advanced', type: 'section' },
-  ]
-
   const computedNavItems = useMemo(() => {
     if (navigation?.items?.length) {
       return navigation.items
@@ -43,7 +40,7 @@ const Header = () => {
     if (contentNavItems.length > 0) {
       return contentNavItems
     }
-    return fallbackNavItems
+    return FALLBACK_NAV_ITEMS
   }, [navigation?.items, contentNavItems])
 
   const handleNavigation = (item) => {

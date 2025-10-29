@@ -209,23 +209,30 @@ fn sanitize_update_payload(
         }
     }
 
-    if let Some(ref mut nav_label) = payload.nav_label {
-        let trimmed = nav_label.trim();
-        if trimmed.is_empty() {
-            payload.nav_label = None;
-        } else {
-            if trimmed.len() > MAX_NAV_LABEL_LEN {
-                return Err((
-                    StatusCode::BAD_REQUEST,
-                    Json(ErrorResponse {
-                        error: format!(
-                            "Navigation label too long (max {MAX_NAV_LABEL_LEN} characters)"
-                        ),
-                    }),
-                ));
+    if let Some(mut nav_label_option) = payload.nav_label.take() {
+        nav_label_option = match nav_label_option {
+            Some(label) => {
+                let trimmed = label.trim().to_string();
+                if trimmed.is_empty() {
+                    None
+                } else {
+                    if trimmed.len() > MAX_NAV_LABEL_LEN {
+                        return Err((
+                            StatusCode::BAD_REQUEST,
+                            Json(ErrorResponse {
+                                error: format!(
+                                    "Navigation label too long (max {MAX_NAV_LABEL_LEN} characters)"
+                                ),
+                            }),
+                        ));
+                    }
+                    Some(trimmed)
+                }
             }
-            *nav_label = trimmed.to_string();
-        }
+            None => None,
+        };
+
+        payload.nav_label = Some(nav_label_option);
     }
 
     if let Some(ref hero) = payload.hero {

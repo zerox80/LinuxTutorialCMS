@@ -199,7 +199,7 @@ pub struct UpdateSitePageRequest {
     pub slug: Option<String>,
     pub title: Option<String>,
     pub description: Option<String>,
-    pub nav_label: Option<String>,
+    pub nav_label: Option<Option<String>>,
     pub show_in_nav: Option<bool>,
     pub order_index: Option<i64>,
     pub is_published: Option<bool>,

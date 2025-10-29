@@ -148,7 +148,7 @@ async fn main() {
 
     tracing::info!(origins = ?allowed_origins, "Configured CORS origins");
 
-    // Configure rate limiting (5 requests per 5 seconds for login, with burst of 5)
+    // Configure rate limiting (average 1 request/sec for login, burst up to 5)
     let rate_limit_config = std::sync::Arc::new(
         GovernorConfigBuilder::default()
             .per_second(1)

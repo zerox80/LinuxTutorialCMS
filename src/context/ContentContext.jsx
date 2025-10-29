@@ -73,9 +73,6 @@ export const DEFAULT_CONTENT = {
     navItems: [
       { id: 'home', label: 'Home', type: 'section' },
       { id: 'grundlagen', label: 'Grundlagen', type: 'route', path: '/grundlagen' },
-      { id: 'befehle', label: 'Befehle', type: 'section' },
-      { id: 'praxis', label: 'Praxis', type: 'section' },
-      { id: 'advanced', label: 'Advanced', type: 'section' },
     ],
     cta: {
       guestLabel: 'Login',
@@ -333,50 +330,47 @@ export const ContentProvider = ({ children }) => {
     }
   }, [content, dynamicNavItems])
 
-  const value = useMemo(
-    () => ({
-      content,
-      loading,
-      error,
-      refreshContent: loadContent,
-      getSection: (section) => content[section] ?? DEFAULT_CONTENT[section],
-      getDefaultSection: (section) => DEFAULT_CONTENT[section],
-      updateSection,
-      savingSections,
-      navigation: {
-        ...navigationData,
-        loading: navLoading,
-        error: navError,
-        refresh: loadNavigation,
-      },
-      pages: {
-        cache: pageCache,
-        fetch: fetchPublishedPage,
-        publishedSlugs: publishedPageSlugs,
-        loading: publishedPagesLoading,
-        error: publishedPagesError,
-        refresh: loadPublishedPages,
-      },
-    }),
-    [
-      content,
-      loading,
-      error,
-      loadContent,
-      updateSection,
-      savingSections,
-      navigationData,
-      navLoading,
-      navError,
-      loadNavigation,
-      pageCache,
-      fetchPublishedPage,
-      publishedPageSlugs,
-      publishedPagesLoading,
-      publishedPagesError,
-      loadPublishedPages,
-    ],
-  );
+  const value = useMemo(() => ({
+    content,
+    loading,
+    error,
+    refreshContent: loadContent,
+    getSection: (section) => content[section] ?? DEFAULT_CONTENT[section],
+    getDefaultSection: (section) => DEFAULT_CONTENT[section],
+    updateSection,
+    savingSections,
+    navigation: {
+      ...navigationData,
+      loading: navLoading,
+      error: navError,
+      refresh: loadNavigation,
+    },
+    pages: {
+      cache: pageCache,
+      fetch: fetchPublishedPage,
+      publishedSlugs: publishedPageSlugs,
+      loading: publishedPagesLoading,
+      error: publishedPagesError,
+      refresh: loadPublishedPages,
+    },
+  }), [
+    content,
+    loading,
+    error,
+    loadContent,
+    updateSection,
+    savingSections,
+    navigationData,
+    navLoading,
+    navError,
+    loadNavigation,
+    pageCache,
+    fetchPublishedPage,
+    publishedPageSlugs,
+    publishedPagesLoading,
+    publishedPagesError,
+    loadPublishedPages,
+  ]);
 
   return <ContentContext.Provider value={value}>{children}</ContentContext.Provider>;
 };

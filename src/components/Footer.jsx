@@ -1,8 +1,47 @@
-import { Terminal, Github, Mail, Heart } from 'lucide-react'
-import { scrollToSection } from '../utils/scrollToSection'
+import { useMemo } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { Terminal, Heart } from 'lucide-react'
+import { useContent } from '../context/ContentContext'
+import { navigateContentTarget } from '../utils/contentNavigation'
+import { getIconComponent } from '../utils/iconMap'
+
+const resolveContactFallbackIcon = (contact) => {
+  const label = (contact?.label || '').toLowerCase()
+  const href = (contact?.href || contact?.url || '').toLowerCase()
+
+  if (contact?.icon) {
+    return contact.icon
+  }
+  if (label.includes('mail') || href.startsWith('mailto:')) {
+    return 'Mail'
+  }
+  if (label.includes('git') || href.includes('github')) {
+    return 'Github'
+  }
+  return 'Terminal'
+}
 
 const Footer = () => {
+  const { getSection } = useContent()
+  const footerContent = getSection('footer') ?? {}
   const currentYear = new Date().getFullYear()
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const BrandIcon = useMemo(
+    () => getIconComponent(footerContent?.brand?.icon, 'Terminal'),
+    [footerContent?.brand?.icon],
+  )
+
+  const quickLinks = Array.isArray(footerContent?.quickLinks) ? footerContent.quickLinks : []
+  const contactLinks = Array.isArray(footerContent?.contactLinks) ? footerContent.contactLinks : []
+
+  const handleQuickLink = (link) => {
+    const target = link?.target
+    if (!target) return
+
+    navigateContentTarget(target, { navigate, location })
+  }
 
   return (
     <footer className="bg-gray-900 text-gray-300 py-12">
@@ -12,12 +51,15 @@ const Footer = () => {
           <div>
             <div className="flex items-center space-x-3 mb-4">
               <div className="bg-gradient-to-r from-primary-600 to-primary-800 p-2 rounded-lg">
-                <Terminal className="w-6 h-6 text-white" />
+                <BrandIcon className="w-6 h-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-white">Linux Tutorial</span>
+              <span className="text-xl font-bold text-white">
+                {footerContent?.brand?.title || footerContent?.brand?.name || 'Linux Tutorial'}
+              </span>
             </div>
             <p className="text-gray-400">
-              Dein umfassendes Tutorial für Linux - von den Basics bis zu Advanced Techniken.
+              {footerContent?.brand?.description ||
+                'Dein umfassendes Tutorial für Linux - von den Basics bis zu Advanced Techniken.'}
             </p>
           </div>
 
@@ -25,38 +67,20 @@ const Footer = () => {
           <div>
             <h4 className="text-white font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2">
-              <li>
-                <button 
-                  onClick={() => scrollToSection('grundlagen')}
-                  className="hover:text-primary-400 transition-colors duration-200"
-                >
-                  Grundlagen
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => scrollToSection('befehle')}
-                  className="hover:text-primary-400 transition-colors duration-200"
-                >
-                  Befehle
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => scrollToSection('praxis')}
-                  className="hover:text-primary-400 transition-colors duration-200"
-                >
-                  Praxis
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => scrollToSection('advanced')}
-                  className="hover:text-primary-400 transition-colors duration-200"
-                >
-                  Advanced
-                </button>
-              </li>
+              {quickLinks.length > 0 ? (
+                quickLinks.map((link, index) => (
+                  <li key={link.label || link.target?.value || `quick-${index}`}>
+                    <button
+                      onClick={() => handleQuickLink(link)}
+                      className="hover:text-primary-400 transition-colors duration-200"
+                    >
+                      {link.label || 'Link'}
+                    </button>
+                  </li>
+                ))
+              ) : (
+                <li className="text-sm text-gray-500">Noch keine Quick Links definiert.</li>
+              )}
             </ul>
           </div>
 
@@ -64,22 +88,26 @@ const Footer = () => {
           <div>
             <h4 className="text-white font-semibold mb-4">Kontakt</h4>
             <div className="space-y-3">
-              <a
-                href="https://github.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center space-x-2 hover:text-primary-400 transition-colors duration-200"
-              >
-                <Github className="w-5 h-5" />
-                <span>GitHub</span>
-              </a>
-              <a
-                href="mailto:info@example.com"
-                className="flex items-center space-x-2 hover:text-primary-400 transition-colors duration-200"
-              >
-                <Mail className="w-5 h-5" />
-                <span>E-Mail</span>
-              </a>
+              {contactLinks.length > 0 ? (
+                contactLinks.map((contact, index) => {
+                  const href = contact.href || contact.url
+                  const ContactIcon = getIconComponent(resolveContactFallbackIcon(contact), 'Terminal')
+                  return (
+                    <a
+                      key={href || contact.label || `contact-${index}`}
+                      href={href || '#'}
+                      target={href?.startsWith('http') ? '_blank' : undefined}
+                      rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+                      className="flex items-center space-x-2 hover:text-primary-400 transition-colors duration-200"
+                    >
+                      <ContactIcon className="w-5 h-5" />
+                      <span>{contact.label || href || 'Kontakt'}</span>
+                    </a>
+                  )
+                })
+              ) : (
+                <p className="text-sm text-gray-500">Keine Kontaktlinks verfügbar.</p>
+              )}
             </div>
           </div>
         </div>
@@ -87,13 +115,22 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 text-sm mb-4 md:mb-0">
-            © {currentYear} Linux Tutorial. Alle Rechte vorbehalten.
+            {(footerContent?.bottom?.copyright || '© {year} Linux Tutorial. Alle Rechte vorbehalten.').replace(
+              '{year}',
+              currentYear,
+            )}
           </p>
-          <div className="flex items-center space-x-1 text-sm">
-            <span className="text-gray-400">Gemacht mit</span>
-            <Heart className="w-4 h-4 text-red-500 fill-red-500" />
-            <span className="text-gray-400">für die Linux Community</span>
-          </div>
+          {footerContent?.bottom?.signature ? (
+            <p className="text-gray-400 text-sm text-center md:text-right">
+              {footerContent.bottom.signature.replace('{year}', currentYear)}
+            </p>
+          ) : (
+            <div className="flex items-center space-x-1 text-sm">
+              <span className="text-gray-400">Gemacht mit</span>
+              <Heart className="w-4 h-4 text-red-500 fill-red-500" />
+              <span className="text-gray-400">für die Linux Community</span>
+            </div>
+          )}
         </div>
       </div>
     </footer>

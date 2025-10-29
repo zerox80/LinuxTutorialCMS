@@ -169,8 +169,8 @@ pub async fn update_site_page(
     if let Some(description) = payload.description {
         existing.description = description;
     }
-    if let Some(nav_label) = payload.nav_label {
-        existing.nav_label = Some(nav_label);
+    if let Some(nav_label_opt) = payload.nav_label {
+        existing.nav_label = nav_label_opt;
     }
     if let Some(show_in_nav) = payload.show_in_nav {
         existing.show_in_nav = show_in_nav;
@@ -304,11 +304,11 @@ pub async fn update_site_post(
     id: &str,
     payload: crate::models::UpdateSitePostRequest,
 ) -> Result<crate::models::SitePost, sqlx::Error> {
-    let mut existing = get_site_post_by_id(pool, id).await?.ok_or(sqlx::Error::RowNotFound)?;
-
     if let Some(slug) = payload.slug.as_deref() {
         validate_slug(slug)?;
     }
+
+    let mut existing = get_site_post_by_id(pool, id).await?.ok_or(sqlx::Error::RowNotFound)?;
 
     if let Some(title) = payload.title {
         existing.title = title;

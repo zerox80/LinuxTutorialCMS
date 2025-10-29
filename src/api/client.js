@@ -134,7 +134,11 @@ class ApiClient {
       !(config.body instanceof URLSearchParams) &&
       typeof config.body === 'object'
 
-    if (isJsonBody && !config.headers['Content-Type']) {
+    const hasJsonContentType = Object.keys(config.headers).some(
+      (key) => key.toLowerCase() === 'content-type',
+    )
+
+    if (isJsonBody && !hasJsonContentType) {
       config.headers['Content-Type'] = 'application/json'
       config.body = JSON.stringify(config.body)
     }
