@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import rehypeHighlight from 'rehype-highlight'
 import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react'
 import { useTutorials } from '../context/TutorialContext'
 import { api } from '../api/client'
+import MarkdownRenderer from '../components/MarkdownRenderer'
 
 const TutorialDetail = () => {
   const { id } = useParams()
@@ -130,14 +128,9 @@ const TutorialDetail = () => {
 
               <section>
                 <h2 className="text-2xl font-semibold text-gray-900 mb-4">Inhalt</h2>
-                <div className="prose prose-slate max-w-none prose-headings:font-semibold prose-a:text-primary-600">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[rehypeHighlight]}
-                  >
-                    {tutorial.content || 'Für dieses Tutorial liegt noch kein Inhalt vor.'}
-                  </ReactMarkdown>
-                </div>
+                <MarkdownRenderer
+                  content={tutorial.content || 'Für dieses Tutorial liegt noch kein Inhalt vor.'}
+                />
               </section>
             </div>
           </article>

@@ -1,14 +1,9 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AlertCircle, ArrowLeft, CalendarDays, Loader2 } from 'lucide-react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import remarkBreaks from 'remark-breaks'
-import rehypeHighlight from 'rehype-highlight'
+import MarkdownRenderer from '../components/MarkdownRenderer'
 import { useContent } from '../context/ContentContext'
 import { formatDate, normalizeSlug } from '../utils/postUtils'
-
-const mergeClassNames = (...classes) => classes.filter(Boolean).join(' ')
 
 const PostDetail = () => {
   const { pageSlug = '', postSlug = '' } = useParams()
@@ -113,107 +108,11 @@ const PostDetail = () => {
               </header>
 
               {post?.content_markdown && (
-                <div className="prose prose-lg prose-slate max-w-none break-words">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm, remarkBreaks]}
-                    rehypePlugins={[rehypeHighlight]}
-                    components={{
-                      h1: ({ children }) => (
-                        <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">
-                          {children}
-                        </h2>
-                      ),
-                      h2: ({ children }) => (
-                        <h3 className="text-xl font-semibold text-gray-900 mt-6 mb-3">
-                          {children}
-                        </h3>
-                      ),
-                      h3: ({ children }) => (
-                        <h4 className="text-lg font-semibold text-gray-900 mt-4 mb-2">
-                          {children}
-                        </h4>
-                      ),
-                      p: ({ children }) => (
-                        <p className="text-gray-700 leading-relaxed mb-4 break-words whitespace-pre-wrap">
-                          {children}
-                        </p>
-                      ),
-                      ul: ({ children }) => (
-                        <ul className="list-disc list-inside space-y-2 mb-4 text-gray-700">
-                          {children}
-                        </ul>
-                      ),
-                      ol: ({ children }) => (
-                        <ol className="list-decimal list-inside space-y-2 mb-4 text-gray-700">
-                          {children}
-                        </ol>
-                      ),
-                      li: ({ children }) => (
-                        <li className="ml-4 break-words whitespace-pre-wrap">{children}</li>
-                      ),
-                      code: ({ inline, className, children, ...props }) =>
-                        inline ? (
-                          <code
-                            className={mergeClassNames(
-                              className,
-                              'bg-gray-100 text-primary-700 px-1.5 py-0.5 rounded text-sm font-mono',
-                            )}
-                            {...props}
-                          >
-                            {children}
-                          </code>
-                        ) : (
-                          <code
-                            className={mergeClassNames(
-                              className,
-                              'block bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm font-mono mb-4',
-                            )}
-                            {...props}
-                          >
-                            {children}
-                          </code>
-                        ),
-                      pre: ({ className, children, ...props }) => (
-                        <pre
-                          className={mergeClassNames(
-                            className,
-                            'bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto mb-4',
-                          )}
-                          {...props}
-                        >
-                          {children}
-                        </pre>
-                      ),
-                      blockquote: ({ className, children, ...props }) => (
-                        <blockquote
-                          className={mergeClassNames(
-                            className,
-                            'border-l-4 border-primary-500 pl-4 italic text-gray-600 my-4',
-                          )}
-                          {...props}
-                        >
-                          {children}
-                        </blockquote>
-                      ),
-                      a: ({ href, className, children, ...props }) => (
-                        <a
-                          href={href}
-                          className={mergeClassNames(
-                            className,
-                            'text-primary-700 hover:text-primary-800 underline',
-                          )}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          {...props}
-                        >
-                          {children}
-                        </a>
-                      ),
-                    }}
-                  >
-                    {post.content_markdown}
-                  </ReactMarkdown>
-                </div>
+                <MarkdownRenderer
+                  content={post.content_markdown}
+                  withBreaks
+                  className="text-base sm:text-lg leading-8"
+                />
               )}
             </div>
           </article>
