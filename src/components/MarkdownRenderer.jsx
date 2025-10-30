@@ -19,13 +19,15 @@ const headingClasses = {
 }
 
 const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
-  const remarkPlugins = withBreaks ? [remarkGfm, remarkBreaks] : [remarkGfm]
+  const remarkPlugins = withBreaks
+    ? [remarkGfm, remarkMath, remarkBreaks]
+    : [remarkGfm, remarkMath]
 
   return (
     <div className={mergeClassNames('markdown-renderer text-gray-700', className)}>
       <ReactMarkdown
         remarkPlugins={remarkPlugins}
-        rehypePlugins={[rehypeHighlight]}
+        rehypePlugins={[rehypeKatex, rehypeHighlight]}
         components={{
           h1: ({ node, children, ...props }) => (
             <h1 className={headingClasses[1]} {...props}>
