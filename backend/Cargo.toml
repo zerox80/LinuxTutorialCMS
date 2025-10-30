@@ -11,6 +11,7 @@ tokio = { version = "1", features = ["full"] }
 tower = "0.4"
 tower-http = { version = "0.5", features = ["cors", "limit"] }
 tower_governor = "0.4"
+anyhow = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "sqlite"] }
@@ -24,6 +25,7 @@ uuid = { version = "1.6", features = ["v4", "serde"] }
 url = "2.5"
 idna_adapter = "=1.2.0"
 regex = { version = "1.10", default-features = false, features = ["std"] }
+anyhow = "1.0"
 
 [dependencies.home]
 version = "=0.5.11"
@@ -32,3 +34,11 @@ version = "=0.5.11"
 version = "=1.6.0"
 default-features = false
 features = ["alloc"]
+
+[[bin]]
+name = "export_content"
+path = "src/bin/export_content.rs"
+
+[[bin]]
+name = "import_content"
+path = "src/bin/import_content.rs"

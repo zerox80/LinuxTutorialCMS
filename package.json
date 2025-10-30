@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "echo 'Linting not configured yet'",
-    "test": "echo 'No tests specified yet'"
+    "test": "echo 'No tests specified yet'",
+    "export-content": "cargo run --manifest-path backend/Cargo.toml --bin export_content",
+    "import-content": "cargo run --manifest-path backend/Cargo.toml --bin import_content"
   },
   "dependencies": {
     "lucide-react": "^0.292.0",
