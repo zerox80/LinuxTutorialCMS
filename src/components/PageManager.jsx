@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { api } from '../api/client'
 import { useContent } from '../context/ContentContext'
+import { normalizeTitle } from '../utils/postUtils'
 
 const defaultHeroJson = JSON.stringify(
   {
@@ -28,6 +29,8 @@ const defaultHeroJson = JSON.stringify(
   null,
   2,
 )
+
+const defaultHeroTitle = normalizeTitle(JSON.parse(defaultHeroJson).title, '')
 
 const defaultLayoutJson = JSON.stringify({}, null, 2)
 
@@ -66,6 +69,12 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
   const [layout, setLayout] = useState(
     initialData?.layout ? JSON.stringify(initialData.layout, null, 2) : defaultLayoutJson,
   )
+  const [heroTitle, setHeroTitle] = useState(() => {
+    if (initialData?.hero) {
+      return normalizeTitle(initialData.hero.title ?? initialData.hero, initialData?.title ?? '')
+    }
+    return initialData?.title ?? defaultHeroTitle
+  })
   const [error, setError] = useState(null)
 
   const handleSubmit = async (event) => {
@@ -73,15 +82,30 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
     setError(null)
 
     try {
+      const trimmedTitle = title.trim()
+      const trimmedSlug = slug.trim().toLowerCase()
+      const trimmedDescription = description.trim()
+      const trimmedNavLabel = navLabel.trim()
+      const heroPayloadRaw = parseJsonField(hero, 'Hero JSON')
+      const heroPayload =
+        typeof heroPayloadRaw === 'object' && heroPayloadRaw !== null ? { ...heroPayloadRaw } : {}
+      const trimmedHeroTitle = heroTitle.trim()
+
+      if (trimmedHeroTitle) {
+        heroPayload.title = trimmedHeroTitle
+      } else if (!heroPayload.title) {
+        heroPayload.title = trimmedTitle
+      }
+
       const payload = {
-        title: title.trim(),
-        slug: slug.trim().toLowerCase(),
-        description: description.trim(),
-        nav_label: navLabel.trim() ? navLabel.trim() : null,
+        title: trimmedTitle,
+        slug: trimmedSlug,
+        description: trimmedDescription,
+        nav_label: trimmedNavLabel ? trimmedNavLabel : null,
         show_in_nav: showInNav,
         is_published: isPublished,
         order_index: sanitizeInteger(orderIndex),
-        hero: parseJsonField(hero, 'Hero JSON'),
+        hero: heroPayload,
         layout: parseJsonField(layout, 'Layout JSON'),
       }
 
@@ -184,6 +208,39 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
             onChange={(event) => setDescription(event.target.value)}
             placeholder="Kurzbeschreibung der Seite"
           />
+        </label>
+
+        <label className="block text-sm font-medium text-gray-700">
+          Hero-Titel
+          <input
+            type="text"
+            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+            value={heroTitle}
+            onChange={(event) => {
+              const { value } = event.target
+              setHeroTitle(value)
+              const trimmedValue = value.trim()
+              setHero((currentHero) => {
+                try {
+                  const parsed = parseJsonField(currentHero, 'Hero JSON')
+                  const nextHero =
+                    typeof parsed === 'object' && parsed !== null ? { ...parsed } : {}
+                  if (trimmedValue) {
+                    nextHero.title = trimmedValue
+                  } else {
+                    delete nextHero.title
+                  }
+                  return JSON.stringify(nextHero, null, 2)
+                } catch (err) {
+                  return currentHero
+                }
+              })
+            }}
+            placeholder="Titel im oberen Bereich der Seite"
+          />
+          <span className="mt-1 block text-xs text-gray-500">
+            Wird beim Speichern automatisch in das Hero JSON übernommen.
+          </span>
         </label>
 
         <div className="flex flex-wrap items-center gap-4">
