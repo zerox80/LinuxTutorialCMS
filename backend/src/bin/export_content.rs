@@ -140,7 +140,7 @@ async fn main() -> Result<()> {
     let output_path = args
         .get(1)
         .map(String::as_str)
-        .unwrap_or("../content/site_content.json");
+        .unwrap_or("content/site_content.json");
     let path = Path::new(output_path);
 
     if let Some(parent) = path.parent() {
