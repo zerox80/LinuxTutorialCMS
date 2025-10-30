@@ -120,7 +120,7 @@
     @apply mt-2;
   }
 
-  .markdown-renderer code {
+  .markdown-renderer :not(pre) > code {
     @apply align-baseline;
     white-space: nowrap;
     display: inline-block;
@@ -129,6 +129,13 @@
     margin-right: -0.05em;
     padding-left: 0.4em;
     padding-right: 0.4em;
+  }
+
+  .markdown-renderer pre > code {
+    display: block;
+    white-space: pre;
+    margin: 0;
+    padding: 0;
   }
   
   .markdown-renderer li {
