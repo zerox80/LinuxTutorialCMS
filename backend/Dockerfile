@@ -20,8 +20,10 @@ RUN if [ ! -f Cargo.lock ]; then \
     fi
 
 # Build dependencies (cached layer)
-RUN mkdir src && \
+RUN mkdir -p src/bin && \
     echo "fn main() {}" > src/main.rs && \
+    echo "fn main() {}" > src/bin/export_content.rs && \
+    echo "fn main() {}" > src/bin/import_content.rs && \
     cargo build --release && \
     rm -rf src
 
