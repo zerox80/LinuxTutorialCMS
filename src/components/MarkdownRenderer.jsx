@@ -127,7 +127,7 @@ const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
             const childArray = Array.isArray(children) ? children : [children]
             const allText = childArray.every((child) => typeof child === 'string')
             const text = allText ? childArray.join('') : null
-            const isMath = inline && text && /^\$.*\$/.test(text)
+            const mathMatch = inline && text ? text.match(/^\$(.+)\$/) : null
 
             if (inline) {
               return (
@@ -138,7 +138,11 @@ const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
                   )}
                   {...props}
                 >
-                  {isMath ? <span className="inline-math">{text}</span> : text ?? children}
+                  {mathMatch ? (
+                    <span className="inline-math">{mathMatch[1].trim()}</span>
+                  ) : (
+                    text ?? children
+                  )}
                 </code>
               )
             }
