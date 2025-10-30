@@ -108,4 +108,17 @@
   .animate-slide-up-delayed-3 {
     animation: slideUp 0.8s ease-out 0.3s both;
   }
+
+  /* Markdown Renderer Fixes */
+  .markdown-renderer li > p {
+    @apply mt-0 inline;
+  }
+
+  .markdown-renderer li > p:not(:last-child) {
+    @apply mb-2;
+  }
+
+  .markdown-renderer code {
+    @apply align-baseline;
+  }
 }
