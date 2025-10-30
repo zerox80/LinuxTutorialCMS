@@ -1,0 +1,571 @@
+{
+  "site_content": [
+    {
+      "section": "footer",
+      "content": {
+        "bottom": {
+          "copyright": "© {year} Linux Tutorial. Alle Rechte vorbehalten.",
+          "signature": "Gemacht mit ❤️ für die Linux Community"
+        },
+        "brand": {
+          "description": "Dein umfassendes Tutorial für Linux - von den Basics bis zu Advanced Techniken.",
+          "icon": "Terminal",
+          "title": "Linux Tutorial"
+        },
+        "contactLinks": [
+          {
+            "href": "https://github.com",
+            "icon": "Github",
+            "label": "GitHub"
+          },
+          {
+            "href": "mailto:info@example.com",
+            "icon": "Mail",
+            "label": "E-Mail"
+          }
+        ],
+        "quickLinks": [
+          {
+            "label": "Grundlagen",
+            "target": {
+              "type": "section",
+              "value": "grundlagen"
+            }
+          },
+          {
+            "label": "Befehle",
+            "target": {
+              "type": "section",
+              "value": "befehle"
+            }
+          },
+          {
+            "label": "Praxis",
+            "target": {
+              "type": "section",
+              "value": "praxis"
+            }
+          },
+          {
+            "label": "Advanced",
+            "target": {
+              "type": "section",
+              "value": "advanced"
+            }
+          }
+        ]
+      },
+      "updated_at": "2025-10-30 15:39:02"
+    },
+    {
+      "section": "grundlagen_page",
+      "content": {
+        "cta": {
+          "description": "Wechsel zur Startseite und wähle das Modul, das am besten zu dir passt, oder tauche direkt in die Praxis- und Advanced-Themen ein, sobald du die Grundlagen sicher beherrschst.",
+          "primary": {
+            "href": "/",
+            "label": "Zur Startseite"
+          },
+          "secondary": {
+            "href": "/admin",
+            "label": "Tutorials verwalten"
+          },
+          "title": "Bereit für den nächsten Schritt?"
+        },
+        "hero": {
+          "badge": "Grundlagenkurs",
+          "description": "In diesem Grundlagenbereich begleiten wir dich von den allerersten Schritten im Terminal bis hin zu sicheren Arbeitsabläufen. Nach diesem Kurs bewegst du dich selbstbewusst in der Linux-Welt.",
+          "icon": "BookOpen",
+          "title": "Starte deine Linux-Reise mit einem starken Fundament"
+        },
+        "highlights": [
+          {
+            "description": "Lerne die wichtigsten Shell-Befehle, arbeite sicher mit Dateien und nutze Pipes, um Aufgaben zu automatisieren.",
+            "icon": "BookOpen",
+            "title": "Terminal Basics verstehen"
+          },
+          {
+            "description": "Verstehe das Zusammenspiel von Kernel, Distribution, Paketverwaltung und warum Linux so flexibel einsetzbar ist.",
+            "icon": "Compass",
+            "title": "Linux-Philosophie kennenlernen"
+          },
+          {
+            "description": "Setze das Erlernte direkt in kleinen Projekten um – von der Benutzerverwaltung bis zum Einrichten eines Webservers.",
+            "icon": "Layers",
+            "title": "Praxisnahe Übungen"
+          },
+          {
+            "description": "Erhalte Best Practices für Benutzerrechte, sudo, SSH und weitere Sicherheitsmechanismen.",
+            "icon": "ShieldCheck",
+            "title": "Sicher arbeiten"
+          }
+        ],
+        "modules": {
+          "description": "Unsere Tutorials bauen logisch aufeinander auf. Jedes Modul enthält praxisnahe Beispiele, Schritt-für-Schritt Anleitungen und kleine Wissenschecks, damit du deinen Fortschritt direkt sehen kannst.",
+          "items": [
+            "Einstieg in die Shell: Navigation, grundlegende Befehle, Dateiverwaltung",
+            "Linux-Systemaufbau: Kernel, Distributionen, Paketmanager verstehen und nutzen",
+            "Benutzer & Rechte: Arbeiten mit sudo, Gruppen und Dateiberechtigungen",
+            "Wichtige Tools: SSH, einfache Netzwerkanalyse und nützliche Utilities für den Alltag"
+          ],
+          "summary": [
+            "Über 40 praxisnahe Lessons",
+            "Schritt-für-Schritt Guides mit Screenshots & Code-Beispielen",
+            "Übungen und Checklisten zum Selbstüberprüfen"
+          ],
+          "title": "Module im Grundlagenkurs"
+        }
+      },
+      "updated_at": "2025-10-30 15:39:02"
+    },
+    {
+      "section": "header",
+      "content": {
+        "brand": {
+          "icon": "Terminal",
+          "name": "Linux Tutorial",
+          "tagline": ""
+        },
+        "cta": {
+          "authLabel": "Admin",
+          "guestLabel": "Login",
+          "icon": "Lock"
+        },
+        "navItems": [
+          {
+            "id": "home",
+            "label": "Home",
+            "type": "section"
+          },
+          {
+            "id": "grundlagen",
+            "label": "Grundlagen",
+            "path": "/grundlagen",
+            "type": "route"
+          },
+          {
+            "id": "befehle",
+            "label": "Befehle",
+            "type": "section"
+          },
+          {
+            "id": "praxis",
+            "label": "Praxis",
+            "type": "section"
+          },
+          {
+            "id": "advanced",
+            "label": "Advanced",
+            "type": "section"
+          }
+        ]
+      },
+      "updated_at": "2025-10-30 15:39:02"
+    },
+    {
+      "section": "hero",
+      "content": {
+        "badgeText": "Professionelles Linux Training",
+        "features": [
+          {
+            "color": "from-blue-500 to-cyan-500",
+            "description": "Strukturiert lernen mit klaren Beispielen",
+            "icon": "Book",
+            "title": "Schritt für Schritt"
+          },
+          {
+            "color": "from-purple-500 to-pink-500",
+            "description": "Direkt anwendbare Kommandos",
+            "icon": "Code",
+            "title": "Praktische Befehle"
+          },
+          {
+            "color": "from-orange-500 to-red-500",
+            "description": "Neueste Best Practices",
+            "icon": "Zap",
+            "title": "Modern & Aktuell"
+          }
+        ],
+        "primaryCta": {
+          "label": "Los geht's",
+          "target": {
+            "type": "section",
+            "value": "tutorials"
+          }
+        },
+        "secondaryCta": {
+          "label": "Mehr erfahren",
+          "target": {
+            "type": "section",
+            "value": "tutorials"
+          }
+        },
+        "subline": "Interaktiv, modern und praxisnah.",
+        "subtitle": "Dein umfassendes Tutorial für Linux - von den Basics bis zu Advanced Techniken.",
+        "title": {
+          "line1": "Lerne Linux",
+          "line2": "von Grund auf"
+        }
+      },
+      "updated_at": "2025-10-30 15:39:02"
+    },
+    {
+      "section": "tutorial_section",
+      "content": {
+        "ctaDescription": "Wähle ein Thema aus und starte deine Linux-Lernreise noch heute!",
+        "ctaPrimary": {
+          "label": "Tutorial starten",
+          "target": {
+            "type": "section",
+            "value": "home"
+          }
+        },
+        "ctaSecondary": {
+          "label": "Mehr erfahren",
+          "target": {
+            "type": "section",
+            "value": "home"
+          }
+        },
+        "description": "Umfassende Lernmodule für alle Erfahrungsstufen - vom Anfänger bis zum Profi",
+        "title": "Tutorial Inhalte"
+      },
+      "updated_at": "2025-10-30 15:39:02"
+    }
+  ],
+  "pages": [],
+  "posts": [],
+  "tutorials": [
+    {
+      "id": "1",
+      "title": "Grundlegende Befehle",
+      "description": "Lerne die wichtigsten Linux-Befehle für die tägliche Arbeit im Terminal.",
+      "icon": "Terminal",
+      "color": "from-blue-500 to-cyan-500",
+      "topics": [
+        "ls",
+        "cd",
+        "pwd",
+        "mkdir",
+        "rm",
+        "cp",
+        "mv",
+        "cat",
+        "grep",
+        "find",
+        "chmod",
+        "chown"
+      ],
+      "content": "",
+      "version": 1,
+      "created_at": "2025-10-30 15:39:04",
+      "updated_at": "2025-10-30 15:39:04"
+    },
+    {
+      "id": "2",
+      "title": "Dateisystem & Navigation",
+      "description": "Verstehe die Linux-Dateistruktur und navigiere effizient durch Verzeichnisse.",
+      "icon": "FolderTree",
+      "color": "from-green-500 to-emerald-500",
+      "topics": [
+        "Verzeichnisstruktur",
+        "Absolute vs. Relative Pfade",
+        "Symlinks",
+        "Mount Points"
+      ],
+      "content": "",
+      "version": 1,
+      "created_at": "2025-10-30 15:39:04",
+      "updated_at": "2025-10-30 15:39:04"
+    },
+    {
+      "id": "3",
+      "title": "Text-Editoren",
+      "description": "Beherrsche vim, nano und andere Editoren für die Arbeit in der Kommandozeile.",
+      "icon": "FileText",
+      "color": "from-purple-500 to-pink-500",
+      "topics": [
+        "vim Basics",
+        "nano Befehle",
+        "sed & awk",
+        "Regex Patterns"
+      ],
+      "content": "",
+      "version": 1,
+      "created_at": "2025-10-30 15:39:04",
+      "updated_at": "2025-10-30 15:39:04"
+    },
+    {
+      "id": "4",
+      "title": "Prozessverwaltung",
+      "description": "Verwalte und überwache Prozesse effektiv in deinem Linux-System.",
+      "icon": "Settings",
+      "color": "from-orange-500 to-red-500",
+      "topics": [
+        "ps",
+        "top",
+        "htop",
+        "kill",
+        "pkill",
+        "Background Jobs",
+        "systemctl"
+      ],
+      "content": "",
+      "version": 1,
+      "created_at": "2025-10-30 15:39:04",
+      "updated_at": "2025-10-30 15:39:04"
+    },
+    {
+      "id": "5",
+      "title": "Berechtigungen & Sicherheit",
+      "description": "Verstehe Benutzerrechte, Gruppen und Sicherheitskonzepte.",
+      "icon": "Shield",
+      "color": "from-indigo-500 to-blue-500",
+      "topics": [
+        "User & Groups",
+        "chmod & chown",
+        "sudo & su",
+        "SSH & Keys"
+      ],
+      "content": "",
+      "version": 1,
+      "created_at": "2025-10-30 15:39:04",
+      "updated_at": "2025-10-30 15:39:04"
+    },
+    {
+      "id": "6",
+      "title": "Netzwerk-Grundlagen",
+      "description": "Konfiguriere Netzwerke und nutze wichtige Netzwerk-Tools.",
+      "icon": "Network",
+      "color": "from-teal-500 to-green-500",
+      "topics": [
+        "ip & ifconfig",
+        "ping",
+        "traceroute",
+        "netstat",
+        "ss",
+        "curl & wget"
+      ],
+      "content": "",
+      "version": 1,
+      "created_at": "2025-10-30 15:39:04",
+      "updated_at": "2025-10-30 15:39:04"
+    },
+    {
+      "id": "7",
+      "title": "Bash Scripting",
+      "description": "Automatisiere Aufgaben mit Shell-Scripts und Bash-Programmierung.",
+      "icon": "Database",
+      "color": "from-yellow-500 to-orange-500",
+      "topics": [
+        "Variables & Loops",
+        "If-Statements",
+        "Functions",
+        "Cron Jobs"
+      ],
+      "content": "",
+      "version": 1,
+      "created_at": "2025-10-30 15:39:04",
+      "updated_at": "2025-10-30 15:39:04"
+    },
+    {
+      "id": "8",
+      "title": "System Administration",
+      "description": "Erweiterte Admin-Aufgaben und Systemwartung.",
+      "icon": "Server",
+      "color": "from-red-500 to-pink-500",
+      "topics": [
+        "Package Manager",
+        "Logs & Monitoring",
+        "Backup & Recovery",
+        "Performance Tuning"
+      ],
+      "content": "",
+      "version": 1,
+      "created_at": "2025-10-30 15:39:04",
+      "updated_at": "2025-10-30 15:39:04"
+    }
+  ],
+  "tutorial_topics": [
+    {
+      "tutorial_id": "1",
+      "topic": "cat"
+    },
+    {
+      "tutorial_id": "1",
+      "topic": "cd"
+    },
+    {
+      "tutorial_id": "1",
+      "topic": "chmod"
+    },
+    {
+      "tutorial_id": "1",
+      "topic": "chown"
+    },
+    {
+      "tutorial_id": "1",
+      "topic": "cp"
+    },
+    {
+      "tutorial_id": "1",
+      "topic": "find"
+    },
+    {
+      "tutorial_id": "1",
+      "topic": "grep"
+    },
+    {
+      "tutorial_id": "1",
+      "topic": "ls"
+    },
+    {
+      "tutorial_id": "1",
+      "topic": "mkdir"
+    },
+    {
+      "tutorial_id": "1",
+      "topic": "mv"
+    },
+    {
+      "tutorial_id": "1",
+      "topic": "pwd"
+    },
+    {
+      "tutorial_id": "1",
+      "topic": "rm"
+    },
+    {
+      "tutorial_id": "2",
+      "topic": "Absolute vs. Relative Pfade"
+    },
+    {
+      "tutorial_id": "2",
+      "topic": "Mount Points"
+    },
+    {
+      "tutorial_id": "2",
+      "topic": "Symlinks"
+    },
+    {
+      "tutorial_id": "2",
+      "topic": "Verzeichnisstruktur"
+    },
+    {
+      "tutorial_id": "3",
+      "topic": "Regex Patterns"
+    },
+    {
+      "tutorial_id": "3",
+      "topic": "nano Befehle"
+    },
+    {
+      "tutorial_id": "3",
+      "topic": "sed & awk"
+    },
+    {
+      "tutorial_id": "3",
+      "topic": "vim Basics"
+    },
+    {
+      "tutorial_id": "4",
+      "topic": "Background Jobs"
+    },
+    {
+      "tutorial_id": "4",
+      "topic": "htop"
+    },
+    {
+      "tutorial_id": "4",
+      "topic": "kill"
+    },
+    {
+      "tutorial_id": "4",
+      "topic": "pkill"
+    },
+    {
+      "tutorial_id": "4",
+      "topic": "ps"
+    },
+    {
+      "tutorial_id": "4",
+      "topic": "systemctl"
+    },
+    {
+      "tutorial_id": "4",
+      "topic": "top"
+    },
+    {
+      "tutorial_id": "5",
+      "topic": "SSH & Keys"
+    },
+    {
+      "tutorial_id": "5",
+      "topic": "User & Groups"
+    },
+    {
+      "tutorial_id": "5",
+      "topic": "chmod & chown"
+    },
+    {
+      "tutorial_id": "5",
+      "topic": "sudo & su"
+    },
+    {
+      "tutorial_id": "6",
+      "topic": "curl & wget"
+    },
+    {
+      "tutorial_id": "6",
+      "topic": "ip & ifconfig"
+    },
+    {
+      "tutorial_id": "6",
+      "topic": "netstat"
+    },
+    {
+      "tutorial_id": "6",
+      "topic": "ping"
+    },
+    {
+      "tutorial_id": "6",
+      "topic": "ss"
+    },
+    {
+      "tutorial_id": "6",
+      "topic": "traceroute"
+    },
+    {
+      "tutorial_id": "7",
+      "topic": "Cron Jobs"
+    },
+    {
+      "tutorial_id": "7",
+      "topic": "Functions"
+    },
+    {
+      "tutorial_id": "7",
+      "topic": "If-Statements"
+    },
+    {
+      "tutorial_id": "7",
+      "topic": "Variables & Loops"
+    },
+    {
+      "tutorial_id": "8",
+      "topic": "Backup & Recovery"
+    },
+    {
+      "tutorial_id": "8",
+      "topic": "Logs & Monitoring"
+    },
+    {
+      "tutorial_id": "8",
+      "topic": "Package Manager"
+    },
+    {
+      "tutorial_id": "8",
+      "topic": "Performance Tuning"
+    }
+  ]
+}
