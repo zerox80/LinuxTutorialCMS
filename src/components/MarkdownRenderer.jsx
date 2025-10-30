@@ -124,8 +124,10 @@ const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
             </td>
           ),
           code: ({ inline, className, children, ...props }) => {
-            const text = Array.isArray(children) ? children.join('') : children
-            const isMath = inline && /^\$.*\$/.test(text)
+            const childArray = Array.isArray(children) ? children : [children]
+            const allText = childArray.every((child) => typeof child === 'string')
+            const text = allText ? childArray.join('') : null
+            const isMath = inline && text && /^\$.*\$/.test(text)
 
             if (inline) {
               return (
@@ -136,7 +138,7 @@ const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
                   )}
                   {...props}
                 >
-                  {isMath ? <span className="inline-math">{text}</span> : text}
+                  {isMath ? <span className="inline-math">{text}</span> : text ?? children}
                 </code>
               )
             }
@@ -146,7 +148,7 @@ const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
                 className={mergeClassNames(className, 'block font-mono text-sm leading-relaxed')}
                 {...props}
               >
-                {text}
+                {children}
               </code>
             )
           },
