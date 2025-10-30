@@ -298,7 +298,7 @@ pub async fn update_tutorial(
     
     // Check if user is admin
     if claims.role != "admin" {
-        tracing::warn!("Unauthorized update attempt for tutorial {} by user {}", id, claims.username);
+        tracing::warn!("Unauthorized update attempt for tutorial {} by user {}", id, claims.sub);
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse {
