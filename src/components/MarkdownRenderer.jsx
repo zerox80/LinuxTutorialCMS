@@ -20,8 +20,8 @@ const headingClasses = {
 
 const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
   const remarkPlugins = withBreaks
-    ? [remarkGfm, remarkMath, remarkBreaks]
-    : [remarkGfm, remarkMath]
+    ? [remarkMath, remarkGfm, remarkBreaks]
+    : [remarkMath, remarkGfm]
 
   return (
     <div className={mergeClassNames('markdown-renderer text-gray-700', className)}>
@@ -128,39 +128,25 @@ const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
               {children}
             </td>
           ),
-          code: ({ inline, className, children, ...props }) => {
-            const childArray = Array.isArray(children) ? children : [children]
-            const allText = childArray.every((child) => typeof child === 'string')
-            const text = allText ? childArray.join('') : null
-            const mathMatch = inline && text ? text.match(/^\$(.+)\$/) : null
-
-            if (inline) {
-              return (
-                <code
-                  className={mergeClassNames(
-                    className,
-                    'rounded-md bg-gray-100 py-0.5 font-mono text-sm text-primary-700'
-                  )}
-                  {...props}
-                >
-                  {mathMatch ? (
-                    <span className="inline-math">{mathMatch[1].trim()}</span>
-                  ) : (
-                    text ?? children
-                  )}
-                </code>
-              )
-            }
-
-            return (
+          code: ({ inline, className, children, ...props }) =>
+            inline ? (
+              <code
+                className={mergeClassNames(
+                  className,
+                  'rounded-md bg-gray-100 py-0.5 font-mono text-sm text-primary-700'
+                )}
+                {...props}
+              >
+                {children}
+              </code>
+            ) : (
               <code
                 className={mergeClassNames(className, 'block font-mono text-sm leading-relaxed')}
                 {...props}
               >
                 {children}
               </code>
-            )
-          },
+            ),
           pre: ({ className, children, ...props }) => (
             <pre
               className={mergeClassNames(
