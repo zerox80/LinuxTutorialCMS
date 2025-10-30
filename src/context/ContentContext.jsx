@@ -262,6 +262,29 @@ export const ContentProvider = ({ children }) => {
     [],
   )
 
+  const invalidatePageCache = useCallback((slug) => {
+    if (slug && typeof slug === 'string') {
+      const normalizedSlug = slug.trim().toLowerCase()
+      if (!normalizedSlug) {
+        return
+      }
+
+      setPageCache((prev) => {
+        if (!prev[normalizedSlug]) {
+          return prev
+        }
+        const next = { ...prev }
+        delete next[normalizedSlug]
+        pageCacheRef.current = next
+        return next
+      })
+      return
+    }
+
+    pageCacheRef.current = {}
+    setPageCache({})
+  }, [])
+
   useEffect(() => {
     loadContent()
   }, [loadContent])
@@ -352,6 +375,7 @@ export const ContentProvider = ({ children }) => {
       loading: publishedPagesLoading,
       error: publishedPagesError,
       refresh: loadPublishedPages,
+      invalidate: invalidatePageCache,
     },
   }), [
     content,
@@ -370,6 +394,7 @@ export const ContentProvider = ({ children }) => {
     publishedPagesLoading,
     publishedPagesError,
     loadPublishedPages,
+    invalidatePageCache,
   ]);
 
   return <ContentContext.Provider value={value}>{children}</ContentContext.Provider>;

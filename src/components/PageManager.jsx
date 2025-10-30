@@ -726,15 +726,28 @@ const PageManager = () => {
   const submitPageForm = async (payload) => {
     try {
       setPageFormSubmitting(true)
+      let response
       if (pageFormMode === 'edit' && pageFormData?.id) {
-        await api.updatePage(pageFormData.id, payload)
+        response = await api.updatePage(pageFormData.id, payload)
       } else {
-        await api.createPage(payload)
+        response = await api.createPage(payload)
       }
+
+      const previousSlug = pageFormMode === 'edit' ? pageFormData?.slug : null
+      const nextSlug = response?.slug ?? payload?.slug ?? previousSlug
+
+      if (previousSlug && previousSlug !== nextSlug) {
+        publishedPages?.invalidate?.(previousSlug)
+      }
+      if (nextSlug) {
+        publishedPages?.invalidate?.(nextSlug)
+      }
+
       setPageFormMode(null)
       setPageFormData(null)
       await loadPages()
       refreshNavigation()
+      publishedPages?.refresh?.()
     } finally {
       setPageFormSubmitting(false)
     }
