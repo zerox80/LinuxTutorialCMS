@@ -22,7 +22,7 @@ const resolveContactFallbackIcon = (contact) => {
 }
 
 const Footer = () => {
-  const { getSection } = useContent()
+  const { getSection, navigation } = useContent()
   const footerContent = getSection('footer') ?? {}
   const currentYear = new Date().getFullYear()
   const navigate = useNavigate()
@@ -33,14 +33,86 @@ const Footer = () => {
     [footerContent?.brand?.icon],
   )
 
-  const quickLinks = Array.isArray(footerContent?.quickLinks) ? footerContent.quickLinks : []
+  const manualQuickLinks = Array.isArray(footerContent?.quickLinks) ? footerContent.quickLinks : []
   const contactLinks = Array.isArray(footerContent?.contactLinks) ? footerContent.contactLinks : []
 
-  const handleQuickLink = (link) => {
-    const target = link?.target
-    if (!target) return
+  const navigationQuickLinks = useMemo(() => {
+    const items = Array.isArray(navigation?.items) ? navigation.items : []
 
-    navigateContentTarget(target, { navigate, location })
+    return items
+      .map((item) => {
+        if (!item) return null
+
+        if (item.target) {
+          return {
+            label: item.label || item.slug || 'Link',
+            target: item.target,
+          }
+        }
+
+        if (item.href) {
+          return {
+            label: item.label || item.slug || item.href,
+            href: item.href,
+          }
+        }
+
+        if (item.type === 'route' && item.path) {
+          return {
+            label: item.label || item.slug || item.path,
+            target: { type: 'route', value: item.path },
+          }
+        }
+
+        if (item.type === 'section') {
+          const sectionValue = item.path || item.value || item.id
+          if (!sectionValue) return null
+          return {
+            label: item.label || 'Link',
+            target: { type: 'section', value: sectionValue },
+          }
+        }
+
+        if (item.slug) {
+          return {
+            label: item.label || item.slug,
+            target: { type: 'route', value: `/pages/${item.slug}` },
+          }
+        }
+
+        return null
+      })
+      .filter(Boolean)
+  }, [navigation?.items])
+
+  const quickLinks = useMemo(() => {
+    const manual = manualQuickLinks.map((link) => ({ ...link }))
+    return [...navigationQuickLinks, ...manual]
+  }, [manualQuickLinks, navigationQuickLinks])
+
+  const handleQuickLink = (link) => {
+    if (!link) return
+
+    const target = link.target
+    const href = link.href || link.url
+    const path = link.path
+
+    if (target) {
+      navigateContentTarget(target, { navigate, location })
+      return
+    }
+
+    if (href) {
+      if (typeof window !== 'undefined') {
+        window.open(href, href.startsWith('http') ? '_blank' : '_self', 'noopener')
+      }
+      return
+    }
+
+    if (path) {
+      navigate(path)
+      return
+    }
   }
 
   return (
