@@ -182,10 +182,52 @@ HeroPreview.propTypes = {
   content: PropTypes.object.isRequired,
 }
 
+const TutorialSectionPreview = ({ content }) => {
+  return (
+    <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+        <h4 className="text-lg font-semibold text-gray-900">Tutorial-Sektion</h4>
+        <span className="rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
+          Vorschau
+        </span>
+      </div>
+      
+      <div className="space-y-3">
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Badge</p>
+          <p className="mt-1 text-sm font-semibold text-gray-900">{content.badge || 'Tutorials'}</p>
+        </div>
+        
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Titel</p>
+          <p className="mt-1 text-sm font-semibold text-gray-900">{content.title || 'Linux Tutorials'}</p>
+        </div>
+        
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Untertitel</p>
+          <p className="mt-1 text-sm text-gray-700">{content.subtitle || 'Lerne die Grundlagen'}</p>
+        </div>
+        
+        <div className="rounded-lg border border-primary-200 bg-primary-50 p-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-primary-600">Button-Text</p>
+          <p className="mt-1 text-sm font-semibold text-primary-700">{content.tutorialCardButton || 'Zum Tutorial'}</p>
+          <p className="mt-1 text-xs text-primary-600">Dieser Text erscheint auf den Tutorial-Karten</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+TutorialSectionPreview.propTypes = {
+  content: PropTypes.object.isRequired,
+}
+
 const SectionPreview = ({ section, content }) => {
   switch (section) {
     case 'hero':
       return <HeroPreview content={content} />
+    case 'tutorial_section':
+      return <TutorialSectionPreview content={content} />
     default:
       return (
         <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600 shadow-sm">
