@@ -23,7 +23,6 @@ fn allowed_sections() -> &'static HashSet<&'static str> {
             "tutorial_section",
             "header",
             "footer",
-            "grundlagen_page",
         ]
         .into_iter()
         .collect()
