@@ -2,7 +2,10 @@ import PropTypes from 'prop-types'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
+import remarkMath from 'remark-math'
 import rehypeHighlight from 'rehype-highlight'
+import rehypeKatex from 'rehype-katex'
+import 'katex/dist/katex.min.css'
 
 const mergeClassNames = (...classes) => classes.filter(Boolean).join(' ')
 
@@ -16,13 +19,15 @@ const headingClasses = {
 }
 
 const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
-  const remarkPlugins = withBreaks ? [remarkGfm, remarkBreaks] : [remarkGfm]
+  const remarkPlugins = withBreaks
+    ? [remarkGfm, remarkMath, remarkBreaks]
+    : [remarkGfm, remarkMath]
 
   return (
     <div className={mergeClassNames('markdown-renderer text-gray-700', className)}>
       <ReactMarkdown
         remarkPlugins={remarkPlugins}
-        rehypePlugins={[rehypeHighlight]}
+        rehypePlugins={[rehypeKatex, rehypeHighlight]}
         components={{
           h1: ({ node, children, ...props }) => (
             <h1 className={headingClasses[1]} {...props}>
