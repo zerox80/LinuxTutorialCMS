@@ -294,8 +294,11 @@ pub async fn update_tutorial(
     Path(id): Path<String>,
     Json(payload): Json<UpdateTutorialRequest>,
 ) -> Result<Json<TutorialResponse>, (StatusCode, Json<ErrorResponse>)> {
+    tracing::info!("Updating tutorial with id: {}", id);
+    
     // Check if user is admin
     if claims.role != "admin" {
+        tracing::warn!("Unauthorized update attempt for tutorial {} by user {}", id, claims.username);
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse {
@@ -306,6 +309,7 @@ pub async fn update_tutorial(
 
     // Validate ID
     if let Err(e) = validate_tutorial_id(&id) {
+        tracing::warn!("Invalid tutorial ID during update: {}", id);
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse { error: e }),
@@ -341,8 +345,16 @@ pub async fn update_tutorial(
     let color = payload.color.unwrap_or(tutorial.color);
     let content = payload.content.unwrap_or(tutorial.content);
 
+    tracing::debug!(
+        "Tutorial update data - title length: {}, description length: {}, content length: {}",
+        title.len(),
+        description.len(),
+        content.len()
+    );
+
     // Validate updated data
     if let Err(e) = validate_tutorial_data(&title, &description, &content) {
+        tracing::warn!("Validation failed for tutorial {}: {}", id, e);
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse { error: e }),
@@ -426,16 +438,16 @@ pub async fn update_tutorial(
         WHERE id = ? AND version = ?
         "#,
     )
-    .bind(&title)
-    .bind(&description)
-    .bind(&icon)
-    .bind(&color)
-    .bind(&topics_json)
-    .bind(&content)
-    .bind(new_version)
-    .bind(&now)
-    .bind(&id)
-    .bind(tutorial.version)
+    .bind(&title)          // 1. title
+    .bind(&description)    // 2. description
+    .bind(&icon)           // 3. icon
+    .bind(&color)          // 4. color
+    .bind(&topics_json)    // 5. topics
+    .bind(&content)        // 6. content
+    .bind(new_version)     // 7. version
+    .bind(&now)            // 8. updated_at
+    .bind(&id)             // 9. id (WHERE)
+    .bind(tutorial.version) // 10. version (WHERE)
     .execute(&pool)
     .await
     .map_err(|e| {
@@ -459,10 +471,11 @@ pub async fn update_tutorial(
     }
 
     // Sync tutorial_topics table
+    tracing::debug!("Updating tutorial_topics table for tutorial {}", id);
     crate::db::replace_tutorial_topics(&pool, &id, &topics_vec)
         .await
         .map_err(|e| {
-            tracing::error!("Failed to update tutorial topics: {}", e);
+            tracing::error!("Failed to update tutorial topics for {}: {}", id, e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse {
@@ -471,6 +484,7 @@ pub async fn update_tutorial(
             )
         })?;
 
+    tracing::info!("Successfully updated tutorial {}", id);
     Ok(Json(TutorialResponse {
         id,
         title,

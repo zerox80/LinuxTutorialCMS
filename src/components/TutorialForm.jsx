@@ -107,7 +107,26 @@ const TutorialForm = ({ tutorial, onClose }) => {
       }
       onClose()
     } catch (error) {
-      setFormError('Fehler beim Speichern: ' + (error.message || 'Unbekannter Fehler'))
+      console.error('Tutorial save error:', error)
+      
+      // Bessere Fehlermeldungen basierend auf dem Fehlertyp
+      let errorMessage = 'Fehler beim Speichern: '
+      
+      if (error.status === 502) {
+        errorMessage += 'Der Server antwortet nicht. Bitte versuche es in ein paar Sekunden erneut.'
+      } else if (error.status === 504 || error.status === 408) {
+        errorMessage += 'Die Anfrage dauert zu lange. Versuche, weniger Inhalt auf einmal zu speichern.'
+      } else if (error.status === 413) {
+        errorMessage += 'Der Inhalt ist zu groß. Bitte reduziere die Größe des Tutorials.'
+      } else if (error.status === 409) {
+        errorMessage += 'Das Tutorial wurde von jemand anderem geändert. Bitte lade die Seite neu.'
+      } else if (error.status >= 500) {
+        errorMessage += 'Serverfehler. Bitte kontaktiere den Administrator.'
+      } else {
+        errorMessage += error.message || 'Unbekannter Fehler'
+      }
+      
+      setFormError(errorMessage)
     } finally {
       setSubmitting(false)
     }

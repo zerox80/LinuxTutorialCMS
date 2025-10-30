@@ -175,7 +175,12 @@ class ApiClient {
         }
       } else {
         const text = await response.text()
-        payload = text ? { message: text } : null
+        // Bei HTML-Fehlerseiten (z.B. 502 von nginx) keine lange Fehlermeldung anzeigen
+        if (contentType.includes('text/html') && !response.ok) {
+          payload = { message: 'Server-Fehler' }
+        } else {
+          payload = text ? { message: text } : null
+        }
       }
 
       if (!response.ok) {
