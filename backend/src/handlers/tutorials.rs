@@ -57,7 +57,8 @@ pub(crate) fn validate_icon(icon: &str) -> Result<(), String> {
 pub(crate) fn validate_color(color: &str) -> Result<(), String> {
     static COLOR_REGEX: OnceLock<Regex> = OnceLock::new();
     let regex = COLOR_REGEX.get_or_init(|| {
-        Regex::new(r"^from-[A-Za-z0-9-]+(?:\s+via-[A-Za-z0-9-]+)?\s+to-[A-Za-z0-9-]+$")
+        // Use simple space instead of \s to avoid unicode-perl feature requirement
+        Regex::new(r"^from-[A-Za-z0-9-]+( via-[A-Za-z0-9-]+)? to-[A-Za-z0-9-]+$")
             .expect("Failed to compile gradient regex")
     });
 
