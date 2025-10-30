@@ -271,7 +271,19 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
               className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-mono focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
               rows={8}
               value={hero}
-              onChange={(event) => setHero(event.target.value)}
+              onChange={(event) => {
+                const { value } = event.target
+                setHero(value)
+                try {
+                  const parsed = JSON.parse(value)
+                  const derivedTitle = normalizeTitle(parsed?.title ?? parsed, '').trim()
+                  setHeroTitle((previous) =>
+                    derivedTitle !== previous ? derivedTitle : previous,
+                  )
+                } catch (err) {
+                  // Ignore JSON parse errors while the user is typing
+                }
+              }}
             />
           </label>
           <label className="block text-sm font-medium text-gray-700">
