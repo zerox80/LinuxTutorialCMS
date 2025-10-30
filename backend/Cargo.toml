@@ -1,8 +1,14 @@
 [package]
 name = "linux-tutorial-backend"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 rust-version = "1.82"  # Minimum Supported Rust Version
+authors = ["zerox80"]
+license = "MIT"
+description = "High-performance Rust backend API for Linux Tutorial CMS"
+repository = "https://github.com/zerox80/LinuxTutorialCMS"
+keywords = ["cms", "api", "tutorial", "axum", "education"]
+categories = ["web-programming", "web-programming::http-server"]
 
 [dependencies]
 axum = "0.7"

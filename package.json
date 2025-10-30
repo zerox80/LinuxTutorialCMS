@@ -1,7 +1,24 @@
 {
-  "name": "linux-tutorial",
-  "private": true,
+  "name": "linux-tutorial-cms",
   "version": "1.0.0",
+  "description": "A modern, fully customizable CMS for creating beautiful tutorial websites with React and Rust",
+  "author": "zerox80",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zerox80/LinuxTutorialCMS"
+  },
+  "keywords": [
+    "cms",
+    "tutorial",
+    "linux",
+    "react",
+    "rust",
+    "education",
+    "learning-platform",
+    "content-management",
+    "admin-panel"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",

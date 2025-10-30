@@ -56,6 +56,7 @@ const TutorialSection = () => {
               {...tutorial}
               icon={getIconComponent(tutorial.icon)}
               onSelect={() => navigate(`/tutorials/${tutorial.id}`)}
+              buttonLabel={sectionContent.tutorialCardButton || 'Zum Tutorial'}
             />
           ))}
         </div>
