@@ -2,10 +2,7 @@ import PropTypes from 'prop-types'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
-import remarkMath from 'remark-math'
 import rehypeHighlight from 'rehype-highlight'
-import rehypeKatex from 'rehype-katex'
-import 'katex/dist/katex.min.css'
 
 const mergeClassNames = (...classes) => classes.filter(Boolean).join(' ')
 
@@ -19,15 +16,13 @@ const headingClasses = {
 }
 
 const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
-  const remarkPlugins = withBreaks
-    ? [remarkGfm, remarkMath, remarkBreaks]
-    : [remarkGfm, remarkMath]
+  const remarkPlugins = withBreaks ? [remarkGfm, remarkBreaks] : [remarkGfm]
 
   return (
     <div className={mergeClassNames('markdown-renderer text-gray-700', className)}>
       <ReactMarkdown
         remarkPlugins={remarkPlugins}
-        rehypePlugins={[rehypeKatex, rehypeHighlight]}
+        rehypePlugins={[rehypeHighlight]}
         components={{
           h1: ({ node, children, ...props }) => (
             <h1 className={headingClasses[1]} {...props}>
@@ -128,25 +123,33 @@ const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
               {children}
             </td>
           ),
-          code: ({ inline, className, children, ...props }) =>
-            inline ? (
-              <code
-                className={mergeClassNames(
-                  className,
-                  'rounded-md bg-gray-100 py-0.5 font-mono text-sm text-primary-700'
-                )}
-                {...props}
-              >
-                {children}
-              </code>
-            ) : (
+          code: ({ inline, className, children, ...props }) => {
+            const text = Array.isArray(children) ? children.join('') : children
+            const isMath = inline && /^\$.*\$/.test(text)
+
+            if (inline) {
+              return (
+                <code
+                  className={mergeClassNames(
+                    className,
+                    'rounded-md bg-gray-100 py-0.5 font-mono text-sm text-primary-700'
+                  )}
+                  {...props}
+                >
+                  {isMath ? <span className="inline-math">{text}</span> : text}
+                </code>
+              )
+            }
+
+            return (
               <code
                 className={mergeClassNames(className, 'block font-mono text-sm leading-relaxed')}
                 {...props}
               >
-                {children}
+                {text}
               </code>
-            ),
+            )
+          },
           pre: ({ className, children, ...props }) => (
             <pre
               className={mergeClassNames(
