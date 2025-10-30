@@ -61,11 +61,43 @@ const DynamicPage = () => {
   const page = pageData?.page
   const posts = Array.isArray(pageData?.posts) ? pageData.posts : []
   const hero = page?.hero ?? {}
+  const layout = page?.layout ?? {}
+  const aboutSection = layout?.aboutSection ?? {}
+  const postsSection = layout?.postsSection ?? {}
 
   const heroTitle = normalizeTitle(hero.title, page?.title)
   const heroSubtitle = normalizeText(hero.subtitle ?? hero.description, page?.description)
   const heroBadge = normalizeText(hero.badge ?? hero.badgeText, null)
   const heroGradient = hero.backgroundGradient || hero.gradient || 'from-primary-600 to-primary-700'
+
+  const aboutTitle = normalizeText(aboutSection.title, 'Über diese Seite')
+  const postsTitle = normalizeText(postsSection.title, 'Beiträge')
+  const postsEmptyTitle = normalizeText(postsSection.emptyTitle, 'Keine Beiträge vorhanden')
+  const postsEmptyMessage = normalizeText(
+    postsSection.emptyMessage,
+    'Sobald für diese Seite Beiträge veröffentlicht werden, erscheinen sie hier.',
+  )
+  const postsCountSingular = normalizeText(
+    postsSection.countLabelSingular,
+    '{count} veröffentlichter Beitrag',
+  )
+  const postsCountPlural = normalizeText(
+    postsSection.countLabelPlural,
+    '{count} veröffentlichte Beiträge',
+  )
+
+  const formatPostsCount = (count) => {
+    const template = count === 1 ? postsCountSingular : postsCountPlural
+    if (typeof template === 'string' && template.includes('{count}')) {
+      return template.replace('{count}', count)
+    }
+    if (template && typeof template === 'string') {
+      return template
+    }
+    return count === 1
+      ? `${count} veröffentlichter Beitrag`
+      : `${count} veröffentlichte Beiträge`
+  }
 
   const hasContent = Boolean(page)
 
@@ -118,7 +150,7 @@ const DynamicPage = () => {
 
             {page?.description && (
               <section className="bg-white rounded-3xl shadow-lg border border-gray-100 px-6 py-8 sm:px-10">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-3">Über diese Seite</h2>
+                <h2 className="text-2xl font-semibold text-gray-900 mb-3">{aboutTitle}</h2>
                 <p className="text-gray-700 leading-relaxed">{page.description}</p>
               </section>
             )}
@@ -126,16 +158,16 @@ const DynamicPage = () => {
             <section className="space-y-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-2xl font-semibold text-gray-900">
-                  {posts.length > 0 ? 'Beiträge' : 'Keine Beiträge vorhanden'}
+                  {posts.length > 0 ? postsTitle : postsEmptyTitle}
                 </h2>
                 {posts.length > 0 && (
-                  <span className="text-sm text-gray-500">{posts.length} veröffentlichte Beitrag{posts.length === 1 ? '' : 'e'}</span>
+                  <span className="text-sm text-gray-500">{formatPostsCount(posts.length)}</span>
                 )}
               </div>
 
               {posts.length === 0 ? (
                 <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center text-gray-600">
-                  Sobald für diese Seite Beiträge veröffentlicht werden, erscheinen sie hier.
+                  {postsEmptyMessage}
                 </div>
               ) : (
                 <div className="space-y-10">

@@ -32,7 +32,20 @@ const defaultHeroJson = JSON.stringify(
 
 const defaultHeroTitle = normalizeTitle(JSON.parse(defaultHeroJson).title, '')
 
-const defaultLayoutJson = JSON.stringify({}, null, 2)
+const defaultLayoutConfig = {
+  aboutSection: {
+    title: 'Über diese Seite',
+  },
+  postsSection: {
+    title: 'Beiträge',
+    emptyTitle: 'Keine Beiträge vorhanden',
+    emptyMessage: 'Sobald für diese Seite Beiträge veröffentlicht werden, erscheinen sie hier.',
+    countLabelSingular: '{count} veröffentlichter Beitrag',
+    countLabelPlural: '{count} veröffentlichte Beiträge',
+  },
+}
+
+const defaultLayoutJson = JSON.stringify(defaultLayoutConfig, null, 2)
 
 const parseJsonField = (value, field) => {
   const trimmed = (value ?? '').trim()
@@ -294,6 +307,10 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
               value={layout}
               onChange={(event) => setLayout(event.target.value)}
             />
+            <span className="mt-1 block text-xs text-gray-500">
+              Verwendet u.a. <code>aboutSection.title</code>, <code>postsSection.title</code>,{' '}
+              <code>postsSection.emptyTitle</code>, <code>postsSection.emptyMessage</code>.
+            </span>
           </label>
         </div>
 
