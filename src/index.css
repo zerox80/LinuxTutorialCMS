@@ -111,14 +111,35 @@
 
   /* Markdown Renderer Fixes */
   .markdown-renderer li > p {
-    @apply mt-0 inline;
+    @apply mt-0 mb-0;
+    display: inline;
   }
 
-  .markdown-renderer li > p:not(:last-child) {
-    @apply mb-2;
+  .markdown-renderer li > p + p {
+    display: block;
+    @apply mt-2;
   }
 
   .markdown-renderer code {
     @apply align-baseline;
+    white-space: nowrap;
+    display: inline-block;
+    /* Small negative margins to keep punctuation close */
+    margin-left: -0.05em;
+    margin-right: -0.05em;
+    padding-left: 0.4em;
+    padding-right: 0.4em;
+  }
+  
+  .markdown-renderer li {
+    @apply break-normal;
+  }
+
+  /* Better text wrapping */
+  .markdown-renderer p,
+  .markdown-renderer li {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: none;
   }
 }

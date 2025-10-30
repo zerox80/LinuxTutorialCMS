@@ -128,9 +128,8 @@ const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
               <code
                 className={mergeClassNames(
                   className,
-                  'whitespace-nowrap rounded-md bg-gray-100 px-1.5 py-0.5 font-mono text-sm text-primary-700'
+                  'rounded-md bg-gray-100 py-0.5 font-mono text-sm text-primary-700'
                 )}
-                style={{ display: 'inline' }}
                 {...props}
               >
                 {children}
