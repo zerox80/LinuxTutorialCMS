@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import PropTypes from 'prop-types'
 import {
   AlertCircle,
@@ -721,6 +721,7 @@ const PageManager = () => {
   const [posts, setPosts] = useState([])
   const [postsLoading, setPostsLoading] = useState(false)
   const [postsError, setPostsError] = useState(null)
+  const postsRequestRef = useRef(0)
 
   const [postFormMode, setPostFormMode] = useState(null)
   const [postFormData, setPostFormData] = useState(null)
@@ -738,7 +739,16 @@ const PageManager = () => {
       const data = await api.listPages()
       const items = Array.isArray(data?.items) ? data.items : []
       setPages(items)
-      if (items.length > 0 && !items.find((item) => item.id === selectedPageId)) {
+      if (items.length === 0) {
+        postsRequestRef.current += 1
+        setSelectedPageId(null)
+        setPosts([])
+        setPostsError(null)
+        setPostsLoading(false)
+        return
+      }
+
+      if (!items.find((item) => item.id === selectedPageId)) {
         setSelectedPageId(items[0].id)
       }
     } catch (err) {
@@ -756,19 +766,32 @@ const PageManager = () => {
   const loadPosts = useCallback(
     async (pageId) => {
       if (!pageId) {
+        postsRequestRef.current += 1
         setPosts([])
+        setPostsLoading(false)
+        setPostsError(null)
         return
       }
+
+      const requestId = postsRequestRef.current + 1
+      postsRequestRef.current = requestId
+
+      setPostsLoading(true)
+      setPostsError(null)
       try {
-        setPostsLoading(true)
-        setPostsError(null)
         const data = await api.listPosts(pageId)
         const items = Array.isArray(data?.items) ? data.items : []
-        setPosts(items)
+        if (postsRequestRef.current === requestId) {
+          setPosts(items)
+        }
       } catch (err) {
-        setPostsError(err)
+        if (postsRequestRef.current === requestId) {
+          setPostsError(err)
+        }
       } finally {
-        setPostsLoading(false)
+        if (postsRequestRef.current === requestId) {
+          setPostsLoading(false)
+        }
       }
     },
     [],
@@ -794,12 +817,22 @@ const PageManager = () => {
     setPageFormData(page)
   }
 
-  const handleDeletePage = async (pageId) => {
+  const handleDeletePage = async (page) => {
+    const pageId = page?.id
+    if (!pageId) {
+      return
+    }
     if (!window.confirm('Soll diese Seite wirklich gelöscht werden? Alle zugehörigen Beiträge werden ebenfalls entfernt.')) {
       return
     }
     try {
+      const pageSlug = page?.slug
       await api.deletePage(pageId)
+      if (pageSlug) {
+        publishedPages?.invalidate?.(pageSlug)
+      } else {
+        publishedPages?.invalidate?.()
+      }
       await loadPages()
       refreshNavigation()
     } catch (err) {
@@ -854,6 +887,11 @@ const PageManager = () => {
     }
     try {
       await api.deletePost(post.id)
+      if (selectedPage?.slug) {
+        publishedPages?.invalidate?.(selectedPage.slug)
+      } else {
+        publishedPages?.invalidate?.()
+      }
       await loadPosts(selectedPageId)
     } catch (err) {
       alert(err?.message || 'Beitrag konnte nicht gelöscht werden')
@@ -871,6 +909,11 @@ const PageManager = () => {
         await api.updatePost(postFormData.id, payload)
       } else {
         await api.createPost(selectedPageId, payload)
+      }
+      if (selectedPage?.slug) {
+        publishedPages?.invalidate?.(selectedPage.slug)
+      } else {
+        publishedPages?.invalidate?.()
       }
       setPostFormMode(null)
       setPostFormData(null)
@@ -1067,7 +1110,7 @@ const PageManager = () => {
                         <Edit className="h-4 w-4" /> Bearbeiten
                       </button>
                       <button
-                        onClick={() => handleDeletePage(page.id)}
+                        onClick={() => handleDeletePage(page)}
                         className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50"
                       >
                         <Trash2 className="h-4 w-4" /> Löschen

@@ -1,16 +1,77 @@
+const fixMojibake = (value) => {
+  if (typeof value !== 'string' || value.length === 0) {
+    return value
+  }
+
+  if (!/[ÃÂâ€™“”–…]|�/.test(value)) {
+    return value
+  }
+
+  const replacements = [
+    ['Ã¤', 'ä'],
+    ['Ã„', 'Ä'],
+    ['Ã¶', 'ö'],
+    ['Ã–', 'Ö'],
+    ['Ã¼', 'ü'],
+    ['Ãœ', 'Ü'],
+    ['ÃŸ', 'ß'],
+    ['Ã¡', 'á'],
+    ['Ã ', 'à'],
+    ['Ã©', 'é'],
+    ['Ã¨', 'è'],
+    ['Ãº', 'ú'],
+    ['Ã³', 'ó'],
+    ['Ã´', 'ô'],
+    ['Ã§', 'ç'],
+    ['Ã±', 'ñ'],
+    ['Â ', ' '],
+    ['Â', ''],
+    ['â€“', '–'],
+    ['â€”', '—'],
+    ['â€ž', '„'],
+    ['â€š', '‚'],
+    ['â€œ', '“'],
+    ['â€', '”'],
+    ['â€™', '’'],
+    ['â€˜', '‘'],
+    ['â€¢', '•'],
+    ['â€¦', '…'],
+    ['â„¢', '™'],
+    ['â‚¬', '€'],
+    ['�', ''],
+  ]
+
+  let result = value
+  for (const [search, replacement] of replacements) {
+    if (result.includes(search)) {
+      result = result.split(search).join(replacement)
+    }
+  }
+  return result
+}
+
+const normalizeStringArray = (values, joiner = ' ') => {
+  const cleaned = values
+    .filter(Boolean)
+    .map((part) => (typeof part === 'string' ? fixMojibake(part.trim()) : null))
+    .filter((part) => part && part.length)
+
+  return cleaned.join(joiner)
+}
+
 export const normalizeTitle = (title, fallback) => {
   if (!title) return fallback
-  if (typeof title === 'string') return title
+  if (typeof title === 'string') return fixMojibake(title)
   if (Array.isArray(title)) {
-    const joined = title.filter(Boolean).join(' ')
-    if (joined.trim()) {
+    const joined = normalizeStringArray(title)
+    if (joined) {
       return joined
     }
   }
   if (typeof title === 'object') {
     const values = Object.values(title).filter((part) => typeof part === 'string' && part.trim())
     if (values.length) {
-      return values.join(' ')
+      return normalizeStringArray(values)
     }
   }
   return fallback
@@ -18,18 +79,18 @@ export const normalizeTitle = (title, fallback) => {
 
 export const normalizeText = (value, fallback = '') => {
   if (!value) return fallback
-  if (typeof value === 'string') return value
+  if (typeof value === 'string') return fixMojibake(value)
   if (Array.isArray(value)) {
-    const text = value.filter((part) => typeof part === 'string').join('\n')
+    const text = normalizeStringArray(value, '\n')
     return text || fallback
   }
   if (typeof value === 'object') {
     if (typeof value.text === 'string' && value.text.trim()) {
-      return value.text
+      return fixMojibake(value.text)
     }
     const values = Object.values(value).filter((part) => typeof part === 'string' && part.trim())
     if (values.length) {
-      return values.join('\n')
+      return normalizeStringArray(values, '\n')
     }
   }
   return fallback
