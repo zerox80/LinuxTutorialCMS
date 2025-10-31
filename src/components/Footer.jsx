@@ -5,43 +5,6 @@ import { useContent } from '../context/ContentContext'
 import { navigateContentTarget } from '../utils/contentNavigation'
 import { getIconComponent } from '../utils/iconMap'
 
-const toLowerString = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '')
-
-const isGrundlagenReference = (value) => {
-  const normalized = toLowerString(value)
-  if (!normalized) return false
-
-  if (normalized === 'grundlagen' || normalized === '/grundlagen') {
-    return true
-  }
-
-  return normalized.endsWith('/grundlagen')
-}
-
-const isGrundlagenLink = (entry) => {
-  if (!entry || typeof entry !== 'object') {
-    return false
-  }
-
-  if (isGrundlagenReference(entry.label)) return true
-  if (isGrundlagenReference(entry.slug)) return true
-  if (isGrundlagenReference(entry.id)) return true
-  if (isGrundlagenReference(entry.path)) return true
-  if (isGrundlagenReference(entry.href)) return true
-  if (isGrundlagenReference(entry.url)) return true
-
-  const target = entry.target
-  if (!target || typeof target !== 'object') {
-    return false
-  }
-
-  if (isGrundlagenReference(target.value)) return true
-  if (isGrundlagenReference(target.path)) return true
-  if (isGrundlagenReference(target.href)) return true
-
-  return false
-}
-
 const resolveContactFallbackIcon = (contact) => {
   const label = (contact?.label || '').toLowerCase()
   const href = (contact?.href || contact?.url || '').toLowerCase()
@@ -70,7 +33,6 @@ const Footer = () => {
     [footerContent?.brand?.icon],
   )
 
-  const manualQuickLinks = Array.isArray(footerContent?.quickLinks) ? footerContent.quickLinks : []
   const contactLinks = Array.isArray(footerContent?.contactLinks) ? footerContent.contactLinks : []
 
   const staticNavigationItems = useMemo(
@@ -93,38 +55,12 @@ const Footer = () => {
     return allItems
   }, [staticNavigationItems, dynamicNavigationItems, navigation?.items])
 
-  const hasGrundlagenInNavigation = useMemo(() => {
-    if (staticNavigationItems.some((item) => isGrundlagenLink(item))) {
-      return true
-    }
-    if (dynamicNavigationItems.some((item) => isGrundlagenLink(item))) {
-      return true
-    }
-    return effectiveNavigationItems.some((item) => isGrundlagenLink(item))
-  }, [staticNavigationItems, dynamicNavigationItems, effectiveNavigationItems])
-
-  const filteredManualQuickLinks = useMemo(() => {
-    return manualQuickLinks.filter((link) => {
-      if (!link) return false
-
-      if (isGrundlagenLink(link)) {
-        return hasGrundlagenInNavigation
-      }
-
-      return true
-    })
-  }, [manualQuickLinks, hasGrundlagenInNavigation])
-
   const navigationQuickLinks = useMemo(() => {
     const items = effectiveNavigationItems
 
     return items
       .map((item) => {
         if (!item) return null
-
-        if (isGrundlagenLink(item) && !hasGrundlagenInNavigation) {
-          return null
-        }
 
         if (item.target) {
           return {
@@ -166,12 +102,11 @@ const Footer = () => {
         return null
       })
       .filter(Boolean)
-  }, [effectiveNavigationItems, hasGrundlagenInNavigation])
+  }, [effectiveNavigationItems])
 
   const quickLinks = useMemo(() => {
-    const manual = filteredManualQuickLinks.map((link) => ({ ...link }))
-    return [...navigationQuickLinks, ...manual]
-  }, [filteredManualQuickLinks, navigationQuickLinks])
+    return navigationQuickLinks
+  }, [navigationQuickLinks])
 
   const handleQuickLink = (link) => {
     if (!link) return
