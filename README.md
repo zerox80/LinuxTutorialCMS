@@ -67,7 +67,7 @@
 
 ```bash
 # Clone the repository
-git clone <your-repo-url>
+git clone https://github.com/zerox80/LinuxTutorialCMS.git
 cd LinuxTutorialCMS
 
 # Install frontend dependencies
