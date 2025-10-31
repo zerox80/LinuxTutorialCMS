@@ -73,7 +73,16 @@ const Footer = () => {
   const manualQuickLinks = Array.isArray(footerContent?.quickLinks) ? footerContent.quickLinks : []
   const contactLinks = Array.isArray(footerContent?.contactLinks) ? footerContent.contactLinks : []
 
+  const staticNavigationItems = useMemo(
+    () => (Array.isArray(navigation?.static) ? navigation.static : []),
+    [navigation?.static],
+  )
+
   const effectiveNavigationItems = useMemo(() => {
+    if (staticNavigationItems.length > 0) {
+      return staticNavigationItems
+    }
+
     const dynamicItems = Array.isArray(navigation?.dynamic) ? navigation.dynamic : []
     if (dynamicItems.length > 0) {
       return dynamicItems
@@ -81,12 +90,14 @@ const Footer = () => {
 
     const allItems = Array.isArray(navigation?.items) ? navigation.items : []
     return allItems
-  }, [navigation?.dynamic, navigation?.items])
+  }, [staticNavigationItems, navigation?.dynamic, navigation?.items])
 
-  const hasGrundlagenInNavigation = useMemo(
-    () => effectiveNavigationItems.some((item) => isGrundlagenLink(item)),
-    [effectiveNavigationItems],
-  )
+  const hasGrundlagenInNavigation = useMemo(() => {
+    if (staticNavigationItems.length > 0) {
+      return staticNavigationItems.some((item) => isGrundlagenLink(item))
+    }
+    return effectiveNavigationItems.some((item) => isGrundlagenLink(item))
+  }, [staticNavigationItems, effectiveNavigationItems])
 
   const filteredManualQuickLinks = useMemo(() => {
     return manualQuickLinks.filter((link) => {
@@ -106,6 +117,10 @@ const Footer = () => {
     return items
       .map((item) => {
         if (!item) return null
+
+        if (isGrundlagenLink(item) && !hasGrundlagenInNavigation) {
+          return null
+        }
 
         if (item.target) {
           return {
@@ -147,7 +162,7 @@ const Footer = () => {
         return null
       })
       .filter(Boolean)
-  }, [effectiveNavigationItems])
+  }, [effectiveNavigationItems, hasGrundlagenInNavigation])
 
   const quickLinks = useMemo(() => {
     const manual = filteredManualQuickLinks.map((link) => ({ ...link }))
