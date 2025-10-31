@@ -78,26 +78,30 @@ const Footer = () => {
     [navigation?.static],
   )
 
-  const effectiveNavigationItems = useMemo(() => {
-    if (staticNavigationItems.length > 0) {
-      return staticNavigationItems
-    }
+  const dynamicNavigationItems = useMemo(
+    () => (Array.isArray(navigation?.dynamic) ? navigation.dynamic : []),
+    [navigation?.dynamic],
+  )
 
-    const dynamicItems = Array.isArray(navigation?.dynamic) ? navigation.dynamic : []
-    if (dynamicItems.length > 0) {
-      return dynamicItems
+  const effectiveNavigationItems = useMemo(() => {
+    const combined = [...staticNavigationItems, ...dynamicNavigationItems]
+    if (combined.length > 0) {
+      return combined
     }
 
     const allItems = Array.isArray(navigation?.items) ? navigation.items : []
     return allItems
-  }, [staticNavigationItems, navigation?.dynamic, navigation?.items])
+  }, [staticNavigationItems, dynamicNavigationItems, navigation?.items])
 
   const hasGrundlagenInNavigation = useMemo(() => {
-    if (staticNavigationItems.length > 0) {
-      return staticNavigationItems.some((item) => isGrundlagenLink(item))
+    if (staticNavigationItems.some((item) => isGrundlagenLink(item))) {
+      return true
+    }
+    if (dynamicNavigationItems.some((item) => isGrundlagenLink(item))) {
+      return true
     }
     return effectiveNavigationItems.some((item) => isGrundlagenLink(item))
-  }, [staticNavigationItems, effectiveNavigationItems])
+  }, [staticNavigationItems, dynamicNavigationItems, effectiveNavigationItems])
 
   const filteredManualQuickLinks = useMemo(() => {
     return manualQuickLinks.filter((link) => {
