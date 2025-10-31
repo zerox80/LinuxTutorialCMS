@@ -26,13 +26,6 @@
         ],
         "quickLinks": [
           {
-            "label": "Grundlagen",
-            "target": {
-              "type": "section",
-              "value": "grundlagen"
-            }
-          },
-          {
             "label": "Befehle",
             "target": {
               "type": "section",
