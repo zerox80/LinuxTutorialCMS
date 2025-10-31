@@ -36,6 +36,47 @@ const Footer = () => {
   const manualQuickLinks = Array.isArray(footerContent?.quickLinks) ? footerContent.quickLinks : []
   const contactLinks = Array.isArray(footerContent?.contactLinks) ? footerContent.contactLinks : []
 
+  const hasGrundlagenInNavigation = useMemo(() => {
+    const items = Array.isArray(navigation?.items) ? navigation.items : []
+
+    return items.some((item) => {
+      if (!item) return false
+
+      const toLower = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '')
+
+      const label = toLower(item.label)
+      const slug = toLower(item.slug)
+      const id = toLower(item.id)
+      const path = toLower(item.path)
+      const targetValue = toLower(item.target?.value)
+
+      return (
+        label === 'grundlagen' ||
+        slug === 'grundlagen' ||
+        id === 'grundlagen' ||
+        path === '/grundlagen' ||
+        targetValue === 'grundlagen'
+      )
+    })
+  }, [navigation?.items])
+
+  const filteredManualQuickLinks = useMemo(() => {
+    return manualQuickLinks.filter((link) => {
+      if (!link) return false
+
+      const toLower = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '')
+
+      const label = toLower(link.label)
+      const targetValue = toLower(link.target?.value)
+
+      if (label === 'grundlagen' || targetValue === 'grundlagen') {
+        return hasGrundlagenInNavigation
+      }
+
+      return true
+    })
+  }, [manualQuickLinks, hasGrundlagenInNavigation])
+
   const navigationQuickLinks = useMemo(() => {
     const items = Array.isArray(navigation?.items) ? navigation.items : []
 
@@ -86,9 +127,9 @@ const Footer = () => {
   }, [navigation?.items])
 
   const quickLinks = useMemo(() => {
-    const manual = manualQuickLinks.map((link) => ({ ...link }))
+    const manual = filteredManualQuickLinks.map((link) => ({ ...link }))
     return [...navigationQuickLinks, ...manual]
-  }, [manualQuickLinks, navigationQuickLinks])
+  }, [filteredManualQuickLinks, navigationQuickLinks])
 
   const handleQuickLink = (link) => {
     if (!link) return
