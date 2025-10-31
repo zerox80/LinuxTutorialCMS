@@ -18,6 +18,7 @@ import {
 import { api } from '../api/client'
 import { useContent } from '../context/ContentContext'
 import { normalizeTitle } from '../utils/postUtils'
+import { sanitizeSlug, isValidSlug } from '../utils/slug'
 
 const defaultHeroJson = JSON.stringify(
   {
@@ -90,19 +91,26 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
   })
   const [error, setError] = useState(null)
 
+  const formSanitizedSlug = useMemo(() => sanitizeSlug(slug), [slug])
+  const slugHasInput = slug.trim().length > 0
+  const slugHasInvalidCharacters = slugHasInput && !formSanitizedSlug
+  const slugDiffersAfterSanitize =
+    slugHasInput && formSanitizedSlug && formSanitizedSlug !== slug.trim()
+
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError(null)
 
     try {
       const trimmedTitle = title.trim()
-      const trimmedSlug = slug.trim().toLowerCase()
       const trimmedDescription = description.trim()
       const trimmedNavLabel = navLabel.trim()
       const heroPayloadRaw = parseJsonField(hero, 'Hero JSON')
       const heroPayload =
         typeof heroPayloadRaw === 'object' && heroPayloadRaw !== null ? { ...heroPayloadRaw } : {}
       const trimmedHeroTitle = heroTitle.trim()
+      const trimmedSlug = slug.trim()
+      const sanitizedSlug = sanitizeSlug(trimmedSlug)
 
       if (trimmedHeroTitle) {
         heroPayload.title = trimmedHeroTitle
@@ -110,9 +118,21 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
         heroPayload.title = trimmedTitle
       }
 
+      if (!trimmedTitle) {
+        throw new Error('Titel darf nicht leer sein.')
+      }
+
+      if (!sanitizedSlug) {
+        throw new Error('Slug darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten.')
+      }
+
+      if (!isValidSlug(sanitizedSlug)) {
+        throw new Error('Slug ist ungültig.')
+      }
+
       const payload = {
         title: trimmedTitle,
-        slug: trimmedSlug,
+        slug: sanitizedSlug,
         description: trimmedDescription,
         nav_label: trimmedNavLabel ? trimmedNavLabel : null,
         show_in_nav: showInNav,
@@ -122,14 +142,8 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
         layout: parseJsonField(layout, 'Layout JSON'),
       }
 
-      if (!payload.title) {
-        throw new Error('Titel darf nicht leer sein.')
-      }
-      if (!payload.slug) {
-        throw new Error('Slug darf nicht leer sein.')
-      }
-
       await onSubmit(payload)
+      setSlug(sanitizedSlug)
     } catch (err) {
       setError(err)
     }
@@ -185,8 +199,20 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
               className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
               value={slug}
               onChange={(event) => setSlug(event.target.value)}
+              onBlur={() => setSlug(formSanitizedSlug)}
               required
             />
+            {slugHasInvalidCharacters && (
+              <p className="mt-1 text-xs text-red-600">
+                Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt.
+              </p>
+            )}
+            {slugDiffersAfterSanitize && !slugHasInvalidCharacters && (
+              <p className="mt-1 text-xs text-gray-500">
+                Gespeicherter Slug:{' '}
+                <code className="rounded bg-gray-100 px-1 py-0.5 text-[11px]">{formSanitizedSlug}</code>
+              </p>
+            )}
           </label>
         </div>
 
@@ -358,6 +384,12 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
   const [publishedAt, setPublishedAt] = useState(initialData?.published_at ?? '')
   const [error, setError] = useState(null)
 
+  const sanitizedPostSlug = useMemo(() => sanitizeSlug(slug), [slug])
+  const postSlugHasInput = slug.trim().length > 0
+  const postSlugInvalid = postSlugHasInput && !sanitizedPostSlug
+  const postSlugDiffers =
+    postSlugHasInput && sanitizedPostSlug && sanitizedPostSlug !== slug.trim()
+
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError(null)
@@ -373,9 +405,19 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
         throw new Error('Inhalt darf nicht leer sein.')
       }
 
+      const sanitizedSlug = sanitizeSlug(slug.trim())
+
+      if (!sanitizedSlug) {
+        throw new Error('Slug darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten.')
+      }
+
+      if (!isValidSlug(sanitizedSlug)) {
+        throw new Error('Slug ist ungültig.')
+      }
+
       const payload = {
         title: title.trim(),
-        slug: slug.trim().toLowerCase(),
+        slug: sanitizedSlug,
         excerpt: excerpt.trim() || null,
         content_markdown: content,
         order_index: sanitizeInteger(orderIndex),
@@ -384,6 +426,7 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
       }
 
       await onSubmit(payload)
+      setSlug(sanitizedSlug)
     } catch (err) {
       setError(err)
     }
@@ -439,8 +482,20 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
               className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
               value={slug}
               onChange={(event) => setSlug(event.target.value)}
+              onBlur={() => setSlug(sanitizedPostSlug)}
               required
             />
+            {postSlugInvalid && (
+              <p className="mt-1 text-xs text-red-600">
+                Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt.
+              </p>
+            )}
+            {postSlugDiffers && !postSlugInvalid && (
+              <p className="mt-1 text-xs text-gray-500">
+                Gespeicherter Slug:{' '}
+                <code className="rounded bg-gray-100 px-1 py-0.5 text-[11px]">{sanitizedPostSlug}</code>
+              </p>
+            )}
           </label>
         </div>
 
