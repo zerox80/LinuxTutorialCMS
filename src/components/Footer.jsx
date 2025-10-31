@@ -5,6 +5,43 @@ import { useContent } from '../context/ContentContext'
 import { navigateContentTarget } from '../utils/contentNavigation'
 import { getIconComponent } from '../utils/iconMap'
 
+const toLowerString = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '')
+
+const isGrundlagenReference = (value) => {
+  const normalized = toLowerString(value)
+  if (!normalized) return false
+
+  if (normalized === 'grundlagen' || normalized === '/grundlagen') {
+    return true
+  }
+
+  return normalized.endsWith('/grundlagen')
+}
+
+const isGrundlagenLink = (entry) => {
+  if (!entry || typeof entry !== 'object') {
+    return false
+  }
+
+  if (isGrundlagenReference(entry.label)) return true
+  if (isGrundlagenReference(entry.slug)) return true
+  if (isGrundlagenReference(entry.id)) return true
+  if (isGrundlagenReference(entry.path)) return true
+  if (isGrundlagenReference(entry.href)) return true
+  if (isGrundlagenReference(entry.url)) return true
+
+  const target = entry.target
+  if (!target || typeof target !== 'object') {
+    return false
+  }
+
+  if (isGrundlagenReference(target.value)) return true
+  if (isGrundlagenReference(target.path)) return true
+  if (isGrundlagenReference(target.href)) return true
+
+  return false
+}
+
 const resolveContactFallbackIcon = (contact) => {
   const label = (contact?.label || '').toLowerCase()
   const href = (contact?.href || contact?.url || '').toLowerCase()
@@ -39,37 +76,14 @@ const Footer = () => {
   const hasGrundlagenInNavigation = useMemo(() => {
     const items = Array.isArray(navigation?.items) ? navigation.items : []
 
-    return items.some((item) => {
-      if (!item) return false
-
-      const toLower = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '')
-
-      const label = toLower(item.label)
-      const slug = toLower(item.slug)
-      const id = toLower(item.id)
-      const path = toLower(item.path)
-      const targetValue = toLower(item.target?.value)
-
-      return (
-        label === 'grundlagen' ||
-        slug === 'grundlagen' ||
-        id === 'grundlagen' ||
-        path === '/grundlagen' ||
-        targetValue === 'grundlagen'
-      )
-    })
+    return items.some((item) => isGrundlagenLink(item))
   }, [navigation?.items])
 
   const filteredManualQuickLinks = useMemo(() => {
     return manualQuickLinks.filter((link) => {
       if (!link) return false
 
-      const toLower = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '')
-
-      const label = toLower(link.label)
-      const targetValue = toLower(link.target?.value)
-
-      if (label === 'grundlagen' || targetValue === 'grundlagen') {
+      if (isGrundlagenLink(link)) {
         return hasGrundlagenInNavigation
       }
 
