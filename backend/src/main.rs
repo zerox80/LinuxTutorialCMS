@@ -228,6 +228,10 @@ async fn main() {
             "/api/public/pages/:slug",
             get(handlers::site_pages::get_published_page_by_slug),
         )
+        .route(
+            "/api/public/pages/:slug/posts/:post_slug",
+            get(handlers::site_pages::get_published_post_by_slug),
+        )
         .route("/api/public/navigation", get(handlers::site_pages::get_navigation))
         .route(
             "/api/public/published-pages",

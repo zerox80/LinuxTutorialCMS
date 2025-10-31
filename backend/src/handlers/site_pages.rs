@@ -3,8 +3,8 @@ use crate::{
     db,
     models::{
         CreateSitePageRequest, ErrorResponse, NavigationItemResponse, NavigationResponse,
-        SitePageListResponse, SitePageResponse, SitePageWithPostsResponse, SitePostResponse,
-        UpdateSitePageRequest,
+        SitePageListResponse, SitePageResponse, SitePageWithPostsResponse, SitePostDetailResponse,
+        SitePostResponse, UpdateSitePageRequest,
     },
 };
 use axum::{
@@ -457,6 +457,61 @@ pub async fn get_navigation(
     }
 
     Ok(Json(NavigationResponse { items }))
+}
+
+pub async fn get_published_post_by_slug(
+    State(pool): State<db::DbPool>,
+    Path((page_slug, post_slug)): Path<(String, String)>,
+) -> Result<Json<SitePostDetailResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let lookup_page_slug = page_slug.trim().to_lowercase();
+    let lookup_post_slug = post_slug.trim().to_lowercase();
+
+    if lookup_page_slug.is_empty() || lookup_post_slug.is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse {
+                error: "Slug cannot be empty".to_string(),
+            }),
+        ));
+    }
+
+    let page = db::get_site_page_by_slug(&pool, &lookup_page_slug)
+        .await
+        .map_err(|err| map_sqlx_error(err, "Site page"))?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse {
+                    error: "Page not found".to_string(),
+                }),
+            )
+        })?;
+
+    if !page.is_published {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse {
+                error: "Page not published".to_string(),
+            }),
+        ));
+    }
+
+    let post = db::get_published_post_by_slug(&pool, &page.id, &lookup_post_slug)
+        .await
+        .map_err(|err| map_sqlx_error(err, "Post"))?
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse {
+                    error: "Post not found".to_string(),
+                }),
+            )
+        })?;
+
+    Ok(Json(SitePostDetailResponse {
+        page: map_page(page)?,
+        post: map_post(post),
+    }))
 }
 
 pub async fn list_published_page_slugs(

@@ -5,6 +5,7 @@ use axum::{
     Json,
 };
 use regex::Regex;
+use std::collections::HashSet;
 use std::convert::TryInto;
 use std::sync::OnceLock;
 use uuid::Uuid;
@@ -74,19 +75,27 @@ fn sanitize_topics(topics: &[String]) -> Result<Vec<String>, String> {
         return Err("Too many topics (max 20)".to_string());
     }
 
-    let sanitized: Vec<String> = topics
-        .iter()
-        .map(|topic| topic.trim())
-        .filter(|topic| !topic.is_empty())
-        .map(|topic| {
-            // Validate individual topic length
-            if topic.len() > 100 {
-                topic.chars().take(100).collect()
-            } else {
-                topic.to_string()
-            }
-        })
-        .collect();
+    let mut sanitized = Vec::with_capacity(topics.len());
+    let mut seen = HashSet::new();
+
+    for topic in topics {
+        let trimmed = topic.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+
+        let limited: String = if trimmed.len() > 100 {
+            trimmed.chars().take(100).collect()
+        } else {
+            trimmed.to_string()
+        };
+
+        if !seen.insert(limited.to_lowercase()) {
+            return Err("Duplicate topics are not allowed".to_string());
+        }
+
+        sanitized.push(limited);
+    }
 
     if sanitized.is_empty() {
         return Err("At least one topic is required".to_string());
@@ -344,7 +353,21 @@ pub async fn update_tutorial(
     let description = payload.description.unwrap_or(tutorial.description.clone());
     let icon = payload.icon.unwrap_or(tutorial.icon);
     let color = payload.color.unwrap_or(tutorial.color);
-    let content = payload.content.unwrap_or(tutorial.content);
+    let content = match payload.content {
+        Some(value) => {
+            let trimmed = value.trim();
+            if trimmed.is_empty() {
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    Json(ErrorResponse {
+                        error: "Content cannot be empty".to_string(),
+                    }),
+                ));
+            }
+            trimmed.to_string()
+        }
+        None => tutorial.content,
+    };
 
     tracing::debug!(
         "Tutorial update data - title length: {}, description length: {}, content length: {}",

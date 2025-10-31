@@ -177,6 +177,12 @@ pub struct SitePageWithPostsResponse {
     pub posts: Vec<SitePostResponse>,
 }
 
+#[derive(Debug, Serialize)]
+pub struct SitePostDetailResponse {
+    pub page: SitePageResponse,
+    pub post: SitePostResponse,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct CreateSitePageRequest {
     pub slug: String,

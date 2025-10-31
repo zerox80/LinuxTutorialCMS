@@ -254,6 +254,22 @@ pub async fn list_published_posts_for_page(
     .await
 }
 
+pub async fn get_published_post_by_slug(
+    pool: &DbPool,
+    page_id: &str,
+    post_slug: &str,
+) -> Result<Option<crate::models::SitePost>, sqlx::Error> {
+    sqlx::query_as::<_, crate::models::SitePost>(
+        "SELECT id, page_id, title, slug, excerpt, content_markdown, is_published, published_at, order_index, created_at, updated_at
+         FROM site_posts
+         WHERE page_id = ? AND slug = ? AND is_published = 1",
+    )
+    .bind(page_id)
+    .bind(post_slug)
+    .fetch_optional(pool)
+    .await
+}
+
 pub async fn get_site_post_by_id(
     pool: &DbPool,
     id: &str,
