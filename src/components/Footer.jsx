@@ -73,11 +73,20 @@ const Footer = () => {
   const manualQuickLinks = Array.isArray(footerContent?.quickLinks) ? footerContent.quickLinks : []
   const contactLinks = Array.isArray(footerContent?.contactLinks) ? footerContent.contactLinks : []
 
-  const hasGrundlagenInNavigation = useMemo(() => {
-    const items = Array.isArray(navigation?.items) ? navigation.items : []
+  const effectiveNavigationItems = useMemo(() => {
+    const dynamicItems = Array.isArray(navigation?.dynamic) ? navigation.dynamic : []
+    if (dynamicItems.length > 0) {
+      return dynamicItems
+    }
 
-    return items.some((item) => isGrundlagenLink(item))
-  }, [navigation?.items])
+    const allItems = Array.isArray(navigation?.items) ? navigation.items : []
+    return allItems
+  }, [navigation?.dynamic, navigation?.items])
+
+  const hasGrundlagenInNavigation = useMemo(
+    () => effectiveNavigationItems.some((item) => isGrundlagenLink(item)),
+    [effectiveNavigationItems],
+  )
 
   const filteredManualQuickLinks = useMemo(() => {
     return manualQuickLinks.filter((link) => {
@@ -92,7 +101,7 @@ const Footer = () => {
   }, [manualQuickLinks, hasGrundlagenInNavigation])
 
   const navigationQuickLinks = useMemo(() => {
-    const items = Array.isArray(navigation?.items) ? navigation.items : []
+    const items = effectiveNavigationItems
 
     return items
       .map((item) => {
@@ -138,7 +147,7 @@ const Footer = () => {
         return null
       })
       .filter(Boolean)
-  }, [navigation?.items])
+  }, [effectiveNavigationItems])
 
   const quickLinks = useMemo(() => {
     const manual = filteredManualQuickLinks.map((link) => ({ ...link }))
