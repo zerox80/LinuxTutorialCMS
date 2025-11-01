@@ -1,6 +1,6 @@
 # Multi-stage build für kleines Image
 # Use latest stable Rust
-FROM rust:1.82-bookworm as builder
+FROM rust:1.91-bookworm as builder
 
 WORKDIR /app
 
