@@ -84,8 +84,21 @@ class ApiClient {
   }
 
   async request(endpoint, options = {}) {
-    const url = `${API_BASE_URL}${endpoint}`
-    const { timeout = 15000, headers: optionHeaders, signal: userSignal, ...rest } = options
+    const {
+      timeout = 15000,
+      headers: optionHeaders,
+      signal: userSignal,
+      cacheBust = true,
+      ...rest
+    } = options
+
+    const method = (rest.method || 'GET').toUpperCase()
+
+    let url = `${API_BASE_URL}${endpoint}`
+    if (cacheBust && method === 'GET') {
+      const separator = url.includes('?') ? '&' : '?'
+      url = `${url}${separator}_ts=${Date.now()}`
+    }
     const controller = new AbortController()
     let timeoutId = null
     let cleanedUp = false
