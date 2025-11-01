@@ -161,9 +161,7 @@ async fn main() {
     // Login route with rate limiting
     let login_router = Router::new()
         .route("/api/auth/login", post(handlers::auth::login))
-        .layer(GovernorLayer {
-            config: rate_limit_config,
-        });
+        .layer(GovernorLayer::new(rate_limit_config));
 
     let write_limit_config = std::sync::Arc::new(
         GovernorConfigBuilder::default()
@@ -194,9 +192,7 @@ async fn main() {
         )
         .route("/api/posts/:id", put(handlers::site_posts::update_post))
         .route("/api/posts/:id", delete(handlers::site_posts::delete_post))
-        .layer(GovernorLayer {
-            config: write_limit_config.clone(),
-        });
+        .layer(GovernorLayer::new(write_limit_config.clone()));
     
     let app = Router::new()
         .merge(login_router)
