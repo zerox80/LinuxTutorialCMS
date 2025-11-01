@@ -31,7 +31,7 @@ updates:
       time: "07:00"
       timezone: "America/New_York"
     open-pull-requests-limit: 5
-    versioning-strategy: increase-if-necessary
+    versioning-strategy: auto
     commit-message:
       prefix: "deps"
     groups:
