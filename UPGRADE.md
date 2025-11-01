@@ -50,7 +50,7 @@ ADMIN_PASSWORD=<your-secure-password>
 
 ```bash
 # Copy example and edit
-cp .env.docker.example .env
+cp .env.example .env
 
 # Edit .env with your values
 # Then deploy:

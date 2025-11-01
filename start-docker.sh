@@ -10,9 +10,9 @@ if ! command -v docker-compose &> /dev/null; then
     exit 1
 fi
 
-# Check if .env.docker exists
-if [ ! -f .env.docker ]; then
-    echo "⚠️  .env.docker not found, using defaults"
+# Check if .env exists
+if [ ! -f .env ]; then
+    echo "⚠️  .env not found. Copy .env.example to .env and set secure values before deploying!"
 fi
 
 # Build and start containers
