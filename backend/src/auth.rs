@@ -6,16 +6,14 @@ use axum::{
         HeaderMap, HeaderValue, StatusCode,
     },
 };
-use axum_extra::extract::cookie::{
-    time::{Duration as CookieDuration, OffsetDateTime},
-    Cookie, CookieJar, SameSite,
-};
+use axum_extra::extract::cookie::{Cookie, CookieJar, SameSite};
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::env;
 use std::sync::OnceLock;
+use time::{Duration as TimeDuration, OffsetDateTime};
 
 pub static JWT_SECRET: OnceLock<String> = OnceLock::new();
 
@@ -111,32 +109,32 @@ pub fn verify_jwt(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
 }
 
 pub fn build_auth_cookie(token: &str) -> Cookie<'static> {
-    let mut cookie = Cookie::build(AUTH_COOKIE_NAME, token.to_owned())
+    let mut builder = Cookie::build((AUTH_COOKIE_NAME, token.to_owned()))
         .path("/")
         .http_only(true)
         .same_site(SameSite::Lax)
-        .max_age(CookieDuration::seconds(AUTH_COOKIE_TTL_SECONDS));
+        .max_age(TimeDuration::seconds(AUTH_COOKIE_TTL_SECONDS));
 
     if cookies_should_be_secure() {
-        cookie = cookie.secure(true);
+        builder = builder.secure(true);
     }
 
-    cookie.finish()
+    builder.build()
 }
 
 pub fn build_cookie_removal() -> Cookie<'static> {
-    let mut cookie = Cookie::build(AUTH_COOKIE_NAME, "")
+    let mut builder = Cookie::build((AUTH_COOKIE_NAME, ""))
         .path("/")
         .http_only(true)
         .same_site(SameSite::Lax)
         .expires(OffsetDateTime::UNIX_EPOCH)
-        .max_age(CookieDuration::seconds(0));
+        .max_age(TimeDuration::seconds(0));
 
     if cookies_should_be_secure() {
-        cookie = cookie.secure(true);
+        builder = builder.secure(true);
     }
 
-    cookie.finish()
+    builder.build()
 }
 
 impl<S> FromRequestParts<S> for Claims
