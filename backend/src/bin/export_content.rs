@@ -280,6 +280,14 @@ async fn main() -> Result<()> {
     };
 
     let json = serde_json::to_string_pretty(&bundle).context("Failed to serialize export bundle")?;
+
+    if let Some(parent) = path.parent() {
+        if !parent.as_os_str().is_empty() {
+            fs::create_dir_all(parent)
+                .with_context(|| format!("Failed to create export directory {}", parent.display()))?;
+        }
+    }
+
     fs::write(path, json)
         .with_context(|| format!("Failed to write export file at {}", path.display()))?;
 

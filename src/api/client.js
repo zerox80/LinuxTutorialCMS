@@ -43,6 +43,35 @@ const removeStoredToken = () => {
   }
 }
 
+const isBinaryBody = (body) => {
+  if (!body || typeof body !== 'object') {
+    return false
+  }
+
+  if (typeof Blob !== 'undefined' && body instanceof Blob) {
+    return true
+  }
+
+  if (typeof File !== 'undefined' && body instanceof File) {
+    return true
+  }
+
+  if (typeof ArrayBuffer !== 'undefined') {
+    if (body instanceof ArrayBuffer) {
+      return true
+    }
+    if (typeof ArrayBuffer.isView === 'function' && ArrayBuffer.isView(body)) {
+      return true
+    }
+  }
+
+  if (typeof ReadableStream !== 'undefined' && body instanceof ReadableStream) {
+    return true
+  }
+
+  return false
+}
+
 const isLikelyJwt = (token) => {
   if (typeof token !== 'string') return false
   const parts = token.split('.')
@@ -71,8 +100,10 @@ class ApiClient {
       // Prefer sessionStorage to avoid persistence across browser restarts
       if (hasSessionStorage) {
         window.sessionStorage.setItem('token', token)
-      }
-      if (hasLocalStorage) {
+        if (hasLocalStorage) {
+          window.localStorage.removeItem('token')
+        }
+      } else if (hasLocalStorage) {
         window.localStorage.setItem('token', token)
       }
     } else {
@@ -132,6 +163,7 @@ class ApiClient {
       config.body &&
       !(config.body instanceof FormData) &&
       !(config.body instanceof URLSearchParams) &&
+      !isBinaryBody(config.body) &&
       typeof config.body === 'object'
 
     const hasJsonContentType = Object.keys(config.headers).some(

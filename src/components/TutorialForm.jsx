@@ -78,7 +78,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
       topics: formData.topics
         .map((t) => (t || '').trim())
         .filter((t) => t !== ''),
-      content: formData.content.trim(),
+      content: formData.content,
     }
 
     if (!cleanedData.title) {

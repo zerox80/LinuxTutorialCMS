@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Terminal, Lock, User, AlertCircle } from 'lucide-react'
@@ -12,6 +12,24 @@ const Login = () => {
   const [cooldownUntil, setCooldownUntil] = useState(null)
   const { login } = useAuth()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!cooldownUntil) {
+      return
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (Date.now() >= cooldownUntil) {
+        window.clearInterval(intervalId)
+        setCooldownUntil(null)
+        setError('')
+      }
+    }, 500)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [cooldownUntil])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -116,7 +134,7 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="••••••••"
+                  placeholder="********"
                   required
                 />
               </div>

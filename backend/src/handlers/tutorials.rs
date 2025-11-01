@@ -244,6 +244,19 @@ pub async fn create_tutorial(
     })?;
     let now = chrono::Utc::now().to_rfc3339();
 
+    let mut tx = pool
+        .begin()
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to begin transaction for tutorial {}: {}", id, e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Failed to create tutorial".to_string(),
+                }),
+            )
+        })?;
+
     sqlx::query(
         r#"
         INSERT INTO tutorials (id, title, description, icon, color, topics, content, version, created_at, updated_at)
@@ -259,7 +272,7 @@ pub async fn create_tutorial(
     .bind(&payload.content)
     .bind(&now)
     .bind(&now)
-    .execute(&pool)
+    .execute(&mut *tx)
     .await
     .map_err(|e| {
         tracing::error!("Database error: {}", e);
@@ -271,11 +284,23 @@ pub async fn create_tutorial(
         )
     })?;
 
-    // Sync tutorial_topics table
-    crate::db::replace_tutorial_topics(&pool, &id, &sanitized_topics)
+    // Sync tutorial_topics table inside transaction
+    crate::db::replace_tutorial_topics_tx(&mut tx, &id, &sanitized_topics)
         .await
         .map_err(|e| {
             tracing::error!("Failed to update tutorial topics: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Failed to create tutorial".to_string(),
+                }),
+            )
+        })?;
+
+    tx.commit()
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to commit tutorial transaction for {}: {}", id, e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse {
@@ -454,6 +479,19 @@ pub async fn update_tutorial(
     };
     let now = chrono::Utc::now().to_rfc3339();
 
+    let mut tx = pool
+        .begin()
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to begin transaction for tutorial update {}: {}", id, e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Failed to update tutorial".to_string(),
+                }),
+            )
+        })?;
+
     // Optimistic locking: update only if version hasn't changed
     let result = sqlx::query(
         r#"
@@ -470,9 +508,9 @@ pub async fn update_tutorial(
     .bind(&content)        // 6. content
     .bind(new_version)     // 7. version
     .bind(&now)            // 8. updated_at
-    .bind(&id)             // 9. id (WHERE)
-    .bind(tutorial.version) // 10. version (WHERE)
-    .execute(&pool)
+    .bind(&id)                // 9. id (WHERE)
+    .bind(tutorial.version)   // 10. version (WHERE)
+    .execute(&mut *tx)
     .await
     .map_err(|e| {
         tracing::error!("Database error: {}", e);
@@ -496,10 +534,22 @@ pub async fn update_tutorial(
 
     // Sync tutorial_topics table
     tracing::debug!("Updating tutorial_topics table for tutorial {}", id);
-    crate::db::replace_tutorial_topics(&pool, &id, &topics_vec)
+    crate::db::replace_tutorial_topics_tx(&mut tx, &id, &topics_vec)
         .await
         .map_err(|e| {
             tracing::error!("Failed to update tutorial topics for {}: {}", id, e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Failed to update tutorial".to_string(),
+                }),
+            )
+        })?;
+
+    tx.commit()
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to commit tutorial update transaction for {}: {}", id, e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse {

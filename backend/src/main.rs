@@ -47,8 +47,8 @@ async fn security_headers(
         // Development mode: Allow WebSocket for Vite HMR
         "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'self'; form-action 'self';"
     } else {
-        // Production mode: Strict CSP
-        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';"
+        // Production mode: Strict CSP (no inline styles)
+        "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';"
     };
     
     headers.insert(
@@ -142,6 +142,7 @@ async fn main() {
             Method::PUT,
             Method::DELETE,
             Method::OPTIONS,
+            Method::HEAD,
         ]))
         .allow_headers(AllowHeaders::list(vec![AUTHORIZATION, CONTENT_TYPE]))
         .allow_credentials(true);

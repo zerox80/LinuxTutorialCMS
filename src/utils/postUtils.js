@@ -1,48 +1,49 @@
+const MOJIBAKE_REPLACEMENTS = [
+  ['\u00C3\u00A4', 'ä'],
+  ['\u00C3\u0084', 'Ä'],
+  ['\u00C3\u00B6', 'ö'],
+  ['\u00C3\u0096', 'Ö'],
+  ['\u00C3\u00BC', 'ü'],
+  ['\u00C3\u009C', 'Ü'],
+  ['\u00C3\u009F', 'ß'],
+  ['\u00C3\u00A1', 'á'],
+  ['\u00C3\u00A0', 'à'],
+  ['\u00C3\u00A9', 'é'],
+  ['\u00C3\u00A8', 'è'],
+  ['\u00C3\u00BA', 'ú'],
+  ['\u00C3\u00B9', 'ù'],
+  ['\u00C3\u00B3', 'ó'],
+  ['\u00C3\u00B2', 'ò'],
+  ['\u00C3\u00B1', 'ñ'],
+  ['\u00C3\u00A7', 'ç'],
+  ['\u00C3\u00A5', 'å'],
+  ['\u00C3\u0098', 'Ø'],
+  ['\u00C3\u00B8', 'ø'],
+  ['\u00E2\u0080\u0093', '–'],
+  ['\u00E2\u0080\u0094', '—'],
+  ['\u00E2\u0080\u009E', '„'],
+  ['\u00E2\u0080\u009C', '“'],
+  ['\u00E2\u0080\u009D', '”'],
+  ['\u00E2\u0080\u0098', '‘'],
+  ['\u00E2\u0080\u0099', '’'],
+  ['\u00E2\u0080\u00A6', '…'],
+  ['\u00E2\u0080\u00A2', '•'],
+  ['\u00C2\u00A0', ' '],
+  ['\u00C2', ''],
+  ['\uFFFD', ''],
+]
+
 const fixMojibake = (value) => {
   if (typeof value !== 'string' || value.length === 0) {
     return value
   }
 
-  if (!/[ÃÂâ€™“”–…]|�/.test(value)) {
+  if (!/[ÃÂâ€™“”–…�]/.test(value)) {
     return value
   }
 
-  const replacements = [
-    ['Ã¤', 'ä'],
-    ['Ã„', 'Ä'],
-    ['Ã¶', 'ö'],
-    ['Ã–', 'Ö'],
-    ['Ã¼', 'ü'],
-    ['Ãœ', 'Ü'],
-    ['ÃŸ', 'ß'],
-    ['Ã¡', 'á'],
-    ['Ã ', 'à'],
-    ['Ã©', 'é'],
-    ['Ã¨', 'è'],
-    ['Ãº', 'ú'],
-    ['Ã³', 'ó'],
-    ['Ã´', 'ô'],
-    ['Ã§', 'ç'],
-    ['Ã±', 'ñ'],
-    ['Â ', ' '],
-    ['Â', ''],
-    ['â€“', '–'],
-    ['â€”', '—'],
-    ['â€ž', '„'],
-    ['â€š', '‚'],
-    ['â€œ', '“'],
-    ['â€', '”'],
-    ['â€™', '’'],
-    ['â€˜', '‘'],
-    ['â€¢', '•'],
-    ['â€¦', '…'],
-    ['â„¢', '™'],
-    ['â‚¬', '€'],
-    ['�', ''],
-  ]
-
   let result = value
-  for (const [search, replacement] of replacements) {
+  for (const [search, replacement] of MOJIBAKE_REPLACEMENTS) {
     if (result.includes(search)) {
       result = result.split(search).join(replacement)
     }
@@ -122,7 +123,7 @@ export const buildPreviewText = (post, maxLength = 240, minCutoff = 180) => {
   const truncated = source.slice(0, maxLength)
   const lastSpace = truncated.lastIndexOf(' ')
   const safeCut = lastSpace > minCutoff ? truncated.slice(0, lastSpace) : truncated
-  return `${safeCut.trim()}…`
+  return `${safeCut.trim()}.`
 }
 
 export const normalizeSlug = (value) => {

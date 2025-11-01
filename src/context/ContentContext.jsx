@@ -20,7 +20,7 @@ export const DEFAULT_CONTENT = {
       line1: 'Lerne Linux',
       line2: 'von Grund auf',
     },
-    subtitle: 'Dein umfassendes Tutorial für Linux - von den Basics bis zu Advanced Techniken.',
+    subtitle: 'Dein umfassendes Tutorial für Linux – von den Basics bis zu Advanced Techniken.',
     subline: 'Interaktiv, modern und praxisnah.',
     primaryCta: {
       label: "Los geht's",
@@ -53,7 +53,7 @@ export const DEFAULT_CONTENT = {
   },
   tutorial_section: {
     title: 'Tutorial Inhalte',
-    description: 'Umfassende Lernmodule für alle Erfahrungsstufen - vom Anfänger bis zum Profi',
+    description: 'Umfassende Lernmodule für alle Erfahrungsstufen – vom Anfänger bis zum Profi',
     heading: 'Bereit anzufangen?',
     ctaDescription: 'Wähle ein Thema aus und starte deine Linux-Lernreise noch heute!',
     ctaPrimary: {
@@ -85,7 +85,7 @@ export const DEFAULT_CONTENT = {
   footer: {
     brand: {
       title: 'Linux Tutorial',
-      description: 'Dein umfassendes Tutorial für Linux - von den Basics bis zu Advanced Techniken.',
+      description: 'Dein umfassendes Tutorial für Linux – von den Basics bis zu Advanced Techniken.',
       icon: 'Terminal',
     },
     quickLinks: [

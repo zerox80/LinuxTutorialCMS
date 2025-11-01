@@ -990,7 +990,7 @@ async fn insert_default_tutorials_tx(tx: &mut sqlx::Transaction<'_, sqlx::Sqlite
     Ok(())
 }
 
-async fn replace_tutorial_topics_tx(
+pub(crate) async fn replace_tutorial_topics_tx(
     tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
     tutorial_id: &str,
     topics: &[String],
