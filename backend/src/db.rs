@@ -19,7 +19,11 @@ pub async fn create_pool() -> Result<DbPool, sqlx::Error> {
     ensure_sqlite_directory(&database_url)?;
 
     let connect_options = SqliteConnectOptions::from_str(&database_url)?
-        .create_if_missing(true);
+        .create_if_missing(true)
+        .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
+        .synchronous(sqlx::sqlite::SqliteSynchronous::Normal)
+        .foreign_keys(true)
+        .busy_timeout(std::time::Duration::from_secs(30));
 
     let pool = SqlitePoolOptions::new()
         .max_connections(5)
