@@ -127,8 +127,29 @@ export const buildPreviewText = (post, maxLength = 240, minCutoff = 180) => {
 }
 
 export const normalizeSlug = (value) => {
-  if (!value || typeof value !== 'string') {
+  if (typeof value !== 'string') {
     return ''
   }
-  return value.trim().toLowerCase()
+
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return ''
+  }
+
+  const ascii = trimmed
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '') // drop diacritics
+
+  const sanitized = ascii
+    .replace(/[^0-9A-Za-z\s-]/g, '')
+    .trim()
+    .replace(/[-_\s]+/g, '-') // collapse separators
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase()
+
+  if (!sanitized || sanitized === '.' || sanitized === '..') {
+    return ''
+  }
+
+  return sanitized.slice(0, 128)
 }
