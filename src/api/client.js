@@ -2,44 +2,95 @@
 const getApiBaseUrl = () => {
   // Prefer explicit environment variable
   if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL
+    return import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, '')
   }
-  
-  // Fallback to window.location.origin with validation
+
   if (typeof window !== 'undefined' && window.location) {
     const origin = window.location.origin
-    // Validate origin starts with http:// or https://
     if (origin && (origin.startsWith('http://') || origin.startsWith('https://'))) {
-      return `${origin}/api`
+      const baseUrl = typeof import.meta.env.BASE_URL === 'string' ? import.meta.env.BASE_URL : '/'
+      try {
+        const resolved = new URL(baseUrl || '/', origin)
+        const pathname = resolved.pathname.replace(/\/$/, '')
+        return `${resolved.origin}${pathname}/api`.replace(/\/+$/, '/api')
+      } catch (error) {
+        console.warn('Failed to resolve BASE_URL for API calls, falling back to origin.', error)
+        return `${origin}/api`
+      }
     }
   }
-  
+
   // Safe fallback for development
   return 'http://localhost:8489/api'
 }
 
 const API_BASE_URL = getApiBaseUrl()
 
-const hasSessionStorage = typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined'
-const hasLocalStorage = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
+let sessionStorageCache
+let localStorageCache
+
+const resolveStorage = (key) => {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  try {
+    const storage = window[key]
+    if (!storage) {
+      return null
+    }
+    const testKey = '__storage_test__'
+    storage.setItem(testKey, testKey)
+    storage.removeItem(testKey)
+    return storage
+  } catch (error) {
+    console.warn(`Storage "${key}" is not available.`, error)
+    return null
+  }
+}
+
+const getSessionStorage = () => {
+  if (sessionStorageCache === undefined) {
+    sessionStorageCache = resolveStorage('sessionStorage')
+  }
+  return sessionStorageCache
+}
+
+const getLocalStorage = () => {
+  if (localStorageCache === undefined) {
+    localStorageCache = resolveStorage('localStorage')
+  }
+  return localStorageCache
+}
 
 const readStoredToken = () => {
-  if (typeof window === 'undefined') return null
+  const sessionStorage = getSessionStorage()
+  if (sessionStorage) {
+    const stored = sessionStorage.getItem('token')
+    if (stored) {
+      return stored
+    }
+  }
 
-  const stored = hasSessionStorage && window.sessionStorage.getItem('token')
-  if (stored) return stored
+  const localStorage = getLocalStorage()
+  if (localStorage) {
+    const stored = localStorage.getItem('token')
+    if (stored) {
+      return stored
+    }
+  }
 
-  const local = hasLocalStorage && window.localStorage.getItem('token')
-  return local || null
+  return null
 }
 
 const removeStoredToken = () => {
-  if (typeof window === 'undefined') return
-  if (hasSessionStorage) {
-    window.sessionStorage.removeItem('token')
+  const sessionStorage = getSessionStorage()
+  if (sessionStorage) {
+    sessionStorage.removeItem('token')
   }
-  if (hasLocalStorage) {
-    window.localStorage.removeItem('token')
+  const localStorage = getLocalStorage()
+  if (localStorage) {
+    localStorage.removeItem('token')
   }
 }
 
@@ -89,7 +140,13 @@ class ApiClient {
 
   setToken(token) {
     this.token = token
-    if (!hasSessionStorage && !hasLocalStorage) {
+    const sessionStorage = getSessionStorage()
+    const localStorage = getLocalStorage()
+
+    if (!sessionStorage && !localStorage) {
+      if (!token) {
+        removeStoredToken()
+      }
       return
     }
     if (token) {
@@ -98,13 +155,13 @@ class ApiClient {
         return
       }
       // Prefer sessionStorage to avoid persistence across browser restarts
-      if (hasSessionStorage) {
-        window.sessionStorage.setItem('token', token)
-        if (hasLocalStorage) {
-          window.localStorage.removeItem('token')
+      if (sessionStorage) {
+        sessionStorage.setItem('token', token)
+        if (localStorage) {
+          localStorage.removeItem('token')
         }
-      } else if (hasLocalStorage) {
-        window.localStorage.setItem('token', token)
+      } else if (localStorage) {
+        localStorage.setItem('token', token)
       }
     } else {
       removeStoredToken()
@@ -150,29 +207,59 @@ class ApiClient {
       controller.abort()
     }, timeout)
 
+    const headers = new Headers()
+    const applyHeaders = (source) => {
+      if (!source) {
+        return
+      }
+      if (source instanceof Headers) {
+        source.forEach((value, key) => headers.set(key, value))
+        return
+      }
+      if (Array.isArray(source)) {
+        source.forEach((entry) => {
+          if (Array.isArray(entry) && entry.length >= 2) {
+            const [key, value] = entry
+            if (key) {
+              headers.set(key, value)
+            }
+          }
+        })
+        return
+      }
+      Object.entries(source).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          headers.set(key, value)
+        }
+      })
+    }
+
+    applyHeaders(this.getHeaders())
+    applyHeaders(optionHeaders)
+
     const config = {
       ...rest,
-      headers: {
-        ...this.getHeaders(),
-        ...optionHeaders,
-      },
+      headers,
       signal: controller.signal,
     }
 
+    const bodyCandidate = config.body
     const isJsonBody =
-      config.body &&
-      !(config.body instanceof FormData) &&
-      !(config.body instanceof URLSearchParams) &&
-      !isBinaryBody(config.body) &&
-      typeof config.body === 'object'
+      bodyCandidate &&
+      !(bodyCandidate instanceof FormData) &&
+      !(bodyCandidate instanceof URLSearchParams) &&
+      !isBinaryBody(bodyCandidate) &&
+      typeof bodyCandidate === 'object'
 
-    const hasJsonContentType = Object.keys(config.headers).some(
+    const hasJsonContentType = Array.from(headers.keys()).some(
       (key) => key.toLowerCase() === 'content-type',
     )
 
     if (isJsonBody && !hasJsonContentType) {
-      config.headers['Content-Type'] = 'application/json'
-      config.body = JSON.stringify(config.body)
+      headers.set('Content-Type', 'application/json')
+    }
+    if (isJsonBody) {
+      config.body = JSON.stringify(bodyCandidate)
     }
 
     try {
@@ -216,6 +303,9 @@ class ApiClient {
       }
 
       if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          this.setToken(null)
+        }
         const error = new Error(
           payload?.error || payload?.message || response.statusText || 'Request failed',
         )
@@ -236,6 +326,9 @@ class ApiClient {
         throw timeoutError
       }
       console.error('API Error:', error)
+      if (error.status === 401 || error.status === 403) {
+        this.setToken(null)
+      }
       throw error
     }
   }

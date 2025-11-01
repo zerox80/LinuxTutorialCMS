@@ -30,6 +30,7 @@
     "import-content": "cargo run --manifest-path backend/Cargo.toml --bin import_content"
   },
   "dependencies": {
+    "highlight.js": "^11.10.0",
     "katex": "^0.16.25",
     "lucide-react": "^0.552.0",
     "prop-types": "^15.8.1",

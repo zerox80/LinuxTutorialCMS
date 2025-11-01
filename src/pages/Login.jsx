@@ -158,7 +158,7 @@ const Login = () => {
             onClick={() => navigate('/')}
             className="text-white hover:text-primary-100 transition-colors duration-200"
           >
-            ← Zurück zur Startseite
+            Zurück zur Startseite
           </button>
         </div>
       </div>

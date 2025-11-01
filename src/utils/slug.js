@@ -7,7 +7,7 @@ export const sanitizeSlug = (value) => {
 
   const withoutDiacritics = value
     .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
 
   const cleaned = withoutDiacritics
     .toLowerCase()

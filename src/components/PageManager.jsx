@@ -726,6 +726,18 @@ const PageManager = () => {
   const [postFormMode, setPostFormMode] = useState(null)
   const [postFormData, setPostFormData] = useState(null)
   const [postFormSubmitting, setPostFormSubmitting] = useState(false)
+  const pagesAbortRef = useRef(null)
+  const postsAbortRef = useRef(null)
+  const isMountedRef = useRef(true)
+
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+      pagesAbortRef.current?.abort()
+      postsAbortRef.current?.abort()
+    }
+  }, [])
 
   const selectedPage = useMemo(
     () => pages.find((item) => item.id === selectedPageId) ?? null,
@@ -733,10 +745,21 @@ const PageManager = () => {
   )
 
   const loadPages = useCallback(async () => {
+    const controller = new AbortController()
+    if (pagesAbortRef.current) {
+      pagesAbortRef.current.abort()
+    }
+    pagesAbortRef.current = controller
+
     try {
       setLoading(true)
       setError(null)
-      const data = await api.listPages()
+
+      const data = await api.listPages({ signal: controller.signal })
+      if (controller.signal.aborted || !isMountedRef.current) {
+        return
+      }
+
       const items = Array.isArray(data?.items) ? data.items : []
       setPages(items)
       if (items.length === 0) {
@@ -752,9 +775,16 @@ const PageManager = () => {
         setSelectedPageId(items[0].id)
       }
     } catch (err) {
-      setError(err)
+      if (!controller.signal.aborted && isMountedRef.current) {
+        setError(err)
+      }
     } finally {
-      setLoading(false)
+      if (pagesAbortRef.current === controller) {
+        pagesAbortRef.current = null
+        if (isMountedRef.current) {
+          setLoading(false)
+        }
+      }
     }
   }, [selectedPageId])
 
@@ -767,11 +797,21 @@ const PageManager = () => {
     async (pageId) => {
       if (!pageId) {
         postsRequestRef.current += 1
+        if (postsAbortRef.current) {
+          postsAbortRef.current.abort()
+          postsAbortRef.current = null
+        }
         setPosts([])
         setPostsLoading(false)
         setPostsError(null)
         return
       }
+
+      const controller = new AbortController()
+      if (postsAbortRef.current) {
+        postsAbortRef.current.abort()
+      }
+      postsAbortRef.current = controller
 
       const requestId = postsRequestRef.current + 1
       postsRequestRef.current = requestId
@@ -779,17 +819,21 @@ const PageManager = () => {
       setPostsLoading(true)
       setPostsError(null)
       try {
-        const data = await api.listPosts(pageId)
-        const items = Array.isArray(data?.items) ? data.items : []
-        if (postsRequestRef.current === requestId) {
-          setPosts(items)
+        const data = await api.listPosts(pageId, { signal: controller.signal })
+        if (controller.signal.aborted || postsRequestRef.current !== requestId || !isMountedRef.current) {
+          return
         }
+        const items = Array.isArray(data?.items) ? data.items : []
+        setPosts(items)
       } catch (err) {
-        if (postsRequestRef.current === requestId) {
+        if (!controller.signal.aborted && postsRequestRef.current === requestId && isMountedRef.current) {
           setPostsError(err)
         }
       } finally {
-        if (postsRequestRef.current === requestId) {
+        if (postsAbortRef.current === controller) {
+          postsAbortRef.current = null
+        }
+        if (!controller.signal.aborted && postsRequestRef.current === requestId && isMountedRef.current) {
           setPostsLoading(false)
         }
       }

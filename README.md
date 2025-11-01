@@ -87,14 +87,17 @@ npm run dev
 - 🔧 **Backend API:** http://localhost:8489
 - 🔐 **Admin Panel:** http://localhost:5173/login
 
-### Default Login Credentials
+### Admin-Anmeldung
 
-```
-Username: admin
-Password: admin123
+Der Backend-Server erstellt kein Standardkonto. Setze daher vor dem Start die Umgebungsvariablen `ADMIN_USERNAME` und `ADMIN_PASSWORD` (mindestens 12 Zeichen).
+
+```bash
+# Beispiel
+export ADMIN_USERNAME=deinadmin
+export ADMIN_PASSWORD=einSicheresPasswort123!
 ```
 
-> ⚠️ **Important:** Change these credentials in production! Set `ADMIN_USERNAME` and `ADMIN_PASSWORD` environment variables.
+Passe die Werte entsprechend deiner Umgebung an und starte den Server danach neu.
 
 ---
 

@@ -535,7 +535,7 @@ fn default_site_content() -> Vec<(&'static str, serde_json::Value)> {
                     "line1": "Lerne Linux",
                     "line2": "von Grund auf"
                 },
-                "subtitle": "Dein umfassendes Tutorial für Linux - von den Basics bis zu Advanced Techniken.",
+                "subtitle": "Dein umfassendes Tutorial für Linux – von den Basics bis zu Advanced-Techniken.",
                 "subline": "Interaktiv, modern und praxisnah.",
                 "primaryCta": {
                     "label": "Los geht's",
@@ -625,7 +625,7 @@ fn default_site_content() -> Vec<(&'static str, serde_json::Value)> {
                 ],
                 "bottom": {
                     "copyright": "© {year} Linux Tutorial. Alle Rechte vorbehalten.",
-                    "signature": "Gemacht mit ❤️ für die Linux Community"
+                    "signature": "Gemacht mit Herz für die Linux Community"
                 }
             }),
         ),

@@ -3,8 +3,16 @@ import { api } from '../api/client'
 
 const removeTokenFromStorage = () => {
   if (typeof window === 'undefined') return
-  window.sessionStorage?.removeItem('token')
-  window.localStorage?.removeItem('token')
+  try {
+    window.sessionStorage?.removeItem('token')
+  } catch (error) {
+    console.warn('Failed to access sessionStorage while removing token', error)
+  }
+  try {
+    window.localStorage?.removeItem('token')
+  } catch (error) {
+    console.warn('Failed to access localStorage while removing token', error)
+  }
 }
 
 const AuthContext = createContext(null)
@@ -24,7 +32,19 @@ export const AuthProvider = ({ children }) => {
         setLoading(false)
         return
       }
-      const token = window.sessionStorage?.getItem('token') ?? window.localStorage.getItem('token')
+      let token = null
+      try {
+        token = window.sessionStorage?.getItem('token')
+      } catch (error) {
+        console.warn('Failed to read sessionStorage token', error)
+      }
+      if (!token) {
+        try {
+          token = window.localStorage?.getItem('token')
+        } catch (error) {
+          console.warn('Failed to read localStorage token', error)
+        }
+      }
       if (token) {
         // Basic JWT format validation (should have 3 parts separated by dots)
         const jwtParts = token.split('.')

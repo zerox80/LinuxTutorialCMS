@@ -20,7 +20,7 @@ export const DEFAULT_CONTENT = {
       line1: 'Lerne Linux',
       line2: 'von Grund auf',
     },
-    subtitle: 'Dein umfassendes Tutorial für Linux – von den Basics bis zu Advanced Techniken.',
+    subtitle: 'Dein umfassendes Tutorial für Linux – von den Basics bis zu Advanced-Techniken.',
     subline: 'Interaktiv, modern und praxisnah.',
     primaryCta: {
       label: "Los geht's",
@@ -85,7 +85,7 @@ export const DEFAULT_CONTENT = {
   footer: {
     brand: {
       title: 'Linux Tutorial',
-      description: 'Dein umfassendes Tutorial für Linux – von den Basics bis zu Advanced Techniken.',
+      description: 'Dein umfassendes Tutorial für Linux – von den Basics bis zu Advanced-Techniken.',
       icon: 'Terminal',
     },
     quickLinks: [
@@ -100,7 +100,7 @@ export const DEFAULT_CONTENT = {
     ],
     bottom: {
       copyright: '© {year} Linux Tutorial. Alle Rechte vorbehalten.',
-      signature: 'Gemacht mit ❤️ für die Linux Community',
+      signature: 'Gemacht mit Herz für die Linux Community',
     },
   },
   grundlagen_page: {
@@ -149,7 +149,7 @@ export const DEFAULT_CONTENT = {
       ],
       summary: [
         'Über 40 praxisnahe Lessons',
-        'Schritt-für-Schritt Guides mit Screenshots & Code-Beispielen',
+        'Schritt-für-Schritt-Guides mit Screenshots & Code-Beispielen',
         'Übungen und Checklisten zum Selbstüberprüfen',
       ],
     },
@@ -162,6 +162,7 @@ export const DEFAULT_CONTENT = {
     },
   },
 }
+
 
 export const CONTENT_SECTIONS = Object.keys(DEFAULT_CONTENT)
 

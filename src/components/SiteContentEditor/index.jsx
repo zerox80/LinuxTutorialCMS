@@ -23,10 +23,10 @@ const cloneContent = (value) => {
   return JSON.parse(JSON.stringify(value))
 }
 
-const SectionPicker = ({ selected, onSelect }) => {
+const SectionPicker = ({ sections, selected, onSelect }) => {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {CONTENT_SECTIONS.map((section) => {
+      {sections.map((section) => {
         const label = sectionLabels[section] || section
         const isActive = selected === section
         return (
@@ -50,6 +50,7 @@ const SectionPicker = ({ selected, onSelect }) => {
 }
 
 SectionPicker.propTypes = {
+  sections: PropTypes.arrayOf(PropTypes.string).isRequired,
   selected: PropTypes.string,
   onSelect: PropTypes.func.isRequired,
 }
@@ -257,6 +258,14 @@ const SiteContentEditor = () => {
     savingSections,
   } = useContent()
 
+  const sectionOptions = useMemo(() => {
+    const base = [...CONTENT_SECTIONS]
+    const extraKeys = content
+      ? Object.keys(content).filter((key) => !base.includes(key))
+      : []
+    return [...base, ...extraKeys.sort()]
+  }, [content])
+
   const [selectedSection, setSelectedSection] = useState(null)
   const [originalContent, setOriginalContent] = useState(null)
   const [draftContent, setDraftContent] = useState(null)
@@ -391,7 +400,11 @@ const SiteContentEditor = () => {
       {!selectedSection && (
         <div className="space-y-4">
           <p className="text-sm font-medium text-gray-700">Wähle einen Inhaltsbereich aus:</p>
-          <SectionPicker selected={selectedSection} onSelect={handleSectionSelect} />
+          <SectionPicker
+            sections={sectionOptions}
+            selected={selectedSection}
+            onSelect={handleSectionSelect}
+          />
         </div>
       )}
 
