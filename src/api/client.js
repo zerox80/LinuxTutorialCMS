@@ -154,6 +154,10 @@ class ApiClient {
       config.credentials = 'include'
     }
 
+    if (!Object.prototype.hasOwnProperty.call(config, 'cache')) {
+      config.cache = 'no-store'
+    }
+
     const bodyCandidate = config.body
     const isJsonBody =
       bodyCandidate &&

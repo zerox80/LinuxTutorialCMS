@@ -13,7 +13,10 @@ use axum::{
 use dotenv::dotenv;
 use std::env;
 use axum::http::{
-    header::{AUTHORIZATION, CONTENT_TYPE, CONTENT_SECURITY_POLICY, STRICT_TRANSPORT_SECURITY, X_CONTENT_TYPE_OPTIONS, X_FRAME_OPTIONS},
+    header::{
+        AUTHORIZATION, CACHE_CONTROL, CONTENT_SECURITY_POLICY, CONTENT_TYPE, EXPIRES,
+        PRAGMA, STRICT_TRANSPORT_SECURITY, X_CONTENT_TYPE_OPTIONS, X_FRAME_OPTIONS,
+    },
     HeaderValue, Method,
 };
 use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
@@ -38,9 +41,16 @@ async fn security_headers(
         .and_then(|v| v.to_str().ok())
         .map(|v| v == "https")
         .unwrap_or(false);
-    
     let mut response = next.run(request).await;
     let headers = response.headers_mut();
+    
+    // Prevent caching of dynamic API responses
+    headers.insert(
+        CACHE_CONTROL,
+        HeaderValue::from_static("no-store, no-cache, must-revalidate"),
+    );
+    headers.insert(PRAGMA, HeaderValue::from_static("no-cache"));
+    headers.insert(EXPIRES, HeaderValue::from_static("0"));
     
     // Content Security Policy - Environment-dependent for dev mode support
     let csp = if cfg!(debug_assertions) {
