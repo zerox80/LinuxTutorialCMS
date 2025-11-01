@@ -174,24 +174,24 @@ async fn main() {
     let write_routes = Router::new()
         // Tutorial mutations
         .route("/api/tutorials", post(handlers::tutorials::create_tutorial))
-        .route("/api/tutorials/:id", put(handlers::tutorials::update_tutorial))
-        .route("/api/tutorials/:id", delete(handlers::tutorials::delete_tutorial))
+        .route("/api/tutorials/{id}", put(handlers::tutorials::update_tutorial))
+        .route("/api/tutorials/{id}", delete(handlers::tutorials::delete_tutorial))
         // Site content mutations
         .route(
-            "/api/content/:section",
+            "/api/content/{section}",
             put(handlers::site_content::update_site_content),
         )
         // Site page mutations
         .route("/api/pages", post(handlers::site_pages::create_site_page))
-        .route("/api/pages/:id", put(handlers::site_pages::update_site_page))
-        .route("/api/pages/:id", delete(handlers::site_pages::delete_site_page))
+        .route("/api/pages/{id}", put(handlers::site_pages::update_site_page))
+        .route("/api/pages/{id}", delete(handlers::site_pages::delete_site_page))
         // Site post mutations
         .route(
-            "/api/pages/:page_id/posts",
+            "/api/pages/{page_id}/posts",
             post(handlers::site_posts::create_post),
         )
-        .route("/api/posts/:id", put(handlers::site_posts::update_post))
-        .route("/api/posts/:id", delete(handlers::site_posts::delete_post))
+        .route("/api/posts/{id}", put(handlers::site_posts::update_post))
+        .route("/api/posts/{id}", delete(handlers::site_posts::delete_post))
         .layer(GovernorLayer::new(write_limit_config.clone()));
     
     let app = Router::new()
@@ -201,31 +201,31 @@ async fn main() {
         
         // Tutorial routes
         .route("/api/tutorials", get(handlers::tutorials::list_tutorials))
-        .route("/api/tutorials/:id", get(handlers::tutorials::get_tutorial))
+        .route("/api/tutorials/{id}", get(handlers::tutorials::get_tutorial))
 
         // Site content routes
         .route("/api/content", get(handlers::site_content::list_site_content))
-        .route("/api/content/:section", get(handlers::site_content::get_site_content))
+        .route("/api/content/{section}", get(handlers::site_content::get_site_content))
 
         // Site pages routes (admin)
         .route("/api/pages", get(handlers::site_pages::list_site_pages))
-        .route("/api/pages/:id", get(handlers::site_pages::get_site_page))
+        .route("/api/pages/{id}", get(handlers::site_pages::get_site_page))
 
         // Site posts routes (admin)
         .route(
-            "/api/pages/:page_id/posts",
+            "/api/pages/{page_id}/posts",
             get(handlers::site_posts::list_posts_for_page),
         )
-        .route("/api/posts/:id", get(handlers::site_posts::get_post))
+        .route("/api/posts/{id}", get(handlers::site_posts::get_post))
         .merge(write_routes)
 
         // Public page routes
         .route(
-            "/api/public/pages/:slug",
+            "/api/public/pages/{slug}",
             get(handlers::site_pages::get_published_page_by_slug),
         )
         .route(
-            "/api/public/pages/:slug/posts/:post_slug",
+            "/api/public/pages/{slug}/posts/{post_slug}",
             get(handlers::site_pages::get_published_post_by_slug),
         )
         .route("/api/public/navigation", get(handlers::site_pages::get_navigation))
