@@ -26,74 +26,6 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl()
 
-let sessionStorageCache
-let localStorageCache
-
-const resolveStorage = (key) => {
-  if (typeof window === 'undefined') {
-    return null
-  }
-
-  try {
-    const storage = window[key]
-    if (!storage) {
-      return null
-    }
-    const testKey = '__storage_test__'
-    storage.setItem(testKey, testKey)
-    storage.removeItem(testKey)
-    return storage
-  } catch (error) {
-    console.warn(`Storage "${key}" is not available.`, error)
-    return null
-  }
-}
-
-const getSessionStorage = () => {
-  if (sessionStorageCache === undefined) {
-    sessionStorageCache = resolveStorage('sessionStorage')
-  }
-  return sessionStorageCache
-}
-
-const getLocalStorage = () => {
-  if (localStorageCache === undefined) {
-    localStorageCache = resolveStorage('localStorage')
-  }
-  return localStorageCache
-}
-
-const readStoredToken = () => {
-  const sessionStorage = getSessionStorage()
-  if (sessionStorage) {
-    const stored = sessionStorage.getItem('token')
-    if (stored) {
-      return stored
-    }
-  }
-
-  const localStorage = getLocalStorage()
-  if (localStorage) {
-    const stored = localStorage.getItem('token')
-    if (stored) {
-      return stored
-    }
-  }
-
-  return null
-}
-
-const removeStoredToken = () => {
-  const sessionStorage = getSessionStorage()
-  if (sessionStorage) {
-    sessionStorage.removeItem('token')
-  }
-  const localStorage = getLocalStorage()
-  if (localStorage) {
-    localStorage.removeItem('token')
-  }
-}
-
 const isBinaryBody = (body) => {
   if (!body || typeof body !== 'object') {
     return false
@@ -131,41 +63,16 @@ const isLikelyJwt = (token) => {
 
 class ApiClient {
   constructor() {
-    const stored = readStoredToken()
-    this.token = isLikelyJwt(stored) ? stored : null
-    if (stored && !this.token) {
-      removeStoredToken()
-    }
+    this.token = null
   }
 
   setToken(token) {
-    this.token = token
-    const sessionStorage = getSessionStorage()
-    const localStorage = getLocalStorage()
-
-    if (!sessionStorage && !localStorage) {
-      if (!token) {
-        removeStoredToken()
-      }
+    if (token && !isLikelyJwt(token)) {
+      console.warn('Attempted to set invalid JWT token; ignoring')
+      this.token = null
       return
     }
-    if (token) {
-      if (!isLikelyJwt(token)) {
-        console.warn('Attempted to store invalid JWT token; ignoring')
-        return
-      }
-      // Prefer sessionStorage to avoid persistence across browser restarts
-      if (sessionStorage) {
-        sessionStorage.setItem('token', token)
-        if (localStorage) {
-          localStorage.removeItem('token')
-        }
-      } else if (localStorage) {
-        localStorage.setItem('token', token)
-      }
-    } else {
-      removeStoredToken()
-    }
+    this.token = token || null
   }
 
   getHeaders() {
@@ -241,6 +148,10 @@ class ApiClient {
       ...rest,
       headers,
       signal: controller.signal,
+    }
+
+    if (!Object.prototype.hasOwnProperty.call(config, 'credentials')) {
+      config.credentials = 'include'
     }
 
     const bodyCandidate = config.body
@@ -344,6 +255,14 @@ class ApiClient {
       this.setToken(data.token)
     }
     return data
+  }
+
+  async logout(options = {}) {
+    try {
+      await this.request('/auth/logout', { method: 'POST', ...options })
+    } finally {
+      this.setToken(null)
+    }
   }
 
   async me(options = {}) {

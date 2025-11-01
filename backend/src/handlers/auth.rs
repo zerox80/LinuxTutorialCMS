@@ -1,5 +1,9 @@
 use crate::{auth, db::DbPool, models::*};
-use axum::{extract::State, http::StatusCode, Json};
+use axum::{
+    extract::State,
+    http::{HeaderMap, StatusCode},
+    Json,
+};
 use chrono::{Duration as ChronoDuration, Utc};
 use sqlx::{self, FromRow};
 use std::time::Duration;
@@ -38,7 +42,7 @@ fn validate_password(password: &str) -> Result<(), String> {
 pub async fn login(
     State(pool): State<DbPool>,
     Json(payload): Json<LoginRequest>,
-) -> Result<Json<LoginResponse>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<(HeaderMap, Json<LoginResponse>), (StatusCode, Json<ErrorResponse>)> {
     // Validate input
     if let Err(e) = validate_username(&payload.username) {
         return Err((
@@ -212,13 +216,19 @@ pub async fn login(
         )
     })?;
 
-    Ok(Json(LoginResponse {
-        token,
-        user: UserResponse {
-            username,
-            role,
-        },
-    }))
+    let mut headers = HeaderMap::new();
+    auth::append_auth_cookie(&mut headers, auth::build_auth_cookie(&token));
+
+    Ok((
+        headers,
+        Json(LoginResponse {
+            token,
+            user: UserResponse {
+                username,
+                role,
+            },
+        }),
+    ))
 }
 
 pub async fn me(
@@ -228,4 +238,10 @@ pub async fn me(
         username: claims.sub,
         role: claims.role,
     }))
+}
+
+pub async fn logout() -> (StatusCode, HeaderMap) {
+    let mut headers = HeaderMap::new();
+    auth::append_auth_cookie(&mut headers, auth::build_cookie_removal());
+    (StatusCode::NO_CONTENT, headers)
 }

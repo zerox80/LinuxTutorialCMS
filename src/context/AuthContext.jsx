@@ -1,19 +1,5 @@
-import { createContext, useContext, useState, useEffect } from 'react'
-import { api } from '../api/client'
-
-const removeTokenFromStorage = () => {
-  if (typeof window === 'undefined') return
-  try {
-    window.sessionStorage?.removeItem('token')
-  } catch (error) {
-    console.warn('Failed to access sessionStorage while removing token', error)
-  }
-  try {
-    window.localStorage?.removeItem('token')
-  } catch (error) {
-    console.warn('Failed to access localStorage while removing token', error)
-  }
-}
+import { createContext, useContext, useState, useEffect } from "react"
+import { api } from "../api/client"
 
 const AuthContext = createContext(null)
 
@@ -23,82 +9,34 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Check if user is already logged in on mount
   useEffect(() => {
     const controller = new AbortController()
-    
+
     const checkAuth = async () => {
-      if (typeof window === 'undefined' || !window.localStorage) {
-        setLoading(false)
-        return
-      }
-      let token = null
       try {
-        token = window.sessionStorage?.getItem('token')
-      } catch (error) {
-        console.warn('Failed to read sessionStorage token', error)
-      }
-      if (!token) {
-        try {
-          token = window.localStorage?.getItem('token')
-        } catch (error) {
-          console.warn('Failed to read localStorage token', error)
+        const userData = await api.me({ signal: controller.signal })
+        if (!controller.signal.aborted) {
+          setIsAuthenticated(true)
+          setUser(userData)
+          setError(null)
         }
-      }
-      if (token) {
-        // Basic JWT format validation (should have 3 parts separated by dots)
-        const jwtParts = token.split('.')
-        if (jwtParts.length !== 3) {
-          console.warn('Invalid JWT format in storage, removing token')
-          removeTokenFromStorage()
+      } catch (err) {
+        if (!controller.signal.aborted && err?.status !== 401) {
+          console.error('Auth check failed:', err)
+        }
+        if (!controller.signal.aborted) {
+          setIsAuthenticated(false)
+          setUser(null)
+        }
+      } finally {
+        if (!controller.signal.aborted) {
           setLoading(false)
-          return
         }
-        
-        // Check JWT expiration before making API call
-        try {
-          const base64Url = jwtParts[1]
-          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
-          const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=')
-          const payload = JSON.parse(atob(padded))
-          if (payload.exp && payload.exp * 1000 < Date.now()) {
-            console.warn('JWT expired, removing token')
-            removeTokenFromStorage()
-            setLoading(false)
-            return
-          }
-        } catch (e) {
-          console.warn('Failed to parse JWT payload, removing token')
-          removeTokenFromStorage()
-          setLoading(false)
-          return
-        }
-        
-        try {
-          api.setToken(token)
-          const userData = await api.me({ signal: controller.signal })
-          if (!controller.signal.aborted) {
-            setIsAuthenticated(true)
-            setUser(userData)
-            setError(null)
-          }
-        } catch (error) {
-          if (!controller.signal.aborted) {
-            console.error('Auth check failed:', error)
-            removeTokenFromStorage()
-            api.setToken(null)
-            setIsAuthenticated(false)
-            setUser(null)
-            // Don't set error here as it's just an expired/invalid token
-          }
-        }
-      }
-      if (!controller.signal.aborted) {
-        setLoading(false)
       }
     }
+
     checkAuth()
-    
+
     return () => {
       controller.abort()
     }
@@ -112,19 +50,19 @@ export const AuthProvider = ({ children }) => {
       const sanitizedUsername = username.trim()
       const response = await api.login(sanitizedUsername, password)
 
-      if (!response?.token || !response?.user) {
-        throw new Error('Ungültige Antwort vom Server')
+      if (!response?.user) {
+        throw new Error('Ungueltige Antwort vom Server')
       }
 
-      api.setToken(response.token)
+      api.setToken(response.token ?? null)
       setIsAuthenticated(true)
       setUser(response.user)
       return { success: true }
-    } catch (error) {
+    } catch (err) {
       api.setToken(null)
       setIsAuthenticated(false)
       setUser(null)
-      const message = error.message || 'Ungültige Anmeldedaten'
+      const message = err.message || 'Ungueltige Anmeldedaten'
       setError(message)
       return { success: false, error: message }
     } finally {
@@ -132,11 +70,17 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  const logout = () => {
-    setIsAuthenticated(false)
-    setUser(null)
-    api.setToken(null)
-    setError(null)
+  const logout = async () => {
+    try {
+      await api.logout()
+    } catch (err) {
+      console.error('Logout failed:', err)
+    } finally {
+      setIsAuthenticated(false)
+      setUser(null)
+      api.setToken(null)
+      setError(null)
+    }
   }
 
   return (
@@ -153,3 +97,5 @@ export const useAuth = () => {
   }
   return context
 }
+
+

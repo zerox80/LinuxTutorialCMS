@@ -1,4 +1,5 @@
 import { scrollToSection } from './scrollToSection'
+import { sanitizeExternalUrl } from './urlValidation'
 
 const normalizeSectionId = (value) => {
   if (typeof value === 'string') {
@@ -67,13 +68,27 @@ export const navigateContentTarget = (target, { navigate, location } = {}) => {
     }
     case 'external': {
       if (typeof window !== 'undefined' && value) {
-        window.open(value, '_blank', 'noopener,noreferrer')
+        const safeUrl = sanitizeExternalUrl(value)
+        if (!safeUrl) {
+          console.warn('Blocked unsafe external navigation target:', value)
+          return
+        }
+        window.open(safeUrl, '_blank', 'noopener,noreferrer')
       }
       break
     }
     case 'href': {
       if (typeof window !== 'undefined' && value) {
-        window.location.assign(value)
+        const safeUrl = sanitizeExternalUrl(value)
+        if (!safeUrl) {
+          console.warn('Blocked unsafe href navigation target:', value)
+          return
+        }
+        if (safeUrl.startsWith('#')) {
+          scrollToSection(safeUrl.slice(1))
+          return
+        }
+        window.location.assign(safeUrl)
       }
       break
     }

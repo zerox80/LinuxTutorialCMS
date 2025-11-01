@@ -4,10 +4,13 @@ import { Terminal, Heart } from 'lucide-react'
 import { useContent } from '../context/ContentContext'
 import { navigateContentTarget } from '../utils/contentNavigation'
 import { getIconComponent } from '../utils/iconMap'
+import { sanitizeExternalUrl } from '../utils/urlValidation'
 
 const resolveContactFallbackIcon = (contact) => {
   const label = (contact?.label || '').toLowerCase()
-  const href = (contact?.href || contact?.url || '').toLowerCase()
+  const rawHref = contact?.href || contact?.url || ''
+  const safeHref = sanitizeExternalUrl(rawHref) || ''
+  const href = safeHref.toLowerCase()
 
   if (contact?.icon) {
     return contact.icon
@@ -70,9 +73,14 @@ const Footer = () => {
         }
 
         if (item.href) {
+          const safeHref = sanitizeExternalUrl(item.href)
+          if (!safeHref) {
+            console.warn('Blocked unsafe navigation href in footer:', item.href)
+            return null
+          }
           return {
             label: item.label || item.slug || item.href,
-            href: item.href,
+            href: safeHref,
           }
         }
 
@@ -112,7 +120,7 @@ const Footer = () => {
     if (!link) return
 
     const target = link.target
-    const href = link.href || link.url
+    const href = sanitizeExternalUrl(link.href || link.url)
     const path = link.path
 
     if (target) {
@@ -121,9 +129,18 @@ const Footer = () => {
     }
 
     if (href) {
-      if (typeof window !== 'undefined') {
-        window.open(href, href.startsWith('http') ? '_blank' : '_self', 'noopener')
+      if (typeof window === 'undefined') {
+        return
       }
+      if (href.startsWith('http://') || href.startsWith('https://')) {
+        window.open(href, '_blank', 'noopener,noreferrer')
+        return
+      }
+      if (href.startsWith('mailto:') || href.startsWith('tel:')) {
+        window.location.href = href
+        return
+      }
+      window.location.assign(href)
       return
     }
 
@@ -180,18 +197,34 @@ const Footer = () => {
             <div className="space-y-3">
               {contactLinks.length > 0 ? (
                 contactLinks.map((contact, index) => {
-                  const href = contact.href || contact.url
+                  const safeHref = sanitizeExternalUrl(contact.href || contact.url)
                   const ContactIcon = getIconComponent(resolveContactFallbackIcon(contact), 'Terminal')
+
+                  if (!safeHref) {
+                    return (
+                      <div
+                        key={contact.label || `contact-${index}`}
+                        className="flex items-center space-x-2 text-gray-500"
+                      >
+                        <ContactIcon className="w-5 h-5" />
+                        <span>{contact.label || 'Kontakt'}</span>
+                      </div>
+                    )
+                  }
+
+                  const isHttp = safeHref.startsWith('http://') || safeHref.startsWith('https://')
+                  const isExternal = isHttp
+
                   return (
                     <a
-                      key={href || contact.label || `contact-${index}`}
-                      href={href || '#'}
-                      target={href?.startsWith('http') ? '_blank' : undefined}
-                      rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+                      key={safeHref || contact.label || `contact-${index}`}
+                      href={safeHref}
+                      target={isExternal ? '_blank' : undefined}
+                      rel={isExternal ? 'noopener noreferrer' : undefined}
                       className="flex items-center space-x-2 hover:text-primary-400 transition-colors duration-200"
                     >
                       <ContactIcon className="w-5 h-5" />
-                      <span>{contact.label || href || 'Kontakt'}</span>
+                      <span>{contact.label || safeHref || 'Kontakt'}</span>
                     </a>
                   )
                 })

@@ -6,6 +6,7 @@ import { useContent } from '../context/ContentContext'
 import { getIconComponent } from '../utils/iconMap'
 import { navigateContentTarget } from '../utils/contentNavigation'
 import { scrollToSection } from '../utils/scrollToSection'
+import { sanitizeExternalUrl } from '../utils/urlValidation'
 
 const FALLBACK_NAV_ITEMS = [
   { id: 'home', label: 'Home', type: 'section' },
@@ -52,7 +53,23 @@ const Header = () => {
     }
 
     if (item.href && typeof window !== 'undefined') {
-      window.open(item.href, '_blank', 'noopener,noreferrer')
+      const safeUrl = sanitizeExternalUrl(item.href)
+      if (!safeUrl) {
+        console.warn('Blocked unsafe navigation URL:', item.href)
+        return
+      }
+
+      if (safeUrl.startsWith('http://') || safeUrl.startsWith('https://')) {
+        window.open(safeUrl, '_blank', 'noopener,noreferrer')
+        return
+      }
+
+      if (safeUrl.startsWith('mailto:') || safeUrl.startsWith('tel:')) {
+        window.location.href = safeUrl
+        return
+      }
+
+      window.location.assign(safeUrl)
       return
     }
 

@@ -162,6 +162,7 @@ async fn main() {
     // Login route with rate limiting
     let login_router = Router::new()
         .route("/api/auth/login", post(handlers::auth::login))
+        .route("/api/auth/logout", post(handlers::auth::logout))
         .layer(GovernorLayer::new(rate_limit_config));
 
     let write_limit_config = std::sync::Arc::new(

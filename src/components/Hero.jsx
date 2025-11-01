@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useContent } from '../context/ContentContext'
 import { getIconComponent } from '../utils/iconMap'
 import { scrollToSection } from '../utils/scrollToSection'
+import { sanitizeExternalUrl } from '../utils/urlValidation'
 
 const Hero = () => {
   const navigate = useNavigate()
@@ -35,13 +36,27 @@ const Hero = () => {
       }
       case 'external': {
         if (typeof window !== 'undefined' && target.value) {
-          window.open(target.value, '_blank', 'noopener,noreferrer')
+          const safeUrl = sanitizeExternalUrl(target.value)
+          if (!safeUrl) {
+            console.warn('Blocked unsafe external hero link:', target.value)
+            return
+          }
+          window.open(safeUrl, '_blank', 'noopener,noreferrer')
         }
         break
       }
       case 'href': {
         if (typeof window !== 'undefined' && target.value) {
-          window.location.assign(target.value)
+          const safeUrl = sanitizeExternalUrl(target.value)
+          if (!safeUrl) {
+            console.warn('Blocked unsafe hero href:', target.value)
+            return
+          }
+          if (safeUrl.startsWith('#')) {
+            scrollToSection(safeUrl.slice(1))
+            return
+          }
+          window.location.assign(safeUrl)
         }
         break
       }
