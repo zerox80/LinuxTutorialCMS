@@ -51,34 +51,10 @@ struct SitePostImport {
 }
 
 #[derive(Debug, Deserialize)]
-struct TutorialImport {
-    id: String,
-    title: String,
-    description: String,
-    icon: String,
-    color: String,
-    topics: Vec<String>,
-    content: String,
-    version: i64,
-    #[serde(default)]
-    created_at: Option<String>,
-    #[serde(default)]
-    updated_at: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct TutorialTopicImport {
-    tutorial_id: String,
-    topic: String,
-}
-
-#[derive(Debug, Deserialize)]
 struct ImportBundle {
     site_content: Vec<SiteContentImport>,
     pages: Vec<SitePageImport>,
     posts: Vec<SitePostImport>,
-    tutorials: Vec<TutorialImport>,
-    tutorial_topics: Vec<TutorialTopicImport>,
 }
 
 #[tokio::main]
@@ -111,18 +87,14 @@ async fn main() -> Result<()> {
     import_site_content(&mut tx, &bundle.site_content).await?;
     import_site_pages(&mut tx, &bundle.pages).await?;
     import_site_posts(&mut tx, &bundle.posts).await?;
-    import_tutorials(&mut tx, &bundle.tutorials).await?;
-    import_tutorial_topics(&mut tx, &bundle.tutorial_topics).await?;
 
     tx.commit().await.context("Failed to commit transaction")?;
 
     println!(
-        "Import completed:\n  site_content: {}\n  pages: {}\n  posts: {}\n  tutorials: {}\n  tutorial_topics: {}\n  <- {}",
+        "Import completed:\n  site_content: {}\n  pages: {}\n  posts: {}\n  <- {}",
         bundle.site_content.len(),
         bundle.pages.len(),
         bundle.posts.len(),
-        bundle.tutorials.len(),
-        bundle.tutorial_topics.len(),
         path.display()
     );
 
@@ -207,49 +179,3 @@ async fn import_site_posts(tx: &mut Transaction<'_, Sqlite>, items: &[SitePostIm
     Ok(())
 }
 
-async fn import_tutorials(tx: &mut Transaction<'_, Sqlite>, items: &[TutorialImport]) -> Result<()> {
-    for item in items {
-        let topics_serialized = serde_json::to_string(&item.topics)
-            .context("Failed to serialize tutorial topics")?;
-
-        sqlx::query(
-            "INSERT INTO tutorials (id, title, description, icon, color, topics, content, version, created_at, updated_at) \
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP), COALESCE(?, CURRENT_TIMESTAMP)) \
-             ON CONFLICT(id) DO UPDATE SET title = excluded.title, description = excluded.description, icon = excluded.icon, color = excluded.color, topics = excluded.topics, content = excluded.content, version = excluded.version, updated_at = COALESCE(excluded.updated_at, CURRENT_TIMESTAMP)",
-        )
-        .bind(&item.id)
-        .bind(&item.title)
-        .bind(&item.description)
-        .bind(&item.icon)
-        .bind(&item.color)
-        .bind(&topics_serialized)
-        .bind(&item.content)
-        .bind(item.version)
-        .bind(&item.created_at)
-        .bind(&item.updated_at)
-        .execute(&mut **tx)
-        .await
-        .with_context(|| format!("Failed to upsert tutorial '{}'", item.id))?;
-
-    }
-
-    Ok(())
-}
-
-async fn import_tutorial_topics(tx: &mut Transaction<'_, Sqlite>, items: &[TutorialTopicImport]) -> Result<()> {
-    sqlx::query("DELETE FROM tutorial_topics")
-        .execute(&mut **tx)
-        .await
-        .context("Failed to clear tutorial_topics table before import")?;
-
-    for item in items {
-        sqlx::query("INSERT INTO tutorial_topics (tutorial_id, topic) VALUES (?, ?)")
-            .bind(&item.tutorial_id)
-            .bind(&item.topic)
-            .execute(&mut **tx)
-            .await
-            .with_context(|| format!("Failed to insert tutorial topic '{}' for tutorial '{}'", item.topic, item.tutorial_id))?;
-    }
-
-    Ok(())
-}

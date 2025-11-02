@@ -899,7 +899,7 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     // Insert default tutorials if none exist (using transaction to prevent race condition)
     let seed_enabled = env::var("ENABLE_DEFAULT_TUTORIALS")
         .map(|v| v.trim().eq_ignore_ascii_case("true"))
-        .unwrap_or(true);
+        .unwrap_or(false);
 
     let mut tx = pool.begin().await?;
 
@@ -927,7 +927,7 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
             tracing::info!("Inserted default tutorials");
         }
     } else {
-        tracing::info!("ENABLE_DEFAULT_TUTORIALS disabled – skipping default tutorial seeding");
+        tracing::info!("ENABLE_DEFAULT_TUTORIALS disabled or not set – skipping default tutorial seeding");
     }
 
     tx.commit().await?;
