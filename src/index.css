@@ -74,6 +74,13 @@
     -webkit-text-fill-color: transparent;
     @apply text-4xl md:text-5xl font-bold mb-8;
   }
+
+  .dark .section-title {
+    background: linear-gradient(to right, #60a5fa, #38bdf8, #60a5fa);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
   
   .nav-link {
     @apply relative text-gray-600 hover:text-primary-600 transition-all duration-300 font-medium;
