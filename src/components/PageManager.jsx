@@ -993,7 +993,7 @@ const PageManager = () => {
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={loadPages}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
             disabled={loading}
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -1009,8 +1009,8 @@ const PageManager = () => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-3 border-b border-gray-100 pb-4 mb-4">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-slate-900">
+          <div className="flex items-center gap-3 border-b border-gray-100 pb-4 mb-4 dark:border-gray-800">
             <Navigation className="h-5 w-5 text-primary-600" />
             <div>
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Navigation</p>
@@ -1023,7 +1023,7 @@ const PageManager = () => {
             {(navigation?.dynamic ?? []).map((item) => (
               <div key={item.id} className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300">
                 <span>{item.label}</span>
-                <span className="text-xs text-gray-400">/pages/{item.slug}</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500">/pages/{item.slug}</span>
               </div>
             ))}
             {dynamicPagesInNav === 0 && (
@@ -1032,8 +1032,8 @@ const PageManager = () => {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-3 border-b border-gray-100 pb-4 mb-4">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-slate-900">
+          <div className="flex items-center gap-3 border-b border-gray-100 pb-4 mb-4 dark:border-gray-800">
             <Eye className="h-5 w-5 text-green-600" />
             <div>
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Veröffentlichungen</p>
@@ -1054,8 +1054,8 @@ const PageManager = () => {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-3 border-b border-gray-100 pb-4 mb-4">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-slate-900">
+          <div className="flex items-center gap-3 border-b border-gray-100 pb-4 mb-4 dark:border-gray-800">
             <Layers className="h-5 w-5 text-indigo-600" />
             <div>
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Seitenübersicht</p>
@@ -1090,11 +1090,11 @@ const PageManager = () => {
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-4">
           {loading && pages.length === 0 ? (
-            <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center text-gray-500 dark:text-gray-400">
+            <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center text-gray-500 dark:border-gray-700 dark:bg-slate-900 dark:text-gray-400">
               Seiten werden geladen…
             </div>
           ) : pages.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center text-gray-600 dark:text-gray-300">
+            <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center text-gray-600 dark:border-gray-600 dark:bg-slate-900/50 dark:text-gray-300">
               Noch keine Seiten vorhanden. Erstelle deine erste Seite, um Beiträge zu veröffentlichen.
             </div>
           ) : (
