@@ -29,8 +29,8 @@ const TutorialSection = () => {
       id="tutorials"
     >
       <div className="text-center mb-12">
-        <h2 className="section-title">{sectionContent.title || 'Tutorial Inhalte'}</h2>
-        <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+        <h2 className="section-title dark:text-slate-100">{sectionContent.title || 'Tutorial Inhalte'}</h2>
+        <p className="text-gray-600 dark:text-slate-300 text-lg max-w-2xl mx-auto">
           {sectionContent.description ||
             'Umfassende Lernmodule für alle Erfahrungsstufen - vom Anfänger bis zum Profi'}
         </p>
@@ -63,7 +63,7 @@ const TutorialSection = () => {
       )}
 
       {/* Call to Action */}
-      <div className="mt-16 bg-gradient-to-r from-primary-600 to-primary-800 rounded-2xl p-8 md:p-12 text-white text-center">
+      <div className="mt-16 bg-gradient-to-r from-primary-600 to-primary-800 rounded-2xl p-8 md:p-12 text-white text-center shadow-xl">
         <h3 className="text-3xl font-bold mb-4">{sectionContent.heading || 'Bereit anzufangen?'}</h3>
         <p className="text-xl text-primary-100 mb-6">
           {sectionContent.ctaDescription ||
