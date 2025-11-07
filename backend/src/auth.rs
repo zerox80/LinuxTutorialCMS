@@ -199,9 +199,15 @@ fn secret_has_min_entropy(secret: &str) -> bool {
 }
 
 fn cookies_should_be_secure() -> bool {
-    env::var("AUTH_COOKIE_SECURE")
-        .map(|value| value.trim().eq_ignore_ascii_case("true"))
-        .unwrap_or(false)
+    match env::var("AUTH_COOKIE_SECURE") {
+        Ok(value) if value.trim().eq_ignore_ascii_case("false") => {
+            tracing::warn!(
+                "AUTH_COOKIE_SECURE explicitly set to false. Cookies will be sent over HTTP; only use this in trusted development environments."
+            );
+            false
+        }
+        _ => true,
+    }
 }
 
 fn extract_token(headers: &HeaderMap) -> Option<String> {

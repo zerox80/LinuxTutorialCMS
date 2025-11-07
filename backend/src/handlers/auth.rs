@@ -20,8 +20,12 @@ fn hash_login_identifier(username: &str) -> String {
 
     let salt = SALT.get_or_init(|| {
         env::var("LOGIN_ATTEMPT_SALT").unwrap_or_else(|_| {
-            tracing::warn!("LOGIN_ATTEMPT_SALT not set; using default dev salt. Set a random value in production.");
-            "dev-login-attempt-salt".to_string()
+            tracing::error!(
+                "LOGIN_ATTEMPT_SALT environment variable is missing. Set a high-entropy value to enable secure brute-force protection."
+            );
+            panic!(
+                "LOGIN_ATTEMPT_SALT must be set to a random, high-entropy string. See .env.example for guidance."
+            );
         })
     });
 

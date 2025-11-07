@@ -56,45 +56,22 @@ const isBinaryBody = (body) => {
   return false
 }
 
-const isLikelyJwt = (token) => {
-  if (typeof token !== 'string') return false
-  const parts = token.split('.')
-  return parts.length === 3 && parts.every((part) => part.length > 0)
-}
-
 class ApiClient {
   constructor() {
     this.token = null
-    if (typeof window !== 'undefined') {
-      const stored = window.localStorage.getItem('ltcms_token')
-      if (isLikelyJwt(stored)) {
-        this.token = stored
-      }
-    }
   }
 
   setToken(token) {
-    if (token && !isLikelyJwt(token)) {
+    // Tokens are now managed exclusively via HttpOnly cookies.
+    // Retain method signature for backwards compatibility without storing client-side state.
+    if (token && typeof token !== 'string') {
       console.warn('Attempted to set invalid JWT token; ignoring')
-      this.token = null
-      return
     }
-    this.token = token || null
-    if (typeof window !== 'undefined') {
-      if (this.token) {
-        window.localStorage.setItem('ltcms_token', this.token)
-      } else {
-        window.localStorage.removeItem('ltcms_token')
-      }
-    }
+    this.token = null
   }
 
   getHeaders() {
-    const headers = {}
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`
-    }
-    return headers
+    return {}
   }
 
   async request(endpoint, options = {}) {
