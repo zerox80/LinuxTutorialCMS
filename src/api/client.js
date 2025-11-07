@@ -1,5 +1,5 @@
 // Validate and sanitize API base URL
-const getApiBaseUrl = () => {
+export const getApiBaseUrl = () => {
   // Prefer explicit environment variable
   if (import.meta.env.VITE_API_BASE_URL) {
     return import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, '')
@@ -327,6 +327,37 @@ class ApiClient {
 
   async deleteTutorial(id, options = {}) {
     return this.request(`/tutorials/${id}`, {
+      method: 'DELETE',
+      ...options,
+    })
+  }
+
+  async listTutorialComments(tutorialId, options = {}) {
+    if (!tutorialId) {
+      throw new Error('tutorialId is required')
+    }
+    const encodedTutorialId = encodeURIComponent(tutorialId)
+    return this.request(`/tutorials/${encodedTutorialId}/comments`, options)
+  }
+
+  async createComment(tutorialId, content, options = {}) {
+    if (!tutorialId) {
+      throw new Error('tutorialId is required')
+    }
+    const encodedTutorialId = encodeURIComponent(tutorialId)
+    return this.request(`/tutorials/${encodedTutorialId}/comments`, {
+      method: 'POST',
+      body: { content },
+      ...options,
+    })
+  }
+
+  async deleteComment(commentId, options = {}) {
+    if (!commentId) {
+      throw new Error('commentId is required')
+    }
+    const encodedCommentId = encodeURIComponent(commentId)
+    return this.request(`/comments/${encodedCommentId}`, {
       method: 'DELETE',
       ...options,
     })

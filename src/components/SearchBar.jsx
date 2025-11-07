@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Search, X, Tag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
+import { api } from '../api/client';
 
 const SearchBar = ({ onClose }) => {
   const [query, setQuery] = useState('');
@@ -16,10 +17,12 @@ const SearchBar = ({ onClose }) => {
     inputRef.current?.focus();
     
     // Fetch available topics
-    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8489'}/api/search/topics`)
-      .then(res => res.json())
-      .then(data => setTopics(data))
-      .catch(err => console.error('Failed to fetch topics:', err));
+    api.request('/search/topics', { cacheBust: false })
+      .then((data) => setTopics(Array.isArray(data) ? data : []))
+      .catch((err) => {
+        console.error('Failed to fetch topics:', err)
+        setTopics([])
+      })
   }, []);
 
   useEffect(() => {
@@ -36,11 +39,10 @@ const SearchBar = ({ onClose }) => {
           params.append('topic', selectedTopic);
         }
         
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:8489'}/api/search/tutorials?${params}`
-        );
-        const data = await response.json();
-        setResults(data);
+        const data = await api.request(`/search/tutorials?${params.toString()}`, {
+          cacheBust: false,
+        })
+        setResults(Array.isArray(data) ? data : [])
       } catch (error) {
         console.error('Search failed:', error);
         setResults([]);

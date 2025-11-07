@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MessageSquare, Send, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { api } from '../api/client';
 import PropTypes from 'prop-types';
 
 const Comments = ({ tutorialId }) => {
@@ -15,15 +16,11 @@ const Comments = ({ tutorialId }) => {
 
   const loadComments = async () => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:8489'}/api/tutorials/${tutorialId}/comments`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setComments(data);
-      }
+      const data = await api.listTutorialComments(tutorialId);
+      setComments(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to load comments:', error);
+      setComments([]);
     }
   };
 
@@ -33,23 +30,9 @@ const Comments = ({ tutorialId }) => {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:8489'}/api/tutorials/${tutorialId}/comments`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({ content: newComment }),
-        }
-      );
-
-      if (response.ok) {
-        setNewComment('');
-        await loadComments();
-      }
+      await api.createComment(tutorialId, newComment);
+      setNewComment('');
+      await loadComments();
     } catch (error) {
       console.error('Failed to post comment:', error);
     } finally {
@@ -61,20 +44,8 @@ const Comments = ({ tutorialId }) => {
     if (!confirm('Kommentar wirklich löschen?')) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:8489'}/api/comments/${commentId}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.ok) {
-        await loadComments();
-      }
+      await api.deleteComment(commentId);
+      await loadComments();
     } catch (error) {
       console.error('Failed to delete comment:', error);
     }

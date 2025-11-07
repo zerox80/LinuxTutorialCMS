@@ -16,7 +16,10 @@ export const sanitizeSlug = (value) => {
     .replace(/-+/g, '-') // collapse duplicate hyphens
     .replace(/^-|-$/g, '') // trim leading/trailing hyphen
 
-  return cleaned
+  const MAX_LENGTH = 100
+  const truncated = cleaned.slice(0, MAX_LENGTH)
+
+  return truncated
 }
 
 const SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
