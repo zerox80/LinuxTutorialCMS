@@ -39,7 +39,7 @@ sha2 = "0.10"
 version = "=0.5.9"
 
 [dependencies.base64ct]
-version = "=1.8.0"
+version = "=1.6.0"
 default-features = false
 features = ["alloc"]
 
