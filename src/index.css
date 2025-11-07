@@ -171,8 +171,10 @@
 
   .markdown-renderer :not(pre) > code {
     @apply align-baseline;
-    white-space: nowrap;
-    display: inline-block;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    display: inline;
     /* Small negative margins to keep punctuation close */
     margin-left: -0.05em;
     margin-right: -0.05em;
