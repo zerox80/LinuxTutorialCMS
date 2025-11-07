@@ -67,7 +67,7 @@ const TutorialDetail = () => {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 py-16">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 py-16">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <button
           onClick={handleBack}
@@ -91,7 +91,7 @@ const TutorialDetail = () => {
             </div>
           </div>
         ) : tutorial ? (
-          <article className="bg-white rounded-3xl shadow-xl overflow-hidden">
+          <article className="bg-white dark:bg-slate-900/90 rounded-3xl shadow-xl border border-gray-200 dark:border-slate-800/70 overflow-hidden">
             <header className="bg-gradient-to-r from-primary-600 to-primary-700 text-white px-8 py-10">
               <div className="flex flex-col gap-4">
                 <span className="inline-flex items-center gap-2 bg-white/15 px-4 py-2 rounded-full text-sm font-medium w-fit">
@@ -109,17 +109,17 @@ const TutorialDetail = () => {
             <div className="px-8 py-10 space-y-12">
               {topics.length > 0 && (
                 <section>
-                  <h2 className="text-2xl font-semibold text-gray-900 mb-4">Was du lernen wirst</h2>
+                  <h2 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">Was du lernen wirst</h2>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {topics.map((topic, index) => (
                       <div
                         key={`${topic}-${index}`}
-                        className="flex items-start gap-3 rounded-2xl border border-gray-200 bg-gray-50/60 px-4 py-3"
+                        className="flex items-start gap-3 rounded-2xl border border-gray-200 dark:border-slate-700 bg-gray-50/60 dark:bg-slate-800/60 px-4 py-3"
                       >
-                        <span className="mt-1 h-6 w-6 shrink-0 rounded-full bg-primary-600/10 text-primary-700 font-semibold flex items-center justify-center text-sm">
+                        <span className="inline-flex items-center justify-center h-6 w-6 shrink-0 rounded-full bg-primary-600/10 text-primary-700 dark:text-primary-300 font-semibold text-sm">
                           {index + 1}
                         </span>
-                        <span className="text-gray-700 leading-relaxed">{topic}</span>
+                        <span className="text-gray-700 dark:text-slate-200 leading-relaxed">{topic}</span>
                       </div>
                     ))}
                   </div>
@@ -127,7 +127,7 @@ const TutorialDetail = () => {
               )}
 
               <section>
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4">Inhalt</h2>
+                <h2 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">Inhalt</h2>
                 <MarkdownRenderer
                   content={tutorial.content || 'Für dieses Tutorial liegt noch kein Inhalt vor.'}
                 />

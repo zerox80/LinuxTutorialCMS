@@ -102,7 +102,7 @@ const DynamicPage = () => {
   const hasContent = Boolean(page)
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 pb-16">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 pb-16">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <button
           onClick={() => navigate('/', { state: { scrollTo: null, from: 'dynamic-page' } })}
@@ -131,7 +131,7 @@ const DynamicPage = () => {
           </div>
         ) : (
           <div className="space-y-12">
-            <section className="relative overflow-hidden rounded-3xl border border-primary-100 bg-white shadow-xl">
+            <section className="relative overflow-hidden rounded-3xl border border-primary-100 dark:border-primary-900/40 bg-white dark:bg-slate-900/80 shadow-xl">
               <div className={`absolute inset-0 bg-gradient-to-br ${heroGradient} opacity-90`} aria-hidden="true" />
               <div className="relative px-6 py-12 sm:px-10 sm:py-14 text-white">
                 <div className="max-w-3xl space-y-6">
@@ -149,24 +149,24 @@ const DynamicPage = () => {
             </section>
 
             {page?.description && (
-              <section className="bg-white rounded-3xl shadow-lg border border-gray-100 px-6 py-8 sm:px-10">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-3">{aboutTitle}</h2>
-                <p className="text-gray-700 leading-relaxed">{page.description}</p>
+              <section className="bg-white dark:bg-slate-900/80 rounded-3xl shadow-lg border border-gray-100 dark:border-slate-800 px-6 py-8 sm:px-10">
+                <h2 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-3">{aboutTitle}</h2>
+                <p className="text-gray-700 dark:text-slate-200 leading-relaxed">{page.description}</p>
               </section>
             )}
 
             <section className="space-y-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-2xl font-semibold text-gray-900">
+                <h2 className="text-2xl font-semibold text-gray-900 dark:text-slate-100">
                   {posts.length > 0 ? postsTitle : postsEmptyTitle}
                 </h2>
                 {posts.length > 0 && (
-                  <span className="text-sm text-gray-500">{formatPostsCount(posts.length)}</span>
+                  <span className="text-sm text-gray-500 dark:text-slate-400">{formatPostsCount(posts.length)}</span>
                 )}
               </div>
 
               {posts.length === 0 ? (
-                <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center text-gray-600">
+                <div className="rounded-2xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-8 text-center text-gray-600 dark:text-slate-300">
                   {postsEmptyMessage}
                 </div>
               ) : (
@@ -179,11 +179,11 @@ const DynamicPage = () => {
                     return (
                       <article
                         key={post.id}
-                        className="rounded-3xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow duration-200"
+                        className="rounded-3xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 shadow-sm hover:shadow-md transition-shadow duration-200"
                       >
                         <div className="px-6 py-7 sm:px-9 sm:py-8 space-y-6">
                           <header className="space-y-2">
-                            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-slate-400">
                               {publishedDate && (
                                 <span className="inline-flex items-center gap-1.5">
                                   <CalendarDays className="w-4 h-4" />
@@ -191,21 +191,21 @@ const DynamicPage = () => {
                                 </span>
                               )}
                             </div>
-                            <h3 className="text-2xl font-semibold text-gray-900 break-words">{post.title}</h3>
+                            <h3 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 break-words">{post.title}</h3>
                             {previewText && (
-                              <p className="text-gray-600 leading-relaxed break-words line-clamp-3">
+                              <p className="text-gray-600 dark:text-slate-300 leading-relaxed break-words line-clamp-3">
                                 {previewText}
                               </p>
                             )}
                           </header>
-                          <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-gray-100">
-                            <span className="text-sm text-gray-500">
+                          <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-gray-100 dark:border-slate-800">
+                            <span className="text-sm text-gray-500 dark:text-slate-400">
                               {previewText ? 'Kurzvorschau' : 'Mehr Details verfügbar'}
                             </span>
                             {postSlug ? (
                               <Link
                                 to={`/pages/${normalizedSlug}/posts/${postSlug}`}
-                                className="inline-flex items-center gap-2 text-primary-700 font-semibold hover:text-primary-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:rounded-lg"
+                                className="inline-flex items-center gap-2 text-primary-700 dark:text-primary-300 font-semibold hover:text-primary-800 dark:hover:text-primary-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:rounded-lg"
                               >
                                 Weiterlesen
                                 <ArrowRight className="w-4 h-4" />

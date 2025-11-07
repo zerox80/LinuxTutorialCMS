@@ -64,7 +64,7 @@ const PostDetail = () => {
   const publishedDate = formatDate(post?.published_at)
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 pb-16">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 pb-16">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <button
           onClick={() => navigate(`/pages/${normalizedPageSlug}`)}
@@ -88,20 +88,20 @@ const PostDetail = () => {
             </div>
           </div>
         ) : (
-          <article className="bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden">
+          <article className="bg-white dark:bg-slate-900/90 rounded-3xl shadow-xl border border-gray-200 dark:border-slate-700/60 overflow-hidden">
             <div className="px-6 py-8 sm:px-10 sm:py-10 space-y-8">
-              <header className="space-y-4 pb-6 border-b border-gray-200">
+              <header className="space-y-4 pb-6 border-b border-gray-200 dark:border-slate-700">
                 {publishedDate && (
-                  <div className="inline-flex items-center gap-2 text-sm text-gray-500">
+                  <div className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400">
                     <CalendarDays className="w-4 h-4" />
                     {publishedDate}
                   </div>
                 )}
-                <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight">
+                <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-slate-100 leading-tight">
                   {post?.title}
                 </h1>
                 {post?.excerpt && (
-                  <p className="text-lg text-gray-600 leading-relaxed">
+                  <p className="text-lg text-gray-600 dark:text-slate-300 leading-relaxed">
                     {post.excerpt}
                   </p>
                 )}
