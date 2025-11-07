@@ -77,6 +77,8 @@
 
   .dark .section-title {
     background: none;
+    background-clip: initial;
+    -webkit-background-clip: initial;
     color: #e2e8f0;
     -webkit-text-fill-color: #e2e8f0;
   }
