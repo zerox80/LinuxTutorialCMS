@@ -2,7 +2,7 @@
 name = "linux-tutorial-backend"
 version = "1.0.0"
 edition = "2021"
-rust-version = "1.83"  # Minimum Supported Rust Version
+rust-version = "1.82"  # Minimum Supported Rust Version
 authors = ["zerox80"]
 license = "MIT"
 description = "High-performance Rust backend API for Linux Tutorial CMS"
