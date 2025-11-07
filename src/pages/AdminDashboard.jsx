@@ -196,8 +196,8 @@ const AdminDashboard = () => {
             {/* Actions */}
             <div className="mb-8 flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
               <div>
-                <h2 className="text-2xl font-bold text-gray-800">Tutorial Verwaltung</h2>
-                <p className="text-gray-600 mt-1">Erstelle, bearbeite und verwalte deine Tutorials</p>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Tutorial Verwaltung</h2>
+                <p className="text-gray-600 dark:text-gray-300 mt-1">Erstelle, bearbeite und verwalte deine Tutorials</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
@@ -344,10 +344,10 @@ const AdminDashboard = () => {
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
                   <Terminal className="w-8 h-8 text-gray-400" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">
                   Noch keine Tutorials vorhanden
                 </h3>
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
                   Erstelle dein erstes Tutorial, um loszulegen.
                 </p>
                 <button
