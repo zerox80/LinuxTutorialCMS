@@ -37,11 +37,11 @@ const SectionPicker = ({ sections, selected, onSelect }) => {
             className={`rounded-xl border px-4 py-3 text-left transition-all ${
               isActive
                 ? 'border-primary-600 bg-primary-50 text-primary-700 shadow-sm'
-                : 'border-gray-200 text-gray-700 hover:border-primary-200 hover:bg-gray-50'
+                : 'border-gray-200 text-gray-700 hover:border-primary-200 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700'
             }`}
           >
             <p className="text-sm font-semibold">{label}</p>
-            <p className="text-xs text-gray-500">{section}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{section}</p>
           </button>
         )
       })}
@@ -372,8 +372,8 @@ const SiteContentEditor = () => {
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Seiteninhalte verwalten</h2>
-          <p className="text-sm text-gray-600">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Seiteninhalte verwalten</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             Bearbeite Texte, Navigation und weitere statische Inhalte. Änderungen werden nach dem Speichern sofort aktiv.
           </p>
         </div>
@@ -399,7 +399,7 @@ const SiteContentEditor = () => {
 
       {!selectedSection && (
         <div className="space-y-4">
-          <p className="text-sm font-medium text-gray-700">Wähle einen Inhaltsbereich aus:</p>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Wähle einen Inhaltsbereich aus:</p>
           <SectionPicker
             sections={sectionOptions}
             selected={selectedSection}

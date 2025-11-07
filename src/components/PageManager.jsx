@@ -985,8 +985,8 @@ const PageManager = () => {
     <div className="space-y-8">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Seiten & Beiträge</h2>
-          <p className="text-sm text-gray-600">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Seiten & Beiträge</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             Verwalte dynamische Seiten, Navigationseinträge und veröffentlichte Beiträge.
           </p>
         </div>
@@ -1013,21 +1013,21 @@ const PageManager = () => {
           <div className="flex items-center gap-3 border-b border-gray-100 pb-4 mb-4">
             <Navigation className="h-5 w-5 text-primary-600" />
             <div>
-              <p className="text-sm font-semibold text-gray-900">Navigation</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Navigation</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 {dynamicPagesInNav} dynamische Seite{dynamicPagesInNav === 1 ? '' : 'n'} im Menü
               </p>
             </div>
           </div>
           <div className="space-y-3">
             {(navigation?.dynamic ?? []).map((item) => (
-              <div key={item.id} className="flex items-center justify-between text-sm text-gray-600">
+              <div key={item.id} className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300">
                 <span>{item.label}</span>
                 <span className="text-xs text-gray-400">/pages/{item.slug}</span>
               </div>
             ))}
             {dynamicPagesInNav === 0 && (
-              <p className="text-sm text-gray-500">Noch keine dynamischen Seiten in der Navigation.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Noch keine dynamischen Seiten in der Navigation.</p>
             )}
           </div>
         </div>
@@ -1036,20 +1036,20 @@ const PageManager = () => {
           <div className="flex items-center gap-3 border-b border-gray-100 pb-4 mb-4">
             <Eye className="h-5 w-5 text-green-600" />
             <div>
-              <p className="text-sm font-semibold text-gray-900">Veröffentlichungen</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Veröffentlichungen</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 {totalPublishedPages} veröffentlichte Seite{totalPublishedPages === 1 ? '' : 'n'}
               </p>
             </div>
           </div>
           <div className="space-y-3">
             {(publishedPages?.publishedSlugs ?? []).map((slugValue) => (
-              <div key={slugValue} className="flex items-center justify-between text-sm text-gray-600">
+              <div key={slugValue} className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300">
                 <span>/pages/{slugValue}</span>
               </div>
             ))}
             {totalPublishedPages === 0 && (
-              <p className="text-sm text-gray-500">Noch keine Seite veröffentlicht.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Noch keine Seite veröffentlicht.</p>
             )}
           </div>
         </div>
@@ -1058,13 +1058,13 @@ const PageManager = () => {
           <div className="flex items-center gap-3 border-b border-gray-100 pb-4 mb-4">
             <Layers className="h-5 w-5 text-indigo-600" />
             <div>
-              <p className="text-sm font-semibold text-gray-900">Seitenübersicht</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Seitenübersicht</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 {pages.length} Seite{pages.length === 1 ? '' : 'n'} insgesamt
               </p>
             </div>
           </div>
-          <div className="space-y-3 text-sm text-gray-600">
+          <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
             <p>
               <span className="font-semibold">Ausgewählt:</span>{' '}
               {selectedPage ? selectedPage.title : 'Keine Seite ausgewählt'}
@@ -1090,11 +1090,11 @@ const PageManager = () => {
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-4">
           {loading && pages.length === 0 ? (
-            <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center text-gray-500">
+            <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center text-gray-500 dark:text-gray-400">
               Seiten werden geladen…
             </div>
           ) : pages.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center text-gray-600">
+            <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center text-gray-600 dark:text-gray-300">
               Noch keine Seiten vorhanden. Erstelle deine erste Seite, um Beiträge zu veröffentlichen.
             </div>
           ) : (

@@ -29,8 +29,8 @@ const TutorialSection = () => {
       id="tutorials"
     >
       <div className="text-center mb-12">
-        <h2 className="section-title dark:text-slate-100">{sectionContent.title || 'Tutorial Inhalte'}</h2>
-        <p className="text-gray-600 dark:text-slate-300 text-lg max-w-2xl mx-auto">
+        <h2 className="section-title">{sectionContent.title || 'Tutorial Inhalte'}</h2>
+        <p className="text-gray-600 dark:text-gray-300 text-lg max-w-2xl mx-auto">
           {sectionContent.description ||
             'Umfassende Lernmodule für alle Erfahrungsstufen - vom Anfänger bis zum Profi'}
         </p>
@@ -47,7 +47,7 @@ const TutorialSection = () => {
       )}
 
       {loading && normalizedTutorials.length === 0 ? (
-        <div className="text-center text-gray-600 py-12">Lade Tutorials…</div>
+        <div className="text-center text-gray-600 dark:text-gray-300 py-12">Lade Tutorials…</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {normalizedTutorials.map((tutorial) => (
