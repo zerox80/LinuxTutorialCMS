@@ -148,24 +148,24 @@ const TutorialForm = ({ tutorial, onClose }) => {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-8 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h2 id="modal-title" className="text-2xl font-bold text-gray-800">
+        <h2 id="modal-title" className="text-2xl font-bold text-gray-800 dark:text-slate-100">
           {tutorial ? 'Tutorial bearbeiten' : 'Neues Tutorial erstellen'}
         </h2>
         <button
           onClick={onClose}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+          className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors duration-200"
         >
-          <X className="w-6 h-6 text-gray-600" />
+          <X className="w-6 h-6 text-gray-600 dark:text-slate-300" />
         </button>
       </div>
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
         {formError && (
-          <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700" role="alert">
+          <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300" role="alert">
             <AlertCircle className="w-5 h-5 mt-0.5" aria-hidden="true" />
             <span className="text-sm">{formError}</span>
           </div>
@@ -173,48 +173,48 @@ const TutorialForm = ({ tutorial, onClose }) => {
 
         {/* Title */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
             Titel *
           </label>
           <input
             type="text"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             placeholder="z.B. Grundlegende Befehle"
             maxLength={200}
             required
           />
-          <p className="mt-1 text-xs text-gray-500">{formData.title.length}/200 Zeichen</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">{formData.title.length}/200 Zeichen</p>
         </div>
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
             Beschreibung *
           </label>
           <textarea
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             rows="3"
             placeholder="Kurze Beschreibung des Tutorials"
             maxLength={1000}
             required
           />
-          <p className="mt-1 text-xs text-gray-500">{formData.description.length}/1000 Zeichen</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">{formData.description.length}/1000 Zeichen</p>
         </div>
 
         {/* Icon & Color */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
               Icon
             </label>
             <select
               value={formData.icon}
               onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               {iconOptions.map((icon) => (
                 <option key={icon} value={icon}>
@@ -225,13 +225,13 @@ const TutorialForm = ({ tutorial, onClose }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
               Farbe
             </label>
             <select
               value={formData.color}
               onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               {colorOptions.map((color) => (
                 <option key={color.value} value={color.value}>
@@ -245,7 +245,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
         {/* Topics */}
         <div>
           <div className="flex justify-between items-center mb-2">
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300">
               Themen
             </label>
             <button
@@ -264,7 +264,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
                   type="text"
                   value={topic}
                   onChange={(e) => handleTopicChange(index, e.target.value)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder={`Thema ${index + 1}`}
                   maxLength={100}
                 />
@@ -272,7 +272,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
                   <button
                     type="button"
                     onClick={() => removeTopic(index)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                    className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200"
                   >
                     <Trash2 className="w-5 h-5" />
                   </button>
@@ -284,22 +284,22 @@ const TutorialForm = ({ tutorial, onClose }) => {
 
         {/* Content */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
             Inhalt (Markdown unterstützt)
           </label>
           <textarea
             value={formData.content}
             onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm"
             rows="10"
             placeholder="Hier kannst du den vollständigen Tutorial-Inhalt eingeben..."
             maxLength={100000}
           />
-          <p className="mt-1 text-xs text-gray-500">{formData.content.length}/100000 Zeichen</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">{formData.content.length}/100000 Zeichen</p>
         </div>
 
         {/* Actions */}
-        <div className="flex space-x-4 pt-4 border-t border-gray-200">
+        <div className="flex space-x-4 pt-4 border-t border-gray-200 dark:border-slate-800">
           <button
             type="submit"
             className="flex-1 flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-60"
@@ -311,7 +311,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+            className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
           >
             Abbrechen
           </button>

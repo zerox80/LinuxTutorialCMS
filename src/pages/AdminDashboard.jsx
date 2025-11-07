@@ -113,31 +113,31 @@ const AdminDashboard = () => {
   }, [showForm])
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 text-gray-900 dark:text-slate-100">
       {/* Header */}
-      <header className="bg-white shadow-md">
+      <header className="bg-white/90 dark:bg-slate-900/80 shadow-md backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-3">
-              <div className="bg-gradient-to-r from-primary-600 to-primary-800 p-2 rounded-lg">
+              <div className="bg-gradient-to-r from-primary-600 to-primary-800 p-2 rounded-lg shadow-lg shadow-primary-900/20">
                 <Terminal className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-                <p className="text-sm text-gray-600">Willkommen, {user?.username}</p>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Admin Dashboard</h1>
+                <p className="text-sm text-gray-600 dark:text-slate-400">Willkommen, {user?.username}</p>
               </div>
             </div>
             <div className="flex space-x-3">
               <button
                 onClick={() => navigate('/')}
-                className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+                className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
               >
                 <Home className="w-4 h-4" />
                 <span>Startseite</span>
               </button>
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors duration-200"
+                className="flex items-center space-x-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors duration-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Abmelden</span>
@@ -150,15 +150,15 @@ const AdminDashboard = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Tabs */}
-        <div className="mb-8 flex flex-col gap-3 border-b border-gray-200 pb-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-8 flex flex-col gap-3 border-b border-gray-200 pb-3 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => setActiveTab('tutorials')}
               className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                 activeTab === 'tutorials'
-                  ? 'bg-primary-600 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
               }`}
             >
               <LayoutDashboard className="h-4 w-4" />
@@ -169,8 +169,8 @@ const AdminDashboard = () => {
               onClick={() => setActiveTab('content')}
               className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                 activeTab === 'content'
-                  ? 'bg-primary-600 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
               }`}
             >
               <Paintbrush className="h-4 w-4" />
@@ -181,8 +181,8 @@ const AdminDashboard = () => {
               onClick={() => setActiveTab('pages')}
               className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                 activeTab === 'pages'
-                  ? 'bg-primary-600 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
               }`}
             >
               <FileText className="h-4 w-4" />
