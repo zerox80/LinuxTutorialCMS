@@ -28,6 +28,11 @@
     background: linear-gradient(to bottom right, #f9fafb, rgba(239, 246, 255, 0.3), rgba(238, 242, 255, 0.2));
     @apply text-gray-900 font-sans;
   }
+
+  .dark body {
+    background: linear-gradient(to bottom right, #0f172a, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.9));
+    color: rgb(226 232 240);
+  }
   
   ::selection {
     @apply bg-primary-600 text-white;
@@ -43,7 +48,7 @@
   .tutorial-card {
     @apply relative bg-white/80 backdrop-blur-sm rounded-2xl shadow-soft hover:shadow-2xl transition-all duration-500 p-8 border border-gray-100/50 overflow-hidden;
   }
-  
+
   .tutorial-card::before {
     content: '';
     background: linear-gradient(to bottom right, rgba(14, 165, 233, 0.05), transparent);
@@ -52,6 +57,14 @@
   
   .tutorial-card:hover::before {
     @apply opacity-100;
+  }
+
+  .dark .tutorial-card {
+    @apply bg-slate-900/80 border-gray-800/60 shadow-2xl;
+  }
+
+  .dark .tutorial-card::before {
+    background: linear-gradient(to bottom right, rgba(79, 70, 229, 0.08), transparent);
   }
   
   .section-title {
@@ -65,7 +78,7 @@
   .nav-link {
     @apply relative text-gray-600 hover:text-primary-600 transition-all duration-300 font-medium;
   }
-  
+
   .nav-link::after {
     content: '';
     background: linear-gradient(to right, #0284c7, #38bdf8);
@@ -75,9 +88,17 @@
   .nav-link:hover::after {
     @apply w-full;
   }
-  
+
+  .dark .nav-link {
+    @apply text-gray-300 hover:text-primary-400;
+  }
+
   .glass-card {
     @apply bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 shadow-glass;
+  }
+  
+  .dark .glass-card {
+    @apply bg-gray-900/10 backdrop-blur-xl rounded-3xl border border-gray-900/20 shadow-glass;
   }
   
   .gradient-text {
