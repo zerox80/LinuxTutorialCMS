@@ -33,6 +33,10 @@ pub fn init_jwt_secret() -> Result<(), String> {
         .map_err(|_| "JWT_SECRET environment variable not set".to_string())?;
     let trimmed = secret.trim();
 
+    if trimmed.is_empty() {
+        return Err("JWT_SECRET cannot be empty or whitespace".to_string());
+    }
+
     if SECRET_BLACKLIST
         .iter()
         .any(|candidate| candidate.eq_ignore_ascii_case(trimmed))

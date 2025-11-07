@@ -4,14 +4,35 @@ use axum::{
     http::{HeaderMap, StatusCode},
     Json,
 };
-use chrono::{Duration as ChronoDuration, Utc};
+use chrono::{DateTime, Duration as ChronoDuration, Utc};
 use sqlx::{self, FromRow};
-use std::time::Duration;
+use std::{env, sync::OnceLock, time::Duration};
+use sha2::{Digest, Sha256};
 
 #[derive(Debug, FromRow, Clone)]
 struct LoginAttempt {
     fail_count: i64,
     blocked_until: Option<String>,
+}
+
+fn hash_login_identifier(username: &str) -> String {
+    static SALT: OnceLock<String> = OnceLock::new();
+
+    let salt = SALT.get_or_init(|| {
+        env::var("LOGIN_ATTEMPT_SALT").unwrap_or_else(|_| {
+            tracing::warn!("LOGIN_ATTEMPT_SALT not set; using default dev salt. Set a random value in production.");
+            "dev-login-attempt-salt".to_string()
+        })
+    });
+
+    let mut hasher = Sha256::new();
+    hasher.update(salt.as_bytes());
+    hasher.update(username.trim().to_ascii_lowercase().as_bytes());
+    format!("{:x}", hasher.finalize())
+}
+
+fn parse_rfc3339_opt(value: &Option<String>) -> Option<DateTime<Utc>> {
+    value.as_ref().and_then(|timestamp| chrono::DateTime::parse_from_rfc3339(timestamp).ok()).map(|dt| dt.with_timezone(&Utc))
 }
 
 // Input validation
@@ -43,8 +64,10 @@ pub async fn login(
     State(pool): State<DbPool>,
     Json(payload): Json<LoginRequest>,
 ) -> Result<(HeaderMap, Json<LoginResponse>), (StatusCode, Json<ErrorResponse>)> {
+    let username = payload.username.trim().to_string();
+
     // Validate input
-    if let Err(e) = validate_username(&payload.username) {
+    if let Err(e) = validate_username(&username) {
         return Err((
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse { error: e }),
@@ -58,14 +81,16 @@ pub async fn login(
     }
 
     // Load login attempt metadata to enforce server-side cooldowns
+    let attempt_key = hash_login_identifier(&username);
+
     let attempt_record = sqlx::query_as::<_, LoginAttempt>(
         "SELECT fail_count, blocked_until FROM login_attempts WHERE username = ?",
     )
-    .bind(&payload.username)
+    .bind(&attempt_key)
     .fetch_optional(&pool)
     .await
     .map_err(|e| {
-        tracing::error!("Failed to load login attempts for {}: {}", payload.username, e);
+        tracing::error!("Failed to load login attempts for {}: {}", username, e);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse {
@@ -75,40 +100,29 @@ pub async fn login(
     })?;
 
     if let Some(record) = &attempt_record {
-        if let Some(ref blocked_until_str) = record.blocked_until {
-            match chrono::DateTime::parse_from_rfc3339(blocked_until_str) {
-                Ok(parsed) => {
-                    let blocked_until = parsed.with_timezone(&Utc);
-                    let now = Utc::now();
-                    if blocked_until > now {
-                        let remaining = (blocked_until - now).num_seconds().max(0);
-                        let jitter = (chrono::Utc::now().timestamp_subsec_millis() % 200) as u64;
-                        tokio::time::sleep(Duration::from_millis(100 + jitter)).await;
-                        return Err((
-                            StatusCode::TOO_MANY_REQUESTS,
-                            Json(ErrorResponse {
-                                error: format!(
-                                    "Zu viele fehlgeschlagene Versuche. Bitte warte {} Sekunde{}.",
-                                    remaining,
-                                    if remaining == 1 { "" } else { "n" }
-                                ),
-                            }),
-                        ));
-                    }
-                }
-                Err(err) => {
-                    tracing::warn!(
-                        "Invalid blocked_until value for '{}': {}",
-                        payload.username, err
-                    );
-                }
+        if let Some(blocked_until) = parse_rfc3339_opt(&record.blocked_until) {
+            let now = Utc::now();
+            if blocked_until > now {
+                let remaining = (blocked_until - now).num_seconds().max(0);
+                let jitter = (chrono::Utc::now().timestamp_subsec_millis() % 200) as u64;
+                tokio::time::sleep(Duration::from_millis(100 + jitter)).await;
+                return Err((
+                    StatusCode::TOO_MANY_REQUESTS,
+                    Json(ErrorResponse {
+                        error: format!(
+                            "Zu viele fehlgeschlagene Versuche. Bitte warte {} Sekunde{}.",
+                            remaining,
+                            if remaining == 1 { "" } else { "n" }
+                        ),
+                    }),
+                ));
             }
         }
     }
 
     // Find user by username
     let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE username = ?")
-        .bind(&payload.username)
+        .bind(&username)
         .fetch_optional(&pool)
         .await
         .map_err(|e| {
@@ -124,25 +138,29 @@ pub async fn login(
     // Timing attack prevention: Always verify password even if user doesn't exist
     // Use a dummy hash that matches DEFAULT_COST to ensure consistent timing
     // This hash was generated with bcrypt::DEFAULT_COST for the password "dummy"
-    let dummy_hash = match bcrypt::DEFAULT_COST {
-        12 => "$2b$12$eImiTXuWVxfM37uY4JANjQPzMzXZjQDzqzQpMv0xoGrTplPPNaE3W",
-        10 => "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy",
-        _ => "$2b$12$eImiTXuWVxfM37uY4JANjQPzMzXZjQDzqzQpMv0xoGrTplPPNaE3W", // fallback
+    let dummy_hash = match bcrypt::hash("dummy", bcrypt::DEFAULT_COST) {
+        Ok(hash) => hash,
+        Err(err) => {
+            tracing::error!("Failed to generate dummy hash: {}", err);
+            // Fallback to cost-12 dummy hash to avoid panicking
+            "$2b$12$eImiTXuWVxfM37uY4JANjQPzMzXZjQDzqzQpMv0xoGrTplPPNaE3W".to_string()
+        }
     };
-    
-    let hash_to_verify = user.as_ref().map(|u| u.password_hash.as_str()).unwrap_or(dummy_hash);
+
+    let hash_to_verify_owned = user.as_ref().map(|u| u.password_hash.clone()).unwrap_or(dummy_hash);
+    let hash_to_verify = hash_to_verify_owned.as_str();
     
     // Always perform verification regardless of whether user exists
     let verification_result = bcrypt::verify(&payload.password, hash_to_verify);
     
-    let (password_valid, username, role) = match (user, verification_result) {
-        (Some(user), Ok(true)) => (true, user.username, user.role),
-        (Some(_), Ok(false)) => (false, String::new(), String::new()),
+    let (password_valid, user_record) = match (user, verification_result) {
+        (Some(user), Ok(true)) => (true, Some(user)),
+        (Some(_), Ok(false)) => (false, None),
         (Some(_), Err(e)) => {
             tracing::error!("Password verification error: {}", e);
-            (false, String::new(), String::new())
+            (false, None)
         }
-        (None, _) => (false, String::new(), String::new()),
+        (None, _) => (false, None),
     };
 
     // Variable delay based on operation to prevent timing attacks
@@ -151,30 +169,26 @@ pub async fn login(
     tokio::time::sleep(Duration::from_millis(100 + jitter)).await;
 
     if !password_valid {
-        let new_fail_count = attempt_record
-            .as_ref()
-            .map(|record| record.fail_count + 1)
-            .unwrap_or(1);
-
-        let cooldown_until = if new_fail_count >= 5 {
-            Some((Utc::now() + ChronoDuration::seconds(60)).to_rfc3339())
-        } else if new_fail_count >= 3 {
-            Some((Utc::now() + ChronoDuration::seconds(10)).to_rfc3339())
-        } else {
-            None
-        };
+        let now = Utc::now();
+        let long_block = (now + ChronoDuration::seconds(60)).to_rfc3339();
+        let short_block = (now + ChronoDuration::seconds(10)).to_rfc3339();
 
         sqlx::query(
-            "INSERT INTO login_attempts (username, fail_count, blocked_until) VALUES (?, ?, ?) \
-             ON CONFLICT(username) DO UPDATE SET fail_count = excluded.fail_count, blocked_until = excluded.blocked_until",
+            "INSERT INTO login_attempts (username, fail_count, blocked_until) VALUES (?, 1, NULL) \
+             ON CONFLICT(username) DO UPDATE SET fail_count = login_attempts.fail_count + 1, \
+             blocked_until = CASE \
+                 WHEN login_attempts.fail_count + 1 >= 5 THEN ? \
+                 WHEN login_attempts.fail_count + 1 >= 3 THEN ? \
+                 ELSE NULL \
+             END",
         )
-        .bind(&payload.username)
-        .bind(new_fail_count)
-        .bind(cooldown_until.as_deref())
+        .bind(&attempt_key)
+        .bind(&long_block)
+        .bind(&short_block)
         .execute(&pool)
         .await
         .map_err(|e| {
-            tracing::error!("Failed to record login attempt for {}: {}", payload.username, e);
+            tracing::error!("Failed to record login attempt for hashed key: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse {
@@ -194,19 +208,20 @@ pub async fn login(
     // Successful login: reset attempt counter
     if attempt_record.is_some() {
         if let Err(e) = sqlx::query("DELETE FROM login_attempts WHERE username = ?")
-            .bind(&payload.username)
+            .bind(&attempt_key)
             .execute(&pool)
             .await
         {
             tracing::warn!(
-                "Failed to clear login attempts for {} after successful login: {}",
-                payload.username, e
+                "Failed to clear login attempts for hashed key after successful login: {}",
+                e
             );
         }
     }
 
     // Generate JWT token
-    let token = auth::create_jwt(username.clone(), role.clone()).map_err(|e| {
+    let user_record = user_record.expect("Successful login must have user record");
+    let token = auth::create_jwt(user_record.username.clone(), user_record.role.clone()).map_err(|e| {
         tracing::error!("JWT creation error: {}", e);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -224,8 +239,8 @@ pub async fn login(
         Json(LoginResponse {
             token,
             user: UserResponse {
-                username,
-                role,
+                username: user_record.username,
+                role: user_record.role,
             },
         }),
     ))

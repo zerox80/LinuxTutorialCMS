@@ -23,13 +23,14 @@ pub async fn create_pool() -> Result<DbPool, sqlx::Error> {
         .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
         .synchronous(sqlx::sqlite::SqliteSynchronous::Normal)
         .foreign_keys(true)
-        .busy_timeout(std::time::Duration::from_secs(30));
+        .busy_timeout(std::time::Duration::from_secs(60));
 
     let pool = SqlitePoolOptions::new()
         .max_connections(5)
-        .acquire_timeout(std::time::Duration::from_secs(10))
-        .max_lifetime(std::time::Duration::from_secs(3600))
-        .idle_timeout(std::time::Duration::from_secs(600))
+        .min_connections(1)
+        .acquire_timeout(std::time::Duration::from_secs(30))
+        .idle_timeout(None)
+        .max_lifetime(None)
         .connect_with(connect_options)
         .await?;
 
@@ -47,6 +48,17 @@ fn slug_regex() -> &'static Regex {
 }
 
 pub fn validate_slug(slug: &str) -> Result<(), sqlx::Error> {
+    const MAX_SLUG_LENGTH: usize = 100;
+
+    if slug.len() > MAX_SLUG_LENGTH {
+        return Err(sqlx::Error::Protocol(
+            format!(
+                "Invalid slug. Maximum length is {MAX_SLUG_LENGTH} characters: '{slug}'"
+            )
+            .into(),
+        ));
+    }
+
     if slug_regex().is_match(slug) {
         Ok(())
     } else {
@@ -459,6 +471,190 @@ async fn ensure_site_page_schema(pool: &DbPool) -> Result<(), sqlx::Error> {
     Ok(())
 }
 
+async fn apply_core_migrations(tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>) -> Result<(), sqlx::Error> {
+    // Create users table
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'admin',
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            CONSTRAINT users_username_unique UNIQUE (username)
+        )
+        "#,
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    // Track login attempts for server-side cooldowns
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS login_attempts (
+            username TEXT PRIMARY KEY,
+            fail_count INTEGER NOT NULL DEFAULT 0,
+            blocked_until TEXT
+        )
+        "#,
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    // Create tutorials table
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS tutorials (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            description TEXT NOT NULL,
+            icon TEXT NOT NULL,
+            color TEXT NOT NULL,
+            topics TEXT NOT NULL,
+            content TEXT NOT NULL DEFAULT '',
+            version INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+        "#,
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    // Create indexes for better query performance
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorials_created_at ON tutorials(created_at)")
+        .execute(&mut **tx)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorials_updated_at ON tutorials(updated_at)")
+        .execute(&mut **tx)
+        .await?;
+
+    // Metadata store for one-off setup flags
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS app_metadata (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        )
+        "#,
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    // Normalized topics table for efficient querying
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS tutorial_topics (
+            tutorial_id TEXT NOT NULL,
+            topic TEXT NOT NULL,
+            CONSTRAINT fk_tutorial_topics_tutorial FOREIGN KEY (tutorial_id) REFERENCES tutorials(id) ON DELETE CASCADE ON UPDATE CASCADE
+        )
+        "#,
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorial_topics_tutorial ON tutorial_topics(tutorial_id)")
+        .execute(&mut **tx)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorial_topics_topic ON tutorial_topics(topic)")
+        .execute(&mut **tx)
+        .await?;
+
+    // Create comments table
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS comments (
+            id TEXT PRIMARY KEY,
+            tutorial_id TEXT NOT NULL,
+            author TEXT NOT NULL,
+            content TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            CONSTRAINT fk_comments_tutorial FOREIGN KEY (tutorial_id) REFERENCES tutorials(id) ON DELETE CASCADE
+        )
+        "#,
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_comments_tutorial ON comments(tutorial_id)")
+        .execute(&mut **tx)
+        .await?;
+
+    // Recreate FTS5 virtual table for full-text search
+    sqlx::query("DROP TRIGGER IF EXISTS tutorials_ai")
+        .execute(&mut **tx)
+        .await?;
+    sqlx::query("DROP TRIGGER IF EXISTS tutorials_ad")
+        .execute(&mut **tx)
+        .await?;
+    sqlx::query("DROP TRIGGER IF EXISTS tutorials_au")
+        .execute(&mut **tx)
+        .await?;
+    sqlx::query("DROP TABLE IF EXISTS tutorials_fts")
+        .execute(&mut **tx)
+        .await?;
+
+    sqlx::query(
+        r#"
+        CREATE VIRTUAL TABLE tutorials_fts USING fts5(
+            tutorial_id UNINDEXED,
+            title,
+            description,
+            content,
+            topics
+        )
+        "#,
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    // Create triggers to keep FTS index in sync without relying on rowid
+    sqlx::query(
+        r#"
+        CREATE TRIGGER tutorials_ai AFTER INSERT ON tutorials BEGIN
+            INSERT INTO tutorials_fts(tutorial_id, title, description, content, topics)
+            VALUES (new.id, new.title, new.description, new.content, new.topics);
+        END
+        "#,
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TRIGGER tutorials_ad AFTER DELETE ON tutorials BEGIN
+            DELETE FROM tutorials_fts WHERE tutorial_id = old.id;
+        END
+        "#,
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TRIGGER tutorials_au AFTER UPDATE ON tutorials BEGIN
+            DELETE FROM tutorials_fts WHERE tutorial_id = old.id;
+            INSERT INTO tutorials_fts(tutorial_id, title, description, content, topics)
+            VALUES (new.id, new.title, new.description, new.content, new.topics);
+        END
+        "#,
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    sqlx::query(
+        r#"
+        INSERT INTO tutorials_fts(tutorial_id, title, description, content, topics)
+        SELECT id, title, description, content, topics FROM tutorials
+        "#,
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    Ok(())
+}
+
 pub async fn fetch_all_site_content(pool: &DbPool) -> Result<Vec<crate::models::SiteContent>, sqlx::Error> {
     sqlx::query_as::<_, crate::models::SiteContent>(
         "SELECT section, content_json, updated_at FROM site_content ORDER BY section",
@@ -738,99 +934,14 @@ fn sqlite_file_path(database_url: &str) -> Option<PathBuf> {
 }
 
 pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
-    {
-        let mut tx = pool.begin().await?;
+    let mut tx = pool.begin().await?;
 
-        // Create users table
-        sqlx::query(
-            r#"
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT NOT NULL UNIQUE,
-                password_hash TEXT NOT NULL,
-                role TEXT NOT NULL DEFAULT 'admin',
-                created_at TEXT NOT NULL DEFAULT (datetime('now'))
-            )
-            "#,
-        )
-        .execute(&mut *tx)
-        .await?;
-
-        // Track login attempts for server-side cooldowns
-        sqlx::query(
-            r#"
-            CREATE TABLE IF NOT EXISTS login_attempts (
-                username TEXT PRIMARY KEY,
-                fail_count INTEGER NOT NULL DEFAULT 0,
-                blocked_until TEXT
-            )
-            "#,
-        )
-        .execute(&mut *tx)
-        .await?;
-
-        // Create tutorials table
-        sqlx::query(
-            r#"
-            CREATE TABLE IF NOT EXISTS tutorials (
-                id TEXT PRIMARY KEY,
-                title TEXT NOT NULL,
-                description TEXT NOT NULL,
-                icon TEXT NOT NULL,
-                color TEXT NOT NULL,
-                topics TEXT NOT NULL,
-                content TEXT NOT NULL DEFAULT '',
-                version INTEGER NOT NULL DEFAULT 1,
-                created_at TEXT NOT NULL DEFAULT (datetime('now')),
-                updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-            )
-            "#,
-        )
-        .execute(&mut *tx)
-        .await?;
-        
-        // Create indexes for better query performance
-        sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorials_created_at ON tutorials(created_at)")
-            .execute(&mut *tx)
-            .await?;
-        sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorials_updated_at ON tutorials(updated_at)")
-            .execute(&mut *tx)
-            .await?;
-
-        // Metadata store for one-off setup flags
-        sqlx::query(
-            r#"
-            CREATE TABLE IF NOT EXISTS app_metadata (
-                key TEXT PRIMARY KEY,
-                value TEXT NOT NULL
-            )
-            "#,
-        )
-        .execute(&mut *tx)
-        .await?;
-
-        // Normalized topics table for efficient querying
-        sqlx::query(
-            r#"
-            CREATE TABLE IF NOT EXISTS tutorial_topics (
-                tutorial_id TEXT NOT NULL,
-                topic TEXT NOT NULL,
-                FOREIGN KEY (tutorial_id) REFERENCES tutorials(id) ON DELETE CASCADE ON UPDATE CASCADE
-            )
-            "#,
-        )
-        .execute(&mut *tx)
-        .await?;
-
-        sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorial_topics_tutorial ON tutorial_topics(tutorial_id)")
-            .execute(&mut *tx)
-            .await?;
-        sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorial_topics_topic ON tutorial_topics(topic)")
-            .execute(&mut *tx)
-            .await?;
-
-        tx.commit().await?;
+    if let Err(err) = apply_core_migrations(&mut tx).await {
+        tx.rollback().await?;
+        return Err(err);
     }
+
+    tx.commit().await?;
 
     ensure_site_page_schema(pool).await?;
 

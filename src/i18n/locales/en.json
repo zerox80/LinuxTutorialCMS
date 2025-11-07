@@ -1,0 +1,46 @@
+{
+  "common": {
+    "home": "Home",
+    "login": "Login",
+    "logout": "Logout",
+    "admin": "Admin",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "close": "Close"
+  },
+  "hero": {
+    "title": "Learn Linux",
+    "subtitle": "from scratch",
+    "description": "Your comprehensive Linux tutorial – from basics to advanced techniques.",
+    "cta_primary": "Get Started",
+    "cta_secondary": "Learn More"
+  },
+  "tutorials": {
+    "title": "Tutorial Content",
+    "description": "Comprehensive learning modules for all skill levels",
+    "search_placeholder": "Search tutorials...",
+    "no_results": "No results found",
+    "min_chars": "Enter at least 2 characters",
+    "all_topics": "All",
+    "read": "Read",
+    "bookmark": "Bookmark",
+    "bookmarked": "Bookmarked"
+  },
+  "footer": {
+    "copyright": "All rights reserved",
+    "made_with": "Made with",
+    "for_community": "for the Linux Community"
+  },
+  "auth": {
+    "username": "Username",
+    "password": "Password",
+    "login_button": "Sign In",
+    "login_error": "Login failed"
+  }
+}

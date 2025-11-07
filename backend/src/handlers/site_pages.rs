@@ -248,7 +248,22 @@ fn sanitize_update_payload(
 fn map_page(
     page: crate::models::SitePage,
 ) -> Result<SitePageResponse, (StatusCode, Json<ErrorResponse>)> {
-    let hero = serde_json::from_str::<Value>(&page.hero_json).map_err(|err| {
+    let crate::models::SitePage {
+        id,
+        slug,
+        title,
+        description,
+        nav_label,
+        show_in_nav,
+        order_index,
+        is_published,
+        hero_json,
+        layout_json,
+        created_at,
+        updated_at,
+    } = page;
+
+    let hero = serde_json::from_str::<Value>(&hero_json).map_err(|err| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse {
@@ -257,7 +272,7 @@ fn map_page(
         )
     })?;
 
-    let layout = serde_json::from_str::<Value>(&page.layout_json).map_err(|err| {
+    let layout = serde_json::from_str::<Value>(&layout_json).map_err(|err| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse {
@@ -266,19 +281,36 @@ fn map_page(
         )
     })?;
 
+    let sanitized_title = match title.trim() {
+        "" => slug.clone(),
+        value => value.to_string(),
+    };
+
+    let sanitized_description = description.trim().to_string();
+
+    let sanitized_nav_label = nav_label
+        .and_then(|label| {
+            let trimmed = label.trim();
+            if trimmed.is_empty() {
+                None
+            } else {
+                Some(trimmed.to_string())
+            }
+        });
+
     Ok(SitePageResponse {
-        id: page.id,
-        slug: page.slug,
-        title: page.title,
-        description: page.description,
-        nav_label: page.nav_label,
-        show_in_nav: page.show_in_nav,
-        order_index: page.order_index,
-        is_published: page.is_published,
+        id,
+        slug,
+        title: sanitized_title,
+        description: sanitized_description,
+        nav_label: sanitized_nav_label,
+        show_in_nav,
+        order_index,
+        is_published,
         hero,
         layout,
-        created_at: page.created_at,
-        updated_at: page.updated_at,
+        created_at,
+        updated_at,
     })
 }
 

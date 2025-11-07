@@ -6,16 +6,17 @@ import remarkMath from 'remark-math'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeKatex from 'rehype-katex'
 import 'katex/dist/katex.min.css'
+import CodeBlock from './CodeBlock'
 
 const mergeClassNames = (...classes) => classes.filter(Boolean).join(' ')
 
 const headingClasses = {
-  1: 'text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight mt-10 first:mt-0',
-  2: 'text-2xl sm:text-3xl font-semibold text-gray-900 mt-8 first:mt-0',
-  3: 'text-xl sm:text-2xl font-semibold text-gray-900 mt-6 first:mt-0',
-  4: 'text-lg font-semibold text-gray-900 mt-5 first:mt-0',
-  5: 'text-base font-semibold text-gray-800 mt-4 first:mt-0 uppercase tracking-wide',
-  6: 'text-sm font-semibold text-gray-700 mt-4 first:mt-0 uppercase tracking-wider',
+  1: 'text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mt-10 first:mt-0',
+  2: 'text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-gray-100 mt-8 first:mt-0',
+  3: 'text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100 mt-6 first:mt-0',
+  4: 'text-lg font-semibold text-gray-900 dark:text-gray-100 mt-5 first:mt-0',
+  5: 'text-base font-semibold text-gray-800 dark:text-gray-200 mt-4 first:mt-0 uppercase tracking-wide',
+  6: 'text-sm font-semibold text-gray-700 dark:text-gray-300 mt-4 first:mt-0 uppercase tracking-wider',
 }
 
 const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
@@ -24,7 +25,7 @@ const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
     : [remarkMath, remarkGfm]
 
   return (
-    <div className={mergeClassNames('markdown-renderer text-gray-700', className)}>
+    <div className={mergeClassNames('markdown-renderer text-gray-700 dark:text-gray-300', className)}>
       <ReactMarkdown
         remarkPlugins={remarkPlugins}
         rehypePlugins={[rehypeKatex, rehypeHighlight]}
@@ -148,15 +149,15 @@ const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
               </code>
             ),
           pre: ({ className, children, ...props }) => (
-            <pre
+            <CodeBlock
               className={mergeClassNames(
                 className,
-                'mt-6 overflow-x-auto rounded-2xl bg-gray-900 p-5 text-sm text-gray-100 shadow-inner'
+                'mt-6 overflow-x-auto rounded-2xl bg-gray-900 dark:bg-gray-950 p-5 text-sm text-gray-100 shadow-inner'
               )}
               {...props}
             >
               {children}
-            </pre>
+            </CodeBlock>
           ),
           img: ({ node, alt, src, ...props }) => (
             <img

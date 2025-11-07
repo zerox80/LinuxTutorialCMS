@@ -12,7 +12,8 @@ const getApiBaseUrl = () => {
       try {
         const resolved = new URL(baseUrl || '/', origin)
         const pathname = resolved.pathname.replace(/\/$/, '')
-        return `${resolved.origin}${pathname}/api`.replace(/\/+$/, '/api')
+        const apiPath = pathname ? `${pathname}/api` : '/api'
+        return `${resolved.origin}${apiPath}`
       } catch (error) {
         console.warn('Failed to resolve BASE_URL for API calls, falling back to origin.', error)
         return `${origin}/api`
@@ -64,6 +65,12 @@ const isLikelyJwt = (token) => {
 class ApiClient {
   constructor() {
     this.token = null
+    if (typeof window !== 'undefined') {
+      const stored = window.localStorage.getItem('ltcms_token')
+      if (isLikelyJwt(stored)) {
+        this.token = stored
+      }
+    }
   }
 
   setToken(token) {
@@ -73,6 +80,13 @@ class ApiClient {
       return
     }
     this.token = token || null
+    if (typeof window !== 'undefined') {
+      if (this.token) {
+        window.localStorage.setItem('ltcms_token', this.token)
+      } else {
+        window.localStorage.removeItem('ltcms_token')
+      }
+    }
   }
 
   getHeaders() {
@@ -88,7 +102,7 @@ class ApiClient {
       timeout = 15000,
       headers: optionHeaders,
       signal: userSignal,
-      cacheBust = true,
+      cacheBust = import.meta.env.VITE_API_CACHE_BUST === 'true',
       ...rest
     } = options
 
@@ -115,6 +129,7 @@ class ApiClient {
       if (userSignal) {
         userSignal.removeEventListener('abort', handleAbort)
       }
+      controller.abort()
     }
 
     // Handle both user signal and internal timeout
@@ -246,7 +261,6 @@ class ApiClient {
     } catch (error) {
       // Clean up on error
       cleanup()
-      
       if (error.name === 'AbortError') {
         const timeoutError = new Error(userSignal?.aborted ? 'Request aborted' : 'Request timed out')
         timeoutError.status = userSignal?.aborted ? 0 : 408

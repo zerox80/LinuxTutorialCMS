@@ -1,6 +1,7 @@
 # Multi-stage build für kleines Image
 # Use latest stable Rust
-FROM rust:1.91-bookworm as builder
+# Multi-stage build for optimized image size
+FROM rust:1.82-slim AS builder
 
 WORKDIR /app
 

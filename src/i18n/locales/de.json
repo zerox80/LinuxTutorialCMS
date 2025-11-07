@@ -1,0 +1,46 @@
+{
+  "common": {
+    "home": "Home",
+    "login": "Login",
+    "logout": "Abmelden",
+    "admin": "Admin",
+    "search": "Suchen",
+    "loading": "Lädt...",
+    "error": "Fehler",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "close": "Schließen"
+  },
+  "hero": {
+    "title": "Lerne Linux",
+    "subtitle": "von Grund auf",
+    "description": "Dein umfassendes Tutorial für Linux – von den Basics bis zu Advanced-Techniken.",
+    "cta_primary": "Los geht's",
+    "cta_secondary": "Mehr erfahren"
+  },
+  "tutorials": {
+    "title": "Tutorial Inhalte",
+    "description": "Umfassende Lernmodule für alle Erfahrungsstufen",
+    "search_placeholder": "Tutorial suchen...",
+    "no_results": "Keine Ergebnisse gefunden",
+    "min_chars": "Gib mindestens 2 Zeichen ein",
+    "all_topics": "Alle",
+    "read": "Gelesen",
+    "bookmark": "Lesezeichen",
+    "bookmarked": "Gespeichert"
+  },
+  "footer": {
+    "copyright": "Alle Rechte vorbehalten",
+    "made_with": "Gemacht mit",
+    "for_community": "für die Linux Community"
+  },
+  "auth": {
+    "username": "Benutzername",
+    "password": "Passwort",
+    "login_button": "Anmelden",
+    "login_error": "Anmeldung fehlgeschlagen"
+  }
+}

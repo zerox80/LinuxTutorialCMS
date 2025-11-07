@@ -8,7 +8,7 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use serde_json::Value;
+use serde_json::{json, Value};
 use std::collections::HashSet;
 
 const MAX_CONTENT_BYTES: usize = 200_000;
@@ -41,6 +41,69 @@ fn validate_section(section: &str) -> Result<(), (StatusCode, Json<ErrorResponse
             }),
         ))
     }
+}
+
+fn validate_content_structure(section: &str, content: &Value) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+    let result = match section {
+        "hero" => validate_hero_structure(content),
+        "tutorial_section" => validate_tutorial_section_structure(content),
+        "header" => validate_header_structure(content),
+        "footer" => validate_footer_structure(content),
+        "grundlagen_page" => Ok(()), // complex layout; rely on size + JSON format
+        _ => Ok(()),
+    };
+
+    result.map_err(|err| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse {
+                error: format!("Invalid structure for section '{section}': {err}"),
+            }),
+        )
+    })
+}
+
+fn validate_hero_structure(content: &Value) -> Result<(), &'static str> {
+    let obj = content.as_object().ok_or("Expected JSON object")?;
+    if !obj.contains_key("title") || !obj.contains_key("features") {
+        return Err("Missing required fields 'title' or 'features'");
+    }
+    if !obj.get("features").map(|v| v.is_array()).unwrap_or(false) {
+        return Err("Field 'features' must be an array");
+    }
+    Ok(())
+}
+
+fn validate_tutorial_section_structure(content: &Value) -> Result<(), &'static str> {
+    let obj = content.as_object().ok_or("Expected JSON object")?;
+    if !obj.contains_key("title") || !obj.contains_key("description") {
+        return Err("Missing required fields 'title' or 'description'");
+    }
+    Ok(())
+}
+
+fn validate_header_structure(content: &Value) -> Result<(), &'static str> {
+    let obj = content.as_object().ok_or("Expected JSON object")?;
+    if !obj.contains_key("brand") || !obj.contains_key("navItems") {
+        return Err("Missing required fields 'brand' or 'navItems'");
+    }
+    if !obj
+        .get("navItems")
+        .and_then(|items| items.as_array())
+        .map(|items| items.iter().all(|item| item.get("id").is_some() && item.get("label").is_some()))
+        .unwrap_or(false)
+    {
+        return Err("Each navigation item must include 'id' and 'label'");
+    }
+    Ok(())
+}
+
+fn validate_footer_structure(content: &Value) -> Result<(), &'static str> {
+    let obj = content.as_object().ok_or("Expected JSON object")?;
+    if !obj.contains_key("brand") || !obj.contains_key("quickLinks") {
+        return Err("Missing required fields 'brand' or 'quickLinks'");
+    }
+    Ok(())
 }
 
 fn validate_content_size(content: &Value) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
@@ -147,6 +210,7 @@ pub async fn update_site_content(
 
     validate_section(&section)?;
     validate_content_size(&payload.content)?;
+    validate_content_structure(&section, &payload.content)?;
 
     let record = db::upsert_site_content(&pool, &section, &payload.content)
         .await

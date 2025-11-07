@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, Search } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useContent } from '../context/ContentContext'
 import { getIconComponent } from '../utils/iconMap'
 import { navigateContentTarget } from '../utils/contentNavigation'
 import { scrollToSection } from '../utils/scrollToSection'
 import { sanitizeExternalUrl } from '../utils/urlValidation'
+import ThemeToggle from './ThemeToggle'
+import SearchBar from './SearchBar'
 
 const FALLBACK_NAV_ITEMS = [
   { id: 'home', label: 'Home', type: 'section' },
@@ -15,6 +17,7 @@ const FALLBACK_NAV_ITEMS = [
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
   const { isAuthenticated } = useAuth()
@@ -102,7 +105,7 @@ const Header = () => {
   }
 
   return (
-    <header className="bg-white/80 backdrop-blur-xl shadow-soft sticky top-0 z-50 border-b border-gray-100/50">
+    <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl shadow-soft sticky top-0 z-50 border-b border-gray-100/50 dark:border-gray-800/50">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
@@ -113,7 +116,7 @@ const Header = () => {
                 <BrandIcon className="w-6 h-6 text-white" />
               </div>
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+            <span className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
               {headerContent?.brand?.name || 'Linux Tutorial'}
             </span>
           </div>
@@ -124,11 +127,19 @@ const Header = () => {
               <button
                 key={item.id || `${item.label ?? 'nav'}-${index}`}
                 onClick={() => handleNavigation(item)}
-                className="nav-link font-medium hover:text-primary-600"
+                className="nav-link font-medium hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400"
               >
                 {item.label}
               </button>
             ))}
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              aria-label="Search tutorials"
+            >
+              <Search className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+            </button>
+            <ThemeToggle />
             <button
               onClick={handleCtaClick}
               className="relative flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl font-medium shadow-lg hover:shadow-2xl hover:scale-105 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden group/btn"
@@ -140,12 +151,22 @@ const Header = () => {
           </div>
 
           {/* Mobile menu button */}
-          <button
-            className="md:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          <div className="md:hidden flex items-center space-x-2">
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
+              aria-label="Search tutorials"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+            <ThemeToggle />
+            <button
+              className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}
@@ -158,7 +179,7 @@ const Header = () => {
                   handleNavigation(item)
                   setMobileMenuOpen(false)
                 }}
-                className="block w-full text-left px-4 py-2 rounded-md text-gray-600 hover:bg-gray-50 hover:text-primary-600"
+                className="block w-full text-left px-4 py-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary-600 dark:hover:text-primary-400"
               >
                 {item.label}
               </button>
@@ -176,6 +197,9 @@ const Header = () => {
           </div>
         )}
       </nav>
+      
+      {/* Search Modal */}
+      {searchOpen && <SearchBar onClose={() => setSearchOpen(false)} />}
     </header>
   )
 }

@@ -45,12 +45,28 @@ const Login = () => {
     if (isSubmitting) {
       return
     }
-    
+
+    const trimmedUsername = username.trim()
+    if (!/^[a-zA-Z0-9_.-]{1,50}$/.test(trimmedUsername)) {
+      setError('Benutzername darf nur Buchstaben, Zahlen sowie _ . - enthalten und max. 50 Zeichen lang sein.')
+      return
+    }
+
+    if (password.length === 0) {
+      setError('Passwort darf nicht leer sein.')
+      return
+    }
+
+    if (password.length > 128) {
+      setError('Passwort darf maximal 128 Zeichen lang sein.')
+      return
+    }
+
     setError('')
     setIsSubmitting(true)
 
     try {
-      const result = await login(username, password)
+      const result = await login(trimmedUsername, password)
       if (result.success) {
         setLoginAttempts(0)
         setCooldownUntil(null)
