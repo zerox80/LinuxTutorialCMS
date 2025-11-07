@@ -22,6 +22,8 @@ services:
       - FRONTEND_ORIGINS=${FRONTEND_ORIGINS:-http://localhost:8489}
       - ADMIN_USERNAME=${ADMIN_USERNAME:?ADMIN_USERNAME must be set in environment}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set in environment}
+      - LOGIN_ATTEMPT_SALT=${LOGIN_ATTEMPT_SALT:?LOGIN_ATTEMPT_SALT must be set in environment}
+      - AUTH_COOKIE_SECURE=${AUTH_COOKIE_SECURE:-true}
     volumes:
       - backend-data:/data
     networks:
