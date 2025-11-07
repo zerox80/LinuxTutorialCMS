@@ -310,7 +310,7 @@ async fn main() {
         .route("/api/public/navigation", get(handlers::site_pages::get_navigation))
         .route(
             "/api/public/published-pages",
-            get(handlers::site_pages::list_published_pages),
+            get(handlers::site_pages::list_published_page_slugs),
         )
 
         // Health check
