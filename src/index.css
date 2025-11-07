@@ -76,10 +76,9 @@
   }
 
   .dark .section-title {
-    background: linear-gradient(to right, #60a5fa, #38bdf8, #60a5fa);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    background: none;
+    color: #e2e8f0;
+    -webkit-text-fill-color: #e2e8f0;
   }
   
   .nav-link {
