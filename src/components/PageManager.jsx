@@ -69,6 +69,17 @@ const sanitizeInteger = (value, fallback = 0) => {
   return parsed
 }
 
+/**
+ * A form for creating and editing pages.
+ * It includes fields for title, slug, description, navigation properties, and JSON configurations for hero and layout.
+ * @param {object} props - The component props.
+ * @param {'create' | 'edit'} props.mode - The form mode, either 'create' or 'edit'.
+ * @param {object} [props.initialData] - The initial data for the form fields when in 'edit' mode.
+ * @param {Function} props.onSubmit - The callback function to execute on form submission.
+ * @param {Function} props.onCancel - The callback function to execute when the form is canceled.
+ * @param {boolean} [props.submitting] - A flag indicating if the form is currently submitting.
+ * @returns {JSX.Element} The rendered page form.
+ */
 const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
   const [title, setTitle] = useState(initialData?.title ?? '')
   const [slug, setSlug] = useState(initialData?.slug ?? '')
@@ -374,6 +385,17 @@ PageForm.propTypes = {
   submitting: PropTypes.bool,
 }
 
+/**
+ * A form for creating and editing posts.
+ * It includes fields for title, slug, excerpt, Markdown content, and publishing options.
+ * @param {object} props - The component props.
+ * @param {'create' | 'edit'} props.mode - The form mode, either 'create' or 'edit'.
+ * @param {object} [props.initialData] - The initial data for the form fields when in 'edit' mode.
+ * @param {Function} props.onSubmit - The callback function to execute on form submission.
+ * @param {Function} props.onCancel - The callback function to execute when the form is canceled.
+ * @param {boolean} [props.submitting] - A flag indicating if the form is currently submitting.
+ * @returns {JSX.Element} The rendered post form.
+ */
 const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
   const [title, setTitle] = useState(initialData?.title ?? '')
   const [slug, setSlug] = useState(initialData?.slug ?? '')
@@ -588,6 +610,21 @@ PostForm.propTypes = {
   submitting: PropTypes.bool,
 }
 
+/**
+ * A panel that displays and manages the posts for a selected page.
+ * It shows a list of posts, provides controls for creating, editing, and deleting them,
+ * and indicates the loading and error states.
+ * @param {object} props - The component props.
+ * @param {object} props.page - The page to which the posts belong.
+ * @param {Array<object>} props.posts - The list of posts to display.
+ * @param {Function} props.onCreate - The callback to trigger the creation of a new post.
+ * @param {Function} props.onEdit - The callback to trigger editing of a post.
+ * @param {Function} props.onDelete - The callback to trigger deletion of a post.
+ * @param {boolean} props.loading - A flag indicating if the posts are currently loading.
+ * @param {Error} [props.error] - An error object if fetching posts failed.
+ * @param {Function} props.onRefresh - The callback to refresh the list of posts.
+ * @returns {JSX.Element} The rendered posts panel.
+ */
 const PostsPanel = ({ page, posts, onCreate, onEdit, onDelete, loading, error, onRefresh }) => {
   const publishedCount = useMemo(
     () => posts.filter((post) => post.is_published).length,
@@ -707,6 +744,12 @@ PostsPanel.propTypes = {
   onRefresh: PropTypes.func.isRequired,
 }
 
+/**
+ * A comprehensive admin component for managing dynamic pages and their associated posts.
+ * It provides an interface to create, read, update, and delete pages and posts,
+ * and displays an overview of navigation and published content.
+ * @returns {JSX.Element} The rendered page manager component.
+ */
 const PageManager = () => {
   const { navigation, pages: publishedPages } = useContent()
   const [pages, setPages] = useState([])

@@ -3,6 +3,14 @@ import { api } from "../api/client"
 
 const AuthContext = createContext(null)
 
+/**
+ * Provides authentication state and functions to its children components.
+ * Manages user authentication status, user data, login, and logout operations.
+ *
+ * @param {object} props - The component props.
+ * @param {React.ReactNode} props.children - The child components that need access to the auth context.
+ * @returns {JSX.Element} The AuthContext provider.
+ */
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState(null)
@@ -90,6 +98,12 @@ export const AuthProvider = ({ children }) => {
   )
 }
 
+/**
+ * Custom hook to access the authentication context.
+ *
+ * @returns {object} The authentication context value, including `isAuthenticated`, `user`, `login`, `logout`, `loading`, and `error`.
+ * @throws {Error} If used outside of an `AuthProvider`.
+ */
 export const useAuth = () => {
   const context = useContext(AuthContext)
   if (!context) {

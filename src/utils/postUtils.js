@@ -60,6 +60,14 @@ const normalizeStringArray = (values, joiner = ' ') => {
   return cleaned.join(joiner)
 }
 
+/**
+ * Normalizes a title value, which can be a string, an array of strings, or an object,
+ * into a single, clean string. It also fixes common encoding errors (mojibake).
+ *
+ * @param {string|Array<string>|object} title - The title value to normalize.
+ * @param {string} fallback - The fallback value to return if normalization fails.
+ * @returns {string} The normalized title string.
+ */
 export const normalizeTitle = (title, fallback) => {
   if (!title) return fallback
   if (typeof title === 'string') return fixMojibake(title)
@@ -78,6 +86,14 @@ export const normalizeTitle = (title, fallback) => {
   return fallback
 }
 
+/**
+ * Normalizes a text value, which can be a string, an array of strings, or an object,
+ * into a single, clean string. It also fixes common encoding errors (mojibake).
+ *
+ * @param {string|Array<string>|object} value - The text value to normalize.
+ * @param {string} [fallback=''] - The fallback value to return if normalization fails.
+ * @returns {string} The normalized text string.
+ */
 export const normalizeText = (value, fallback = '') => {
   if (!value) return fallback
   if (typeof value === 'string') return fixMojibake(value)
@@ -97,6 +113,13 @@ export const normalizeText = (value, fallback = '') => {
   return fallback
 }
 
+/**
+ * Formats an ISO 8601 date string into a localized, human-readable format.
+ *
+ * @param {string} isoString - The ISO 8601 date string to format.
+ * @param {string} [locale='de-DE'] - The locale to use for formatting.
+ * @returns {string|null} The formatted date string, or null if the input is invalid.
+ */
 export const formatDate = (isoString, locale = 'de-DE') => {
   if (!isoString) return null
   const date = new Date(isoString)
@@ -108,6 +131,17 @@ export const formatDate = (isoString, locale = 'de-DE') => {
   }).format(date)
 }
 
+/**
+ * Generates a preview text from a post's excerpt or content.
+ * It truncates the text to a specified maximum length without cutting words.
+ *
+ * @param {object} post - The post object.
+ * @param {string} [post.excerpt] - The post's excerpt.
+ * @param {string} [post.content_markdown] - The post's full Markdown content.
+ * @param {number} [maxLength=240] - The maximum length of the preview text.
+ * @param {number} [minCutoff=180] - The minimum length before trying to find a natural break.
+ * @returns {string} The generated preview text.
+ */
 export const buildPreviewText = (post, maxLength = 240, minCutoff = 180) => {
   const excerpt = normalizeText(post?.excerpt)
   const fallback = normalizeText(post?.content_markdown)
@@ -126,6 +160,14 @@ export const buildPreviewText = (post, maxLength = 240, minCutoff = 180) => {
   return `${safeCut.trim()}.`
 }
 
+/**
+ * Normalizes a string into a URL-friendly slug.
+ * It converts the string to lowercase, removes diacritics, replaces spaces and special characters with hyphens,
+ * and truncates it to a safe length.
+ *
+ * @param {string} value - The string to be converted into a slug.
+ * @returns {string} The normalized slug.
+ */
 export const normalizeSlug = (value) => {
   if (typeof value !== 'string') {
     return ''

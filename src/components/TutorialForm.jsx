@@ -3,6 +3,15 @@ import PropTypes from 'prop-types'
 import { useTutorials } from '../context/TutorialContext'
 import { X, Save, Plus, Trash2, AlertCircle } from 'lucide-react'
 
+/**
+ * A form for creating and editing tutorials.
+ * It includes fields for title, description, icon, color, topics, and Markdown content.
+ *
+ * @param {object} props - The component props.
+ * @param {object} [props.tutorial] - The tutorial object to be edited. If not provided, the form is in 'create' mode.
+ * @param {Function} props.onClose - A callback function to close the form.
+ * @returns {JSX.Element} The rendered tutorial form.
+ */
 const TutorialForm = ({ tutorial, onClose }) => {
   const { addTutorial, updateTutorial } = useTutorials()
   const [formData, setFormData] = useState({

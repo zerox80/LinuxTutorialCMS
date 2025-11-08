@@ -1,3 +1,10 @@
+/**
+ * Scrolls the page smoothly to a specific section identified by its ID or a data-section attribute.
+ * It includes a mapping for common section aliases to target the correct element.
+ *
+ * @param {string} sectionId - The ID or alias of the section to scroll to.
+ * @param {'smooth' | 'auto'} [behavior='smooth'] - The scrolling behavior.
+ */
 export const scrollToSection = (sectionId, behavior = 'smooth') => {
   if (typeof window === 'undefined') {
     return

@@ -166,6 +166,14 @@ export const DEFAULT_CONTENT = {
 
 export const CONTENT_SECTIONS = Object.keys(DEFAULT_CONTENT)
 
+/**
+ * Provides dynamic site content, navigation, and page data to its children components.
+ * It manages fetching, caching, and updating content from the API.
+ *
+ * @param {object} props - The component props.
+ * @param {React.ReactNode} props.children - The child components that need access to the content context.
+ * @returns {JSX.Element} The ContentContext provider.
+ */
 export const ContentProvider = ({ children }) => {
   const [content, setContent] = useState(DEFAULT_CONTENT)
   const [loading, setLoading] = useState(true)
@@ -407,6 +415,13 @@ ContentProvider.propTypes = {
   children: PropTypes.node,
 }
 
+/**
+ * Custom hook to access the content context.
+ *
+ * @returns {object} The content context value, providing access to site content,
+ * navigation data, page data, and functions to manage them.
+ * @throws {Error} If used outside of a `ContentProvider`.
+ */
 export const useContent = () => {
   const ctx = useContext(ContentContext)
   if (!ctx) {

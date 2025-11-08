@@ -2,6 +2,13 @@
 
 const hasProtocol = (value) => /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value)
 
+/**
+ * Sanitizes a URL to ensure it uses an allowed protocol (http, https, mailto, tel).
+ * It also allows relative paths and anchors.
+ *
+ * @param {string} value - The URL to sanitize.
+ * @returns {string|null} The sanitized URL, or null if it's invalid or uses a disallowed protocol.
+ */
 export const sanitizeExternalUrl = (value) => {
   if (typeof value !== 'string') {
     return null
@@ -31,4 +38,10 @@ export const sanitizeExternalUrl = (value) => {
   }
 }
 
+/**
+ * Checks if a given URL is safe by attempting to sanitize it.
+ *
+ * @param {string} value - The URL to check.
+ * @returns {boolean} True if the URL is safe, otherwise false.
+ */
 export const isSafeExternalUrl = (value) => sanitizeExternalUrl(value) !== null

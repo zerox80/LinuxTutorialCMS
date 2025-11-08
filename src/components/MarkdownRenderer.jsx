@@ -19,6 +19,16 @@ const headingClasses = {
   6: 'text-sm font-semibold text-gray-700 dark:text-slate-400 mt-4 first:mt-0 uppercase tracking-wider',
 }
 
+/**
+ * Renders Markdown content with custom styling and components.
+ * It supports GitHub Flavored Markdown, math formulas (KaTeX), and syntax highlighting.
+ *
+ * @param {object} props - The component props.
+ * @param {string} [props.content] - The Markdown content to render.
+ * @param {string} [props.className] - Optional additional CSS class for the container.
+ * @param {boolean} [props.withBreaks=false] - If true, enables line breaks-as-paragraphs.
+ * @returns {JSX.Element} The rendered Markdown content.
+ */
 const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
   const remarkPlugins = withBreaks
     ? [remarkMath, remarkGfm, remarkBreaks]

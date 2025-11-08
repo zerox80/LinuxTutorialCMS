@@ -5,6 +5,12 @@ import { getIconComponent } from '../utils/iconMap'
 import { scrollToSection } from '../utils/scrollToSection'
 import { sanitizeExternalUrl } from '../utils/urlValidation'
 
+/**
+ * Renders the hero section of the homepage.
+ * This component displays a prominent headline, subtitle, call-to-action buttons,
+ * and a set of feature highlights. Content is dynamically sourced from the `ContentContext`.
+ * @returns {JSX.Element} The rendered hero section.
+ */
 const Hero = () => {
   const navigate = useNavigate()
   const location = useLocation()

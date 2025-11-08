@@ -4,6 +4,14 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
 import PropTypes from 'prop-types';
 
+/**
+ * Renders the comments section for a tutorial, including a form to add new comments
+ * and a list of existing comments.
+ *
+ * @param {object} props - The component props.
+ * @param {string} props.tutorialId - The ID of the tutorial to load comments for.
+ * @returns {JSX.Element} The rendered comments section.
+ */
 const Comments = ({ tutorialId }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');

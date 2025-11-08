@@ -11,11 +11,15 @@
 
 **A professional, open-source content management system designed for creating beautiful tutorial websites with zero hassle.**
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Customization](#-customization) • [Documentation](#-documentation) • [License](#-license)
+[Project Purpose](#-project-purpose) • [Features](#-features) • [Quick Start](#-quick-start) • [Customization](#-customization) • [Documentation](#-documentation) • [License](#-license)
 
 </div>
 
 ---
+
+## 🎯 Project Purpose
+
+The Linux Tutorial CMS is a modern, open-source platform designed for creating and managing high-quality, interactive tutorial websites. It combines a high-performance Rust backend with a flexible React frontend to provide a seamless experience for both content creators and learners. The primary goal of this project is to offer a fully customizable, easy-to-use solution for educational content that is both beautiful and fast.
 
 ## ✨ Features
 
@@ -89,15 +93,23 @@ npm run dev
 
 ### Admin-Anmeldung
 
-Der Backend-Server erstellt kein Standardkonto. Setze daher vor dem Start die Umgebungsvariablen `ADMIN_USERNAME` und `ADMIN_PASSWORD` (mindestens 12 Zeichen).
+To get started, you need to create a `.env` file in the `backend` directory. This file will store the necessary environment variables for the application to run correctly.
 
-```bash
-# Beispiel
-export ADMIN_USERNAME=deinadmin
-export ADMIN_PASSWORD=einSicheresPasswort123!
+**Example `backend/.env` file:**
+
+```env
+# The connection string for the SQLite database.
+DATABASE_URL=sqlite:./cms.db
+
+# A secret key for signing JWT tokens. You can generate a strong secret using a password manager or a command-line tool.
+JWT_SECRET=your-super-secret-key-that-is-at-least-32-characters-long
+
+# The credentials for the default admin account.
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=your-secure-password
 ```
 
-Passe die Werte entsprechend deiner Umgebung an und starte den Server danach neu.
+Once you have created the `.env` file, you can start the backend server.
 
 ---
 
@@ -160,6 +172,8 @@ All editable content is stored as **JSON objects** that you can modify through a
 ```
 
 **No database migrations needed** - just edit the JSON and save! ✨
+
+The content you edit in the admin panel is saved to the SQLite database. When a user visits the website, the React frontend fetches this content from the backend API and dynamically renders the pages. This architecture allows for a fast, modern user experience while still providing a simple and powerful content management system.
 
 ---
 
@@ -362,14 +376,14 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## 🌟 Features Roadmap
 
+- [x] Dark mode theme
+- [x] Search functionality
 - [ ] Multi-language support
-- [ ] Dark mode theme
 - [ ] Markdown editor with live preview
 - [ ] Image upload and management
 - [ ] SEO optimization tools
 - [ ] Analytics dashboard
 - [ ] Comment system
-- [ ] Search functionality
 
 ---
 

@@ -4,6 +4,14 @@ import { getIconComponent as getIconComponentFromMap } from '../utils/iconMap'
 
 const TutorialContext = createContext(null)
 
+/**
+ * Provides tutorial data and management functions to its children components.
+ * It handles fetching, creating, updating, and deleting tutorials.
+ *
+ * @param {object} props - The component props.
+ * @param {React.ReactNode} props.children - The child components that need access to the tutorial context.
+ * @returns {JSX.Element} The TutorialContext provider.
+ */
 export const TutorialProvider = ({ children }) => {
   const [tutorials, setTutorials] = useState([])
   const [loading, setLoading] = useState(true)
@@ -184,6 +192,13 @@ export const TutorialProvider = ({ children }) => {
   )
 }
 
+/**
+ * Custom hook to access the tutorial context.
+ *
+ * @returns {object} The tutorial context value, including `tutorials`, `loading`, `error`,
+ * and functions to manage tutorials.
+ * @throws {Error} If used outside of a `TutorialProvider`.
+ */
 export const useTutorials = () => {
   const context = useContext(TutorialContext)
   if (!context) {
