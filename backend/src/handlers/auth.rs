@@ -312,7 +312,7 @@ pub async fn me(
 /// # Returns
 ///
 /// An HTTP `204 No Content` response with a `Set-Cookie` header to clear the auth cookie.
-pub async fn logout(claims: auth::Claims) -> (StatusCode, HeaderMap) {
+pub async fn logout(_csrf: csrf::CsrfGuard, claims: auth::Claims) -> (StatusCode, HeaderMap) {
     let mut headers = HeaderMap::new();
     auth::append_auth_cookie(&mut headers, auth::build_cookie_removal());
     csrf::append_csrf_removal(&mut headers);

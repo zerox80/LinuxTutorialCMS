@@ -23,7 +23,7 @@ use std::env;
 use std::io::ErrorKind;
 use std::net::SocketAddr;
 use tokio::signal;
-use tower_governor::key_extractor::{PeerIpKeyExtractor, SmartIpKeyExtractor};
+use tower_governor::key_extractor::SmartIpKeyExtractor;
 use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
 use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tower_http::limit::RequestBodyLimitLayer;
@@ -310,12 +310,7 @@ async fn main() {
     // Login route with rate limiting
     let login_router = Router::new()
         .route("/api/auth/login", post(handlers::auth::login))
-        .route(
-            "/api/auth/logout",
-            post(handlers::auth::logout)
-                .layer(middleware::from_extractor::<csrf::CsrfGuard>())
-                .layer(middleware::from_extractor::<auth::Claims>()),
-        )
+        .route("/api/auth/logout", post(handlers::auth::logout))
         .layer(RequestBodyLimitLayer::new(LOGIN_BODY_LIMIT))
         .layer(GovernorLayer::new(rate_limit_config));
 
