@@ -7,6 +7,7 @@ import rehypeHighlight from 'rehype-highlight'
 import rehypeKatex from 'rehype-katex'
 import 'katex/dist/katex.min.css'
 import CodeBlock from './CodeBlock'
+import remarkMergeInlineParagraphs from '../utils/remarkMergeInlineParagraphs'
 
 const mergeClassNames = (...classes) => classes.filter(Boolean).join(' ')
 
@@ -31,8 +32,8 @@ const headingClasses = {
  */
 const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
   const remarkPlugins = withBreaks
-    ? [remarkMath, remarkGfm, remarkBreaks]
-    : [remarkMath, remarkGfm]
+    ? [remarkMath, remarkGfm, remarkMergeInlineParagraphs, remarkBreaks]
+    : [remarkMath, remarkGfm, remarkMergeInlineParagraphs]
 
   return (
     <div className={mergeClassNames('markdown-renderer text-gray-700 dark:text-slate-200', className)}>
