@@ -135,18 +135,23 @@ fn sanitize_topics(topics: &[String]) -> Result<Vec<String>, String> {
     Ok(sanitized)
 }
 
+/// Query parameters for listing tutorials.
 #[derive(Deserialize)]
 pub struct TutorialListQuery {
+    /// The maximum number of tutorials to return.
     #[serde(default = "default_tutorial_limit")]
     limit: i64,
+    /// The number of tutorials to skip.
     #[serde(default)]
     offset: i64,
 }
 
+/// Returns the default limit for tutorial listings.
 fn default_tutorial_limit() -> i64 {
     50
 }
 
+/// Fetches a paginated list of all tutorials.
 pub async fn list_tutorials(
     State(pool): State<DbPool>,
     Query(params): Query<TutorialListQuery>,
@@ -191,6 +196,7 @@ pub async fn list_tutorials(
     Ok(Json(responses))
 }
 
+/// Fetches a single tutorial by its ID.
 pub async fn get_tutorial(
     State(pool): State<DbPool>,
     Path(id): Path<String>,
@@ -239,6 +245,7 @@ pub async fn get_tutorial(
     Ok(Json(response))
 }
 
+/// Creates a new tutorial. (Admin only)
 pub async fn create_tutorial(
     claims: auth::Claims,
     State(pool): State<DbPool>,
@@ -388,6 +395,9 @@ pub async fn create_tutorial(
     Ok(Json(response))
 }
 
+/// Updates an existing tutorial. (Admin only)
+///
+/// This handler uses optimistic locking via a `version` field to prevent concurrent edit conflicts.
 pub async fn update_tutorial(
     claims: auth::Claims,
     State(pool): State<DbPool>,
@@ -673,6 +683,7 @@ pub async fn update_tutorial(
     Ok(Json(response))
 }
 
+/// Deletes a tutorial by its ID. (Admin only)
 pub async fn delete_tutorial(
     claims: auth::Claims,
     State(pool): State<DbPool>,

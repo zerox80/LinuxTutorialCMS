@@ -143,6 +143,7 @@ fn map_record(
     })
 }
 
+/// Fetches all site content sections.
 pub async fn list_site_content(
     State(pool): State<db::DbPool>,
 ) -> Result<Json<SiteContentListResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -164,6 +165,7 @@ pub async fn list_site_content(
     Ok(Json(SiteContentListResponse { items }))
 }
 
+/// Fetches a single site content section by name.
 pub async fn get_site_content(
     State(pool): State<db::DbPool>,
     Path(section): Path<String>,
@@ -193,6 +195,7 @@ pub async fn get_site_content(
     Ok(Json(map_record(record)?))
 }
 
+/// Updates a site content section. (Admin only)
 pub async fn update_site_content(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,

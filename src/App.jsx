@@ -16,6 +16,17 @@ import PostDetail from './pages/PostDetail'
 import AdminDashboard from './pages/AdminDashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 
+/**
+ * The main application component.
+ *
+ * This component sets up the application's routing, context providers, and overall layout.
+ * It uses a collection of providers (`HelmetProvider`, `ThemeProvider`, `Router`, `AuthProvider`,
+ * `ContentProvider`, `TutorialProvider`) to manage application-wide state and functionality.
+ * The component also defines the routes for all pages, including public routes, login,
+ * and a protected admin dashboard.
+ *
+ * @returns {JSX.Element} The rendered application.
+ */
 function App() {
   return (
     <ErrorBoundary>

@@ -57,6 +57,10 @@ fn escape_like_pattern(value: &str) -> String {
     escaped
 }
 
+/// Performs a full-text search across tutorials.
+///
+/// It sanitizes the query, optionally filters by topic, and returns a list of matching tutorials
+/// ranked by relevance using SQLite's FTS5 `bm25` function.
 pub async fn search_tutorials(
     State(pool): State<DbPool>,
     Query(params): Query<SearchQuery>,
@@ -161,6 +165,7 @@ pub async fn search_tutorials(
     Ok(Json(responses))
 }
 
+/// Retrieves a list of all unique topics from the database.
 pub async fn get_all_topics(
     State(pool): State<DbPool>,
 ) -> Result<Json<Vec<String>>, (StatusCode, Json<ErrorResponse>)> {

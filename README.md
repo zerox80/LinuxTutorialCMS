@@ -76,22 +76,9 @@ cd LinuxTutorialCMS
 
 # Install frontend dependencies
 npm install
-
-# Start the backend (in a separate terminal)
-cd backend
-cargo run
-
-# Start the frontend
-npm run dev
 ```
 
-### Access the Application
-
-- 🌐 **Frontend:** http://localhost:5173
-- 🔧 **Backend API:** http://localhost:8489
-- 🔐 **Admin Panel:** http://localhost:5173/login
-
-### Admin-Anmeldung
+### Configuration
 
 To get started, you need to create a `.env` file in the `backend` directory. This file will store the necessary environment variables for the application to run correctly.
 
@@ -109,7 +96,22 @@ ADMIN_USERNAME=admin
 ADMIN_PASSWORD=your-secure-password
 ```
 
-Once you have created the `.env` file, you can start the backend server.
+### Running the Application
+
+```bash
+# Start the backend (in a separate terminal)
+cd backend
+cargo run
+
+# Start the frontend
+npm run dev
+```
+
+### Access the Application
+
+- 🌐 **Frontend:** http://localhost:5173
+- 🔧 **Backend API:** http://localhost:8489
+- 🔐 **Admin Panel:** http://localhost:5173/login
 
 ---
 

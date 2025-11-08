@@ -40,6 +40,19 @@ const X_FORWARDED_PROTO_HEADER: HeaderName = HeaderName::from_static("x-forwarde
 const X_FORWARDED_HOST_HEADER: HeaderName = HeaderName::from_static("x-forwarded-host");
 const X_REAL_IP_HEADER: HeaderName = HeaderName::from_static("x-real-ip");
 
+/// Parses a boolean value from an environment variable.
+///
+/// Accepts "1", "true", "yes", or "on" as `true` (case-insensitive)
+/// and "0", "false", "no", or "off" as `false`.
+///
+/// # Arguments
+///
+/// * `key` - The name of the environment variable.
+/// * `default` - The default value to return if the variable is not set or invalid.
+///
+/// # Returns
+///
+/// The parsed boolean value or the default.
 fn parse_env_bool(key: &str, default: bool) -> bool {
     env::var(key)
         .ok()
@@ -56,6 +69,18 @@ fn parse_env_bool(key: &str, default: bool) -> bool {
         .unwrap_or(default)
 }
 
+/// Middleware to remove proxy-related headers to prevent IP spoofing.
+///
+/// This is used when `TRUST_PROXY_IP_HEADERS` is false.
+///
+/// # Arguments
+///
+/// * `request` - The incoming request.
+/// * `next` - The next middleware in the chain.
+///
+/// # Returns
+///
+/// The response with headers stripped.
 async fn strip_untrusted_forwarded_headers(mut request: Request, next: Next) -> Response {
     {
         let headers = request.headers_mut();
@@ -69,7 +94,18 @@ async fn strip_untrusted_forwarded_headers(mut request: Request, next: Next) -> 
     next.run(request).await
 }
 
-// Security headers middleware
+/// Middleware to apply various security headers to every response.
+///
+/// Headers include CSP, HSTS, X-Frame-Options, and others for best security practices.
+///
+/// # Arguments
+///
+/// * `request` - The incoming request.
+/// * `next` - The next middleware in the chain.
+///
+/// # Returns
+///
+/// The response with security headers added.
 async fn security_headers(
     request: Request,
     next: Next,
@@ -171,6 +207,15 @@ const DEV_DEFAULT_FRONTEND_ORIGINS: &[&str] = &[
     "http://localhost:3000",
 ];
 
+/// Parses a list of allowed CORS origins from an iterator of string slices.
+///
+/// # Arguments
+///
+/// * `origins` - An iterator of string slices, each representing an origin URL.
+///
+/// # Returns
+///
+/// A `Vec<HeaderValue>` containing the valid origins.
 fn parse_allowed_origins<'a, I>(origins: I) -> Vec<HeaderValue>
 where
     I: IntoIterator<Item = &'a str>,
@@ -204,6 +249,10 @@ where
         .collect()
 }
 
+/// The main entry point for the application.
+///
+/// Initializes the environment, database, JWT, CORS, rate limiting, and routes.
+/// Binds to a TCP socket and serves the application.
 #[tokio::main]
 async fn main() {
     // Load environment variables
@@ -429,6 +478,7 @@ async fn main() {
     tracing::info!("Server shutdown complete");
 }
 
+/// Listens for shutdown signals (Ctrl+C, SIGTERM) to trigger a graceful shutdown.
 async fn shutdown_signal() {
     let ctrl_c = async {
         signal::ctrl_c()

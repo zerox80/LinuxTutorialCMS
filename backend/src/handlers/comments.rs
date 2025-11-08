@@ -90,6 +90,7 @@ fn sanitize_comment_content(
     Ok(sanitized)
 }
 
+/// Lists all comments for a specific tutorial, with pagination.
 pub async fn list_comments(
     State(pool): State<DbPool>,
     Path(tutorial_id): Path<String>,
@@ -152,6 +153,7 @@ pub async fn list_comments(
     Ok(Json(comments))
 }
 
+/// Creates a new comment for a tutorial. (Admin only)
 pub async fn create_comment(
     claims: auth::Claims,
     State(pool): State<DbPool>,
@@ -234,6 +236,7 @@ pub async fn create_comment(
     }))
 }
 
+/// Deletes a comment by its ID. (Admin only)
 pub async fn delete_comment(
     claims: auth::Claims,
     State(pool): State<DbPool>,
