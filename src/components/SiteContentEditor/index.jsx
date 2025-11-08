@@ -23,6 +23,22 @@ const cloneContent = (value) => {
   return JSON.parse(JSON.stringify(value))
 }
 
+const setNestedValue = (obj, path, value) => {
+  if (!Array.isArray(path) || path.length === 0) {
+    return obj
+  }
+  let cursor = obj
+  for (let i = 0; i < path.length - 1; i += 1) {
+    const key = path[i]
+    if (typeof cursor[key] !== 'object' || cursor[key] === null) {
+      cursor[key] = {}
+    }
+    cursor = cursor[key]
+  }
+  cursor[path[path.length - 1]] = value
+  return obj
+}
+
 const SectionPicker = ({ sections, selected, onSelect }) => {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -181,6 +197,68 @@ const HeroPreview = ({ content }) => {
 
 HeroPreview.propTypes = {
   content: PropTypes.object.isRequired,
+}
+
+const HeroContentForm = ({ content, onFieldChange }) => {
+  const heroContent = content || {}
+  const title = heroContent.title || {}
+
+  const handleChange = (path) => (event) => {
+    onFieldChange(path, event.target.value)
+  }
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Hero-Inhalt bearbeiten</h3>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Titel Zeile 1</label>
+          <input
+            type="text"
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-100"
+            value={title.line1 || ''}
+            onChange={handleChange(['title', 'line1'])}
+            placeholder="z. B. Lerne Linux"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Titel Zeile 2</label>
+          <input
+            type="text"
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-100"
+            value={title.line2 || ''}
+            onChange={handleChange(['title', 'line2'])}
+            placeholder="z. B. von Grund auf"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Untertitel</label>
+          <textarea
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-100"
+            rows="2"
+            value={heroContent.subtitle || ''}
+            onChange={handleChange(['subtitle'])}
+            placeholder="Kurze Beschreibung"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Subline</label>
+          <textarea
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-100"
+            rows="2"
+            value={heroContent.subline || ''}
+            onChange={handleChange(['subline'])}
+            placeholder="Zusätzlicher Satz unter dem Untertitel"
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+HeroContentForm.propTypes = {
+  content: PropTypes.object,
+  onFieldChange: PropTypes.func.isRequired,
 }
 
 const TutorialSectionPreview = ({ content }) => {
@@ -373,6 +451,24 @@ const SiteContentEditor = () => {
     return JSON.stringify(base, null, 2)
   }, [getDefaultSection, selectedSection])
 
+  const handleStructuredFieldChange = useCallback(
+    (path, value) => {
+      if (!selectedSection) {
+        return
+      }
+      setDraftContent((prev) => {
+        const fallback =
+          getDefaultSection(selectedSection) ?? DEFAULT_CONTENT[selectedSection] ?? {}
+        const base = cloneContent(prev ?? fallback)
+        setNestedValue(base, path, value)
+        setEditorValue(JSON.stringify(base, null, 2))
+        setJsonError(null)
+        return base
+      })
+    },
+    [getDefaultSection, selectedSection],
+  )
+
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -434,6 +530,10 @@ const SiteContentEditor = () => {
               <AlertCircle className="h-4 w-4" />
               <span>{status.message}</span>
             </div>
+          )}
+
+          {selectedSection === 'hero' && (
+            <HeroContentForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
           )}
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

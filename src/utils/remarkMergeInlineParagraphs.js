@@ -1,282 +1,308 @@
-﻿import { visit } from 'unist-util-visit'
+import { visit } from 'unist-util-visit'
+
+const INLINE_NODE_TYPES = new Set([
+  'text',
+  'inlineCode',
+  'emphasis',
+  'strong',
+  'delete',
+  'link',
+  'linkReference',
+  'image',
+  'imageReference',
+  'footnoteReference',
+  'break',
+  'html',
+])
 
 const LETTER_NUMBER_REGEX = /[A-Za-z0-9\u00C0-\u024F]/
-const TERMINAL_PUNCTUATION_REGEX = /[.!?;:)]$/
-const LEADING_PUNCTUATION_REGEX = /^[\],.;:)(-]/
 
-const isPunctuationOnlyText = (value = '') => !LETTER_NUMBER_REGEX.test(value.replace(/\s+/g, ''))
+const cloneNode = (node) => {
+  if (!node || typeof node !== 'object') {
+    return node
+  }
+  const copy = { ...node }
+  if (Array.isArray(node.children)) {
+    copy.children = node.children.map(cloneNode)
+  }
+  return copy
+}
 
-const extractPlainText = (node) => {
-  if (!node || !node.children) {
+const cloneParagraph = (paragraph) => ({
+  type: 'paragraph',
+  children: Array.isArray(paragraph.children)
+    ? paragraph.children.map(cloneNode)
+    : [],
+})
+
+const getParagraphText = (paragraph) => {
+  if (!paragraph || !Array.isArray(paragraph.children)) {
     return ''
   }
-  let buffer = ''
-  for (const child of node.children) {
-    if (typeof child.value === 'string') {
-      buffer += child.value
-    } else if (child.children) {
-      buffer += extractPlainText(child)
-    }
-  }
-  return buffer
-}
-
-const getFirstMeaningfulChar = (children) => {
-  for (const child of children) {
-    if (child.type === 'text' && child.value) {
-      const trimmed = child.value.trimStart()
-      if (trimmed.length > 0) {
-        return trimmed[0]
+  return paragraph.children
+    .map((child) => {
+      if (child.type === 'text') {
+        return child.value || ''
       }
-    }
-    if (child.type === 'inlineCode' && child.value) {
-      return child.value.trimStart()[0]
-    }
-  }
-  return null
+      if (child.type === 'inlineCode') {
+        return child.value || ''
+      }
+      return ''
+    })
+    .join('')
 }
 
-const getLastMeaningfulChar = (children) => {
+const isInlineCodeOnly = (paragraph) =>
+  paragraph &&
+  Array.isArray(paragraph.children) &&
+  paragraph.children.length === 1 &&
+  paragraph.children[0].type === 'inlineCode'
+
+const isInlineParagraph = (node) => {
+  if (!node || node.type !== 'paragraph') {
+    return false
+  }
+  if (!Array.isArray(node.children) || node.children.length === 0) {
+    return true
+  }
+  return node.children.every((child) => INLINE_NODE_TYPES.has(child.type))
+}
+
+const getLastInlineChar = (children) => {
   for (let i = children.length - 1; i >= 0; i -= 1) {
     const child = children[i]
     if (child.type === 'text' && child.value) {
       const trimmed = child.value.trimEnd()
-      if (trimmed.length > 0) {
+      if (trimmed) {
         return trimmed[trimmed.length - 1]
       }
     }
     if (child.type === 'inlineCode' && child.value) {
-      const value = child.value.trimEnd()
-      if (value.length > 0) {
-        return value[value.length - 1]
+      const trimmed = child.value.trimEnd()
+      if (trimmed) {
+        return trimmed[trimmed.length - 1]
       }
     }
   }
   return null
 }
 
-const needsSpaceBetween = (leftChildren, rightChildren) => {
-  const leftChar = getLastMeaningfulChar(leftChildren)
-  const rightChar = getFirstMeaningfulChar(rightChildren)
+const getFirstInlineChar = (children) => {
+  for (const child of children) {
+    if (child.type === 'text' && child.value) {
+      const trimmed = child.value.trimStart()
+      if (trimmed) {
+        return trimmed[0]
+      }
+    }
+    if (child.type === 'inlineCode' && child.value) {
+      const trimmed = child.value.trimStart()
+      if (trimmed) {
+        return trimmed[0]
+      }
+    }
+  }
+  return null
+}
+
+const NEVER_BEFORE_SPACE = new Set([',', '.', ';', ':', ')', ']', '}', '?'])
+const NEVER_AFTER_SPACE = new Set(['(', '[', '{'])
+
+const shouldInsertSpace = (leftChildren, rightChildren) => {
+  const leftChar = getLastInlineChar(leftChildren)
+  const rightChar = getFirstInlineChar(rightChildren)
   if (!leftChar || !rightChar) {
     return false
   }
-  return (
-    LETTER_NUMBER_REGEX.test(leftChar) &&
-    LETTER_NUMBER_REGEX.test(rightChar)
-  )
-}
-
-const isInlineFragment = (node) => {
-  if (!node || node.type !== 'paragraph') {
+  if (NEVER_BEFORE_SPACE.has(rightChar) || NEVER_AFTER_SPACE.has(leftChar)) {
     return false
   }
-
-  if (node.children.length === 0) {
+  if (LETTER_NUMBER_REGEX.test(leftChar) && LETTER_NUMBER_REGEX.test(rightChar)) {
     return true
   }
+  return /\S/.test(leftChar) && /\S/.test(rightChar)
+}
 
-  return node.children.every((child) => {
-    if (child.type === 'inlineCode') {
-      return true
+const mergeParagraphs = (target, fragment) => {
+  if (!target || !fragment) {
+    return target || fragment
+  }
+  if (shouldInsertSpace(target.children, fragment.children)) {
+    target.children.push({ type: 'text', value: ' ' })
+  }
+  target.children.push(...fragment.children.map(cloneNode))
+  return target
+}
+
+const getLastParagraphFromItem = (listItem) => {
+  if (!Array.isArray(listItem.children)) {
+    return null
+  }
+  for (let i = listItem.children.length - 1; i >= 0; i -= 1) {
+    const child = listItem.children[i]
+    if (child.type === 'paragraph') {
+      return child
     }
-    if (child.type === 'text') {
-      return isPunctuationOnlyText(child.value)
+  }
+  return null
+}
+
+const attachFragmentToListItem = (listItem, fragment) => {
+  if (!listItem || !fragment) {
+    return
+  }
+  const target = getLastParagraphFromItem(listItem) || (() => {
+    const paragraph = cloneParagraph(fragment)
+    listItem.children = Array.isArray(listItem.children) ? listItem.children : []
+    listItem.children.push(paragraph)
+    return paragraph
+  })()
+
+  if (target === fragment) {
+    return
+  }
+
+  mergeParagraphs(target, fragment)
+}
+
+const tightenListItems = (tree) => {
+  visit(tree, 'listItem', (listItem) => {
+    if (!Array.isArray(listItem.children) || listItem.children.length <= 1) {
+      return
     }
-    return false
+
+    const normalized = []
+    let buffer = null
+
+    for (const child of listItem.children) {
+      if (isInlineParagraph(child)) {
+        buffer = buffer ? mergeParagraphs(buffer, child) : cloneParagraph(child)
+        continue
+      }
+
+      if (buffer) {
+        normalized.push(buffer)
+        buffer = null
+      }
+
+      if (child.children) {
+        tightenListItems(child)
+      }
+
+      normalized.push(child)
+    }
+
+    if (buffer) {
+      normalized.push(buffer)
+    }
+
+    listItem.children = normalized
   })
 }
 
-const appendFragment = (target, fragment) => {
-  if (!target || !fragment) {
+const reattachDanglingParagraphs = (parent) => {
+  if (!parent || !Array.isArray(parent.children)) {
     return
   }
 
-  if (needsSpaceBetween(target.children, fragment.children)) {
-    target.children.push({ type: 'text', value: ' ' })
-  }
+  let lastAttachableItem = null
 
-  target.children.push(...fragment.children)
-}
+  for (let index = 0; index < parent.children.length; ) {
+    const child = parent.children[index]
 
-const prependFragment = (target, fragment) => {
-  if (!target || !fragment) {
-    return
-  }
-
-  if (needsSpaceBetween(fragment.children, target.children)) {
-    fragment.children.push({ type: 'text', value: ' ' })
-  }
-
-  target.children.unshift(...fragment.children)
-}
-
-const ensureChildren = (node) => {
-  if (!node.children) {
-    node.children = []
-  }
-  return node.children
-}
-
-const cloneParagraph = () => ({
-  type: 'paragraph',
-  children: [],
-})
-
-const findTailParagraph = (node, { createIfMissing = false } = {}) => {
-  if (!node) return null
-
-  if (node.type === 'paragraph') {
-    return isInlineFragment(node) ? null : node
-  }
-
-  if (node.type === 'list') {
-    const items = node.children || []
-    const lastItem = items[items.length - 1]
-    if (!lastItem && createIfMissing) {
-      const newItem = { type: 'listItem', children: [cloneParagraph()] }
-      ensureChildren(node).push(newItem)
-      return newItem.children[0]
-    }
-    return findTailParagraph(lastItem, { createIfMissing })
-  }
-
-  if (node.type === 'listItem' || node.type === 'blockquote') {
-    const children = node.children || []
-    for (let i = children.length - 1; i >= 0; i -= 1) {
-      const candidate = findTailParagraph(children[i], { createIfMissing: false })
-      if (candidate) {
-        return candidate
+    if (child.type === 'list') {
+      if (Array.isArray(child.children) && child.children.length > 0) {
+        lastAttachableItem = child.children[child.children.length - 1]
+      } else {
+        lastAttachableItem = null
       }
+      reattachDanglingParagraphs(child)
+      index += 1
+      continue
     }
-    if (createIfMissing) {
-      const paragraph = cloneParagraph()
-      ensureChildren(node).push(paragraph)
-      return paragraph
-    }
-  }
 
-  return null
+    if (child.type === 'listItem' || child.type === 'blockquote') {
+      reattachDanglingParagraphs(child)
+    }
+
+    if (lastAttachableItem && isInlineParagraph(child)) {
+      attachFragmentToListItem(lastAttachableItem, child)
+      parent.children.splice(index, 1)
+      continue
+    }
+
+    if (child.type !== 'paragraph') {
+      lastAttachableItem = null
+    }
+
+    index += 1
+  }
 }
 
-const findHeadParagraph = (node, { createIfMissing = false } = {}) => {
-  if (!node) return null
-
-  if (node.type === 'paragraph') {
-    return isInlineFragment(node) ? null : node
-  }
-
-  if (node.type === 'list') {
-    const items = node.children || []
-    const firstItem = items[0]
-    if (!firstItem && createIfMissing) {
-      const newItem = { type: 'listItem', children: [cloneParagraph()] }
-      ensureChildren(node).unshift(newItem)
-      return newItem.children[0]
-    }
-    return findHeadParagraph(firstItem, { createIfMissing })
-  }
-
-  if (node.type === 'listItem' || node.type === 'blockquote') {
-    const children = node.children || []
-    for (let i = 0; i < children.length; i += 1) {
-      const candidate = findHeadParagraph(children[i], { createIfMissing: false })
-      if (candidate) {
-        return candidate
-      }
-    }
-    if (createIfMissing) {
-      const paragraph = cloneParagraph()
-      ensureChildren(node).unshift(paragraph)
-      return paragraph
-    }
-  }
-
-  return null
-}
-
-const shouldMergeParagraph = (previousParagraph, currentParagraph) => {
+const shouldChainParagraph = (previousParagraph, currentParagraph) => {
   if (!previousParagraph) {
     return false
   }
 
-  const currentText = extractPlainText(currentParagraph).trim()
+  const currentText = getParagraphText(currentParagraph).trim()
+  const previousText = getParagraphText(previousParagraph).trim()
+
   if (!currentText) {
     return true
   }
 
-  if (isInlineFragment(currentParagraph)) {
+  if (isInlineCodeOnly(currentParagraph)) {
     return true
   }
 
-  const startsWithLowercase = /^[a-z\u00C0-\u024F]/.test(currentText[0])
-  const startsWithPunctuation = LEADING_PUNCTUATION_REGEX.test(currentText)
-  const previousText = extractPlainText(previousParagraph).trim()
-  const previousEndsSentence = TERMINAL_PUNCTUATION_REGEX.test(previousText)
+  const firstChar = currentText[0]
+  const startsWithConjunction = /^(und|oder|and|or)\b/i.test(currentText)
+  const previousEndsSentence = /[.!?)]$/.test(previousText)
 
-  return startsWithPunctuation || startsWithLowercase || !previousEndsSentence
+  if (/[,:;)\]]/.test(firstChar)) {
+    return true
+  }
+
+  if (startsWithConjunction) {
+    return true
+  }
+
+  if (/^[a-z\u00C0-\u024F]/.test(firstChar)) {
+    return true
+  }
+
+  return !previousEndsSentence
+}
+
+const mergeLooseParagraphs = (parent) => {
+  if (!parent || !Array.isArray(parent.children)) {
+    return
+  }
+
+  const merged = []
+  let activeParagraph = null
+
+  for (const child of parent.children) {
+    if (child.type === 'paragraph' && shouldChainParagraph(activeParagraph, child)) {
+      mergeParagraphs(activeParagraph, child)
+      continue
+    }
+
+    if (child.children) {
+      mergeLooseParagraphs(child)
+    }
+
+    merged.push(child)
+    activeParagraph = child.type === 'paragraph' ? child : null
+  }
+
+  parent.children = merged
 }
 
 const remarkMergeInlineParagraphs = () => (tree) => {
-  visit(tree, (node) => {
-    if (!node || !Array.isArray(node.children)) {
-      return
-    }
-
-    const mergedChildren = []
-    let activeParagraph = null
-
-    for (let index = 0; index < node.children.length; index += 1) {
-      const current = node.children[index]
-
-      if (current.type !== 'paragraph') {
-        mergedChildren.push(current)
-        activeParagraph = null
-        continue
-      }
-
-      if (shouldMergeParagraph(activeParagraph, current)) {
-        appendFragment(activeParagraph, current)
-        continue
-      }
-
-      mergedChildren.push(current)
-      activeParagraph = isInlineFragment(current) ? activeParagraph : current
-    }
-
-    node.children = mergedChildren
-
-    for (let index = 0; index < node.children.length; index += 1) {
-      const current = node.children[index]
-      if (!isInlineFragment(current)) {
-        continue
-      }
-
-      const previous = node.children[index - 1]
-      const next = node.children[index + 1]
-
-      const appendTarget =
-        (previous && previous.type === 'paragraph' && !isInlineFragment(previous) && previous) ||
-        findTailParagraph(previous, { createIfMissing: true })
-
-      if (appendTarget) {
-        appendFragment(appendTarget, current)
-        node.children.splice(index, 1)
-        index -= 1
-        continue
-      }
-
-      const prependTarget =
-        (next && next.type === 'paragraph' && !isInlineFragment(next) && next) ||
-        findHeadParagraph(next, { createIfMissing: true })
-
-      if (prependTarget) {
-        prependFragment(prependTarget, current)
-        node.children.splice(index, 1)
-        index -= 1
-      }
-    }
-  })
+  tightenListItems(tree)
+  reattachDanglingParagraphs(tree)
+  mergeLooseParagraphs(tree)
 }
 
 export default remarkMergeInlineParagraphs
