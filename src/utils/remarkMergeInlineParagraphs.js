@@ -1,8 +1,25 @@
-import { visit } from 'unist-util-visit'
+﻿import { visit } from 'unist-util-visit'
 
-const LETTER_NUMBER_REGEX = /[A-Za-zÀ-ÖØ-öø-ÿ0-9]/
+const LETTER_NUMBER_REGEX = /[A-Za-z0-9\u00C0-\u024F]/
+const TERMINAL_PUNCTUATION_REGEX = /[.!?;:)]$/
+const LEADING_PUNCTUATION_REGEX = /^[\],.;:)(-]/
 
 const isPunctuationOnlyText = (value = '') => !LETTER_NUMBER_REGEX.test(value.replace(/\s+/g, ''))
+
+const extractPlainText = (node) => {
+  if (!node || !node.children) {
+    return ''
+  }
+  let buffer = ''
+  for (const child of node.children) {
+    if (typeof child.value === 'string') {
+      buffer += child.value
+    } else if (child.children) {
+      buffer += extractPlainText(child)
+    }
+  }
+  return buffer
+}
 
 const getFirstMeaningfulChar = (children) => {
   for (const child of children) {
@@ -94,11 +111,140 @@ const prependFragment = (target, fragment) => {
   target.children.unshift(...fragment.children)
 }
 
+const ensureChildren = (node) => {
+  if (!node.children) {
+    node.children = []
+  }
+  return node.children
+}
+
+const cloneParagraph = () => ({
+  type: 'paragraph',
+  children: [],
+})
+
+const findTailParagraph = (node, { createIfMissing = false } = {}) => {
+  if (!node) return null
+
+  if (node.type === 'paragraph') {
+    return isInlineFragment(node) ? null : node
+  }
+
+  if (node.type === 'list') {
+    const items = node.children || []
+    const lastItem = items[items.length - 1]
+    if (!lastItem && createIfMissing) {
+      const newItem = { type: 'listItem', children: [cloneParagraph()] }
+      ensureChildren(node).push(newItem)
+      return newItem.children[0]
+    }
+    return findTailParagraph(lastItem, { createIfMissing })
+  }
+
+  if (node.type === 'listItem' || node.type === 'blockquote') {
+    const children = node.children || []
+    for (let i = children.length - 1; i >= 0; i -= 1) {
+      const candidate = findTailParagraph(children[i], { createIfMissing: false })
+      if (candidate) {
+        return candidate
+      }
+    }
+    if (createIfMissing) {
+      const paragraph = cloneParagraph()
+      ensureChildren(node).push(paragraph)
+      return paragraph
+    }
+  }
+
+  return null
+}
+
+const findHeadParagraph = (node, { createIfMissing = false } = {}) => {
+  if (!node) return null
+
+  if (node.type === 'paragraph') {
+    return isInlineFragment(node) ? null : node
+  }
+
+  if (node.type === 'list') {
+    const items = node.children || []
+    const firstItem = items[0]
+    if (!firstItem && createIfMissing) {
+      const newItem = { type: 'listItem', children: [cloneParagraph()] }
+      ensureChildren(node).unshift(newItem)
+      return newItem.children[0]
+    }
+    return findHeadParagraph(firstItem, { createIfMissing })
+  }
+
+  if (node.type === 'listItem' || node.type === 'blockquote') {
+    const children = node.children || []
+    for (let i = 0; i < children.length; i += 1) {
+      const candidate = findHeadParagraph(children[i], { createIfMissing: false })
+      if (candidate) {
+        return candidate
+      }
+    }
+    if (createIfMissing) {
+      const paragraph = cloneParagraph()
+      ensureChildren(node).unshift(paragraph)
+      return paragraph
+    }
+  }
+
+  return null
+}
+
+const shouldMergeParagraph = (previousParagraph, currentParagraph) => {
+  if (!previousParagraph) {
+    return false
+  }
+
+  const currentText = extractPlainText(currentParagraph).trim()
+  if (!currentText) {
+    return true
+  }
+
+  if (isInlineFragment(currentParagraph)) {
+    return true
+  }
+
+  const startsWithLowercase = /^[a-z\u00C0-\u024F]/.test(currentText[0])
+  const startsWithPunctuation = LEADING_PUNCTUATION_REGEX.test(currentText)
+  const previousText = extractPlainText(previousParagraph).trim()
+  const previousEndsSentence = TERMINAL_PUNCTUATION_REGEX.test(previousText)
+
+  return startsWithPunctuation || startsWithLowercase || !previousEndsSentence
+}
+
 const remarkMergeInlineParagraphs = () => (tree) => {
   visit(tree, (node) => {
     if (!node || !Array.isArray(node.children)) {
       return
     }
+
+    const mergedChildren = []
+    let activeParagraph = null
+
+    for (let index = 0; index < node.children.length; index += 1) {
+      const current = node.children[index]
+
+      if (current.type !== 'paragraph') {
+        mergedChildren.push(current)
+        activeParagraph = null
+        continue
+      }
+
+      if (shouldMergeParagraph(activeParagraph, current)) {
+        appendFragment(activeParagraph, current)
+        continue
+      }
+
+      mergedChildren.push(current)
+      activeParagraph = isInlineFragment(current) ? activeParagraph : current
+    }
+
+    node.children = mergedChildren
 
     for (let index = 0; index < node.children.length; index += 1) {
       const current = node.children[index]
@@ -109,15 +255,23 @@ const remarkMergeInlineParagraphs = () => (tree) => {
       const previous = node.children[index - 1]
       const next = node.children[index + 1]
 
-      if (previous && previous.type === 'paragraph' && !isInlineFragment(previous)) {
-        appendFragment(previous, current)
+      const appendTarget =
+        (previous && previous.type === 'paragraph' && !isInlineFragment(previous) && previous) ||
+        findTailParagraph(previous, { createIfMissing: true })
+
+      if (appendTarget) {
+        appendFragment(appendTarget, current)
         node.children.splice(index, 1)
         index -= 1
         continue
       }
 
-      if (next && next.type === 'paragraph' && !isInlineFragment(next)) {
-        prependFragment(next, current)
+      const prependTarget =
+        (next && next.type === 'paragraph' && !isInlineFragment(next) && next) ||
+        findHeadParagraph(next, { createIfMissing: true })
+
+      if (prependTarget) {
+        prependFragment(prependTarget, current)
         node.children.splice(index, 1)
         index -= 1
       }
