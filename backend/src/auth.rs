@@ -292,7 +292,7 @@ fn secret_has_min_entropy(secret: &str) -> bool {
 /// # Returns
 ///
 /// `true` if cookies should be secure, `false` otherwise.
-fn cookies_should_be_secure() -> bool {
+pub fn cookies_should_be_secure() -> bool {
     match env::var("AUTH_COOKIE_SECURE") {
         Ok(value) if value.trim().eq_ignore_ascii_case("false") => {
             tracing::warn!(
