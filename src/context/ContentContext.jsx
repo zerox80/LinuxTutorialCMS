@@ -320,8 +320,6 @@ export const ContentProvider = ({ children }) => {
         [section]: updatedContent,
       }))
       return response
-    } catch (err) {
-      throw err
     } finally {
       setSavingSections((prev) => {
         const next = { ...prev }

@@ -91,7 +91,7 @@ const Grundlagen = () => {
             <h3 className="text-2xl font-semibold text-gray-900 mb-4">Dein Lernpfad</h3>
             <p className="text-gray-600 leading-relaxed mb-6">
               Der Grundlagenkurs ist der erste Schritt unseres kompletten Linux-Lernpfads. Sobald du dich sicher fühlst,
-              kannst du in die Bereiche "Befehle", "Praxis" und "Advanced" wechseln, um dein Wissen zu vertiefen.
+              kannst du in die Bereiche &quot;Befehle&quot;, &quot;Praxis&quot; und &quot;Advanced&quot; wechseln, um dein Wissen zu vertiefen.
             </p>
             <div className="space-y-3 text-gray-700">
               {Array.isArray(modules.summary) && modules.summary.map((item, idx) => (
