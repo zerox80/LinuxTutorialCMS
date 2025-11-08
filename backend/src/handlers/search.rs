@@ -7,6 +7,7 @@ use axum::{
 use serde::Deserialize;
 use std::convert::TryInto;
 
+/// Query-string parameters accepted by `/api/search/tutorials`.
 #[derive(Deserialize)]
 pub struct SearchQuery {
     q: String,

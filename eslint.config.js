@@ -3,6 +3,13 @@ import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
 import globals from 'globals'
 
+/**
+ * ESLint flat-config stack that lints modern React code (JSX, hooks) while ignoring build artifacts.
+ * The array blends the built-in JavaScript recommendations with React-specific rules and shared globals.
+ *
+ * @type {import('eslint').Linter.FlatConfig[]}
+ * @returns {import('eslint').Linter.FlatConfig[]} Ordered configuration segments consumed by ESLint.
+ */
 export default [
   {
     ignores: ['dist/', 'node_modules/', 'backend/', 'public/sw.js'],

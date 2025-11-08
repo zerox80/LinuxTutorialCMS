@@ -1,4 +1,9 @@
-/** @type {import('tailwindcss').Config} */
+/**
+ * Tailwind configuration powering the design system (colors, typography, motion).
+ *
+ * @type {import('tailwindcss').Config}
+ * @returns {import('tailwindcss').Config} Theme definition consumed by Tailwind CLI.
+ */
 export default {
   darkMode: 'class',
   content: [

@@ -299,6 +299,13 @@ const mergeLooseParagraphs = (parent) => {
   parent.children = merged
 }
 
+/**
+ * Remark plugin that stitches sequences of inline-only paragraphs back together so prose flows naturally.
+ * It first tightens loose list items, reattaches dangling inline fragments, and finally merges paragraphs that
+ * should be chained based on punctuation heuristics.
+ *
+ * @returns {(tree: import('mdast').Root) => void} Transformer that mutates the Markdown AST in-place.
+ */
 const remarkMergeInlineParagraphs = () => (tree) => {
   tightenListItems(tree)
   reattachDanglingParagraphs(tree)

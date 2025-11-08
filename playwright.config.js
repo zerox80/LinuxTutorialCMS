@@ -1,5 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
 
+/**
+ * Playwright end-to-end test configuration covering desktop and mobile browsers.
+ * Spins up the dev server, captures traces/screenshots, and tunes retries for CI.
+ *
+ * @returns {import('@playwright/test').PlaywrightTestConfig} Configuration consumed by Playwright.
+ */
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,

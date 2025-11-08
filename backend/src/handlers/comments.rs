@@ -7,11 +7,15 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::{env, sync::OnceLock};
 
+/// Payload accepted when an admin submits a new tutorial comment via the API.
+///
+/// Field validations (trimmed, max length) happen inside `create_comment`.
 #[derive(Deserialize)]
 pub struct CreateCommentRequest {
     content: String,
 }
 
+/// Pagination parameters understood by `list_comments`.
 #[derive(Deserialize)]
 pub struct CommentListQuery {
     #[serde(default = "default_comment_limit")]
@@ -24,6 +28,7 @@ fn default_comment_limit() -> i64 {
     50
 }
 
+/// Database row/JSON payload for a persisted comment.
 #[derive(Serialize, sqlx::FromRow)]
 pub struct Comment {
     pub id: String,

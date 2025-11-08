@@ -111,6 +111,41 @@ All sensitive configuration lives in `backend/.env`. The most important keys are
 
 Frontend configuration lives in `./.env` files consumed by Vite (see `.env.example`).
 
+### Frontend (`.env.local`)
+| Variable | Description | Example |
+| --- | --- | --- |
+| `VITE_API_BASE_URL` | Absolute API root. Leave unset to use the current origin + `/api`. | `https://cms.example.com/api` |
+| `VITE_API_CACHE_BUST` | When set to `true`, appends `?cb=<timestamp>` to every API call (handy while debugging aggressive caches/CDNs). | `true` |
+
+## Usage Guide
+### 1. Admin Dashboard Workflow
+1. **Sign in:** Visit `/login` and use the credentials defined in `backend/.env`.
+2. **Tutorials tab:** Create, edit, and delete tutorials. Each save normalizes topics, colors, and icons; validation errors surface inline.
+3. **Site Content tab:** Edit hero/header/footer/Grundlagen JSON with live previews. Only validated JSON within the allowed size limit is persisted.
+4. **Pages & Posts tab:** Curate landing pages and their related blog posts. Publishing a page automatically exposes it via `/pages/:slug` and, if `show_in_nav` is true, in the global navigation feed.
+5. **Comments tab:** Read-only for visitors; admins can post or delete comments for each tutorial.
+6. **Search modal:** Press the magnifying glass in the header to exercise the `/api/search/tutorials` endpoint and verify FTS indexing.
+
+### 2. CLI Import/Export
+Use the bundled Rust binaries to move content between environments or create backups.
+
+```bash
+# Export everything to a JSON bundle
+cd backend
+cargo run --bin export_content -- ../exports/site-content.json
+
+# Import a bundle (upserts site content, pages, and posts)
+cargo run --bin import_content -- ../exports/site-content.json
+```
+
+Exports include site copy, dynamic pages, posts, tutorials, and topic metadata. Imports run inside a single transaction, so failures leave your database untouched.
+
+### 3. Progressive Web App (Optional)
+The frontend ships with a service worker and install prompt helpers (`src/utils/pwa.js`). To test them:
+1. Run `npm run dev` or a production build.
+2. Open the site in Chrome/Edge, and use the browser install menu or wire up a custom button via `initPWA`/`installPWA`.
+3. Use the Application tab in DevTools to verify caching and offline readiness.
+
 ## Daily Development Tasks
 - **Manage tutorials:** Use the Admin dashboard -> "Tutorials" tab to create/edit/delete tutorials. Topics, markdown content, and hero icons are all validated server-side.
 - **Edit site copy:** The "Site Content" editor exposes hero, header, footer, and Grundlagen page sections as JSON. Every update is validated (structure + size) before persisting.
