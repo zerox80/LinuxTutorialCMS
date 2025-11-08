@@ -113,9 +113,9 @@ SectionToolbar.propTypes = {
 
 const ContentJsonEditor = ({ value, onChange, error, schemaHint }) => (
   <div className="space-y-3">
-    <label className="block text-sm font-semibold text-gray-700">JSON-Inhalt</label>
+    <label className="block text-sm font-semibold text-gray-700 dark:text-slate-200">JSON-Inhalt</label>
     <textarea
-      className="min-h-[420px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 font-mono text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200"
+      className="min-h-[420px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 font-mono text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
       value={value}
       onChange={(event) => onChange(event.target.value)}
     />
