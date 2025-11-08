@@ -91,9 +91,15 @@ DATABASE_URL=sqlite:./cms.db
 # A secret key for signing JWT tokens. You can generate a strong secret using a password manager or a command-line tool.
 JWT_SECRET=your-super-secret-key-that-is-at-least-32-characters-long
 
+# A secret key for CSRF token protection. Generate with: openssl rand -base64 48
+CSRF_SECRET=your-csrf-secret-key-that-is-at-least-32-characters-long
+
 # The credentials for the default admin account.
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=your-secure-password
+
+# Salt for login attempt rate limiting. Generate with: openssl rand -base64 48
+LOGIN_ATTEMPT_SALT=your-login-salt-that-is-at-least-32-characters-long
 ```
 
 ### Running the Application

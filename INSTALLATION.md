@@ -73,6 +73,8 @@ cp .env.docker.example .env.docker
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=SehrSicheresPasswort123!
 JWT_SECRET=dein-geheimer-jwt-schlüssel-mindestens-32-zeichen
+CSRF_SECRET=dein-geheimer-csrf-schlüssel-mindestens-32-zeichen
+LOGIN_ATTEMPT_SALT=dein-geheimer-salt-mindestens-32-zeichen
 FRONTEND_ORIGINS=https://deine-domain.com
 ```
 
@@ -109,8 +111,10 @@ DATABASE_URL=sqlite:./cms.db
 
 # Auth
 JWT_SECRET=your-secret-key-min-32-chars
+CSRF_SECRET=your-csrf-secret-min-32-chars
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=SecurePassword123!
+LOGIN_ATTEMPT_SALT=your-salt-min-32-chars
 
 # Server
 PORT=8489

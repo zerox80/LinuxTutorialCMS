@@ -17,6 +17,7 @@ services:
     environment:
       - DATABASE_URL=sqlite:/data/database.db
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in environment}
+      - CSRF_SECRET=${CSRF_SECRET:?CSRF_SECRET must be set in environment}
       - RUST_LOG=${RUST_LOG:-info}
       - PORT=8489
       - FRONTEND_ORIGINS=${FRONTEND_ORIGINS:-http://localhost:8489}
