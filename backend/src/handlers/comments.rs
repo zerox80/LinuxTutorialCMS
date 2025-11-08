@@ -5,6 +5,7 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
+use std::{env, sync::OnceLock};
 
 #[derive(Deserialize)]
 pub struct CreateCommentRequest {
@@ -30,6 +31,63 @@ pub struct Comment {
     pub author: String,
     pub content: String,
     pub created_at: String,
+}
+
+fn comment_author_display_name(claims: &auth::Claims) -> String {
+    static DISPLAY_NAME: OnceLock<Option<String>> = OnceLock::new();
+
+    let configured = DISPLAY_NAME.get_or_init(|| {
+        env::var("COMMENT_AUTHOR_DISPLAY_NAME")
+            .ok()
+            .and_then(|value| {
+                let trimmed = value.trim();
+                if trimmed.is_empty() {
+                    None
+                } else {
+                    Some(trimmed.to_string())
+                }
+            })
+    });
+
+    configured
+        .as_ref()
+        .cloned()
+        .unwrap_or_else(|| claims.sub.clone())
+}
+
+fn sanitize_comment_content(
+    raw: &str,
+) -> Result<String, (StatusCode, Json<ErrorResponse>)> {
+    let trimmed = raw.trim();
+
+    if trimmed.is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse {
+                error: "Comment content cannot be empty".to_string(),
+            }),
+        ));
+    }
+
+    if trimmed.len() > 1_000 {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse {
+                error: "Comment too long (max 1000 characters)".to_string(),
+            }),
+        ));
+    }
+
+    let sanitized: String = trimmed
+        .chars()
+        .filter(|c| match c {
+            '\n' | '\r' | '\t' => true,
+            c if c.is_control() => false,
+            _ => true,
+        })
+        .collect();
+
+    Ok(sanitized)
 }
 
 pub async fn list_comments(
@@ -141,24 +199,8 @@ pub async fn create_comment(
         ));
     }
 
-    // Validate content
-    if payload.content.trim().is_empty() {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse {
-                error: "Comment content cannot be empty".to_string(),
-            }),
-        ));
-    }
-
-    if payload.content.len() > 1000 {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse {
-                error: "Comment too long (max 1000 characters)".to_string(),
-            }),
-        ));
-    }
+    let comment_content = sanitize_comment_content(&payload.content)?;
+    let author = comment_author_display_name(&claims);
 
     let id = uuid::Uuid::new_v4().to_string();
     let now = chrono::Utc::now().to_rfc3339();
@@ -168,8 +210,8 @@ pub async fn create_comment(
     )
     .bind(&id)
     .bind(&tutorial_id)
-    .bind(&claims.sub)
-    .bind(&payload.content)
+    .bind(&author)
+    .bind(&comment_content)
     .bind(&now)
     .execute(&pool)
     .await
@@ -186,8 +228,8 @@ pub async fn create_comment(
     Ok(Json(Comment {
         id,
         tutorial_id,
-        author: claims.sub,
-        content: payload.content,
+        author,
+        content: comment_content,
         created_at: now,
     }))
 }

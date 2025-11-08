@@ -17,7 +17,7 @@ use axum::http::{
         AUTHORIZATION, CACHE_CONTROL, CONTENT_SECURITY_POLICY, CONTENT_TYPE, EXPIRES,
         PRAGMA, STRICT_TRANSPORT_SECURITY, X_CONTENT_TYPE_OPTIONS, X_FRAME_OPTIONS,
     },
-    HeaderValue, Method,
+    HeaderName, HeaderValue, Method,
 };
 use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tower_http::limit::RequestBodyLimitLayer;
@@ -29,7 +29,45 @@ use tracing_subscriber;
 use tokio::signal;
 use std::net::SocketAddr;
 use std::io::ErrorKind;
-use tower_governor::key_extractor::SmartIpKeyExtractor;
+use tower_governor::key_extractor::{PeerIpKeyExtractor, SmartIpKeyExtractor};
+
+const PERMISSIONS_POLICY: HeaderName = HeaderName::from_static("permissions-policy");
+const REFERRER_POLICY: HeaderName = HeaderName::from_static("referrer-policy");
+const X_XSS_PROTECTION: HeaderName = HeaderName::from_static("x-xss-protection");
+const FORWARDED_HEADER: HeaderName = HeaderName::from_static("forwarded");
+const X_FORWARDED_FOR_HEADER: HeaderName = HeaderName::from_static("x-forwarded-for");
+const X_FORWARDED_PROTO_HEADER: HeaderName = HeaderName::from_static("x-forwarded-proto");
+const X_FORWARDED_HOST_HEADER: HeaderName = HeaderName::from_static("x-forwarded-host");
+const X_REAL_IP_HEADER: HeaderName = HeaderName::from_static("x-real-ip");
+
+fn parse_env_bool(key: &str, default: bool) -> bool {
+    env::var(key)
+        .ok()
+        .and_then(|value| {
+            match value.trim().to_ascii_lowercase().as_str() {
+                "1" | "true" | "yes" | "on" => Some(true),
+                "0" | "false" | "no" | "off" => Some(false),
+                _ => {
+                    tracing::warn!(key = %key, value = %value, "Invalid boolean env value; using default");
+                    None
+                }
+            }
+        })
+        .unwrap_or(default)
+}
+
+async fn strip_untrusted_forwarded_headers(mut request: Request, next: Next) -> Response {
+    {
+        let headers = request.headers_mut();
+        headers.remove(FORWARDED_HEADER);
+        headers.remove(X_FORWARDED_FOR_HEADER);
+        headers.remove(X_FORWARDED_PROTO_HEADER);
+        headers.remove(X_FORWARDED_HOST_HEADER);
+        headers.remove(X_REAL_IP_HEADER);
+    }
+
+    next.run(request).await
+}
 
 // Security headers middleware
 async fn security_headers(
@@ -75,10 +113,10 @@ async fn security_headers(
     // Content Security Policy - Environment-dependent for dev mode support
     let csp = if cfg!(debug_assertions) {
         // Development mode: Allow WebSocket for Vite HMR
-        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'self'; form-action 'self';"
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
     } else {
         // Production mode: Strict CSP (no inline styles)
-        "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';"
+        "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;"
     };
     
     headers.insert(
@@ -104,6 +142,21 @@ async fn security_headers(
     headers.insert(
         X_FRAME_OPTIONS,
         HeaderValue::from_static("DENY"),
+    );
+
+    headers.insert(
+        REFERRER_POLICY,
+        HeaderValue::from_static("no-referrer"),
+    );
+
+    headers.insert(
+        PERMISSIONS_POLICY,
+        HeaderValue::from_static("geolocation=(), microphone=(), camera=()"),
+    );
+
+    headers.insert(
+        X_XSS_PROTECTION,
+        HeaderValue::from_static("0"),
     );
     
     response
@@ -199,12 +252,25 @@ async fn main() {
 
     tracing::info!(origins = ?allowed_origins, "Configured CORS origins");
 
+    let trust_proxy_ip_headers = parse_env_bool("TRUST_PROXY_IP_HEADERS", false);
+    if trust_proxy_ip_headers {
+        tracing::info!("Trusting X-Forwarded-* headers for client IP extraction");
+    } else {
+        tracing::info!("Proxy headers will be stripped before rate limiting to prevent spoofing");
+    }
+
+    let login_key_extractor = if trust_proxy_ip_headers {
+        SmartIpKeyExtractor
+    } else {
+        PeerIpKeyExtractor
+    };
+
     // Configure rate limiting (average 1 request/sec for login, burst up to 5)
     let rate_limit_config = std::sync::Arc::new(
         GovernorConfigBuilder::default()
             .per_second(1)
             .burst_size(5)
-            .key_extractor(SmartIpKeyExtractor)
+            .key_extractor(login_key_extractor)
             .finish()
             .expect("Failed to build governor config"),
     );
@@ -217,11 +283,17 @@ async fn main() {
         .layer(RequestBodyLimitLayer::new(LOGIN_BODY_LIMIT))
         .layer(GovernorLayer::new(rate_limit_config));
 
+    let admin_key_extractor = if trust_proxy_ip_headers {
+        SmartIpKeyExtractor
+    } else {
+        PeerIpKeyExtractor
+    };
+
     let admin_rate_limit_config = std::sync::Arc::new(
         GovernorConfigBuilder::default()
             .per_second(1)
             .burst_size(3)
-            .key_extractor(SmartIpKeyExtractor)
+            .key_extractor(admin_key_extractor)
             .finish()
             .expect("Failed to build governor config for write routes"),
     );
@@ -276,7 +348,7 @@ async fn main() {
         .layer(RequestBodyLimitLayer::new(ADMIN_BODY_LIMIT))
         .layer(GovernorLayer::new(admin_rate_limit_config.clone()));
 
-    let app = Router::new()
+    let mut app = Router::new()
         .merge(login_router)
         // Auth routes
         .route("/api/auth/me", get(handlers::auth::me))
@@ -320,6 +392,10 @@ async fn main() {
         .layer(cors)
         .layer(middleware::from_fn(security_headers))
         .with_state(pool);
+
+    if !trust_proxy_ip_headers {
+        app = app.layer(middleware::from_fn(strip_untrusted_forwarded_headers));
+    }
 
     // Get port from environment or use default
     let port_str = env::var("PORT").unwrap_or_else(|_| "8489".to_string());
