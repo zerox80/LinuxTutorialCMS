@@ -33,6 +33,12 @@ const MOJIBAKE_REPLACEMENTS = [
   ['�', ''],
 ]
 
+/**
+ * Fixes common mojibake (character encoding errors) in a string.
+ *
+ * @param {string} value - The string to fix.
+ * @returns {string} The string with mojibake characters replaced.
+ */
 const fixMojibake = (value) => {
   if (typeof value !== 'string' || value.length === 0) {
     return value
@@ -51,6 +57,13 @@ const fixMojibake = (value) => {
   return result
 }
 
+/**
+ * Normalizes an array of strings by filtering, trimming, and joining them.
+ *
+ * @param {Array<string>} values - The array of strings to normalize.
+ * @param {string} [joiner=' '] - The string to use for joining the array elements.
+ * @returns {string} The joined and normalized string.
+ */
 const normalizeStringArray = (values, joiner = ' ') => {
   const cleaned = values
     .filter(Boolean)

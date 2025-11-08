@@ -17,6 +17,13 @@ export const TutorialProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  /**
+   * Loads tutorials from the API with retry logic for server errors.
+   *
+   * @param {object} [options] - Load options.
+   * @param {AbortSignal} [options.signal] - Optional abort signal for cancellation.
+   * @returns {Promise<void>}
+   */
   const loadTutorials = useCallback(
     async ({ signal } = {}) => {
       setLoading(true)
@@ -100,6 +107,15 @@ export const TutorialProvider = ({ children }) => {
     }
   }, [loadTutorials])
 
+  /**
+   * Creates a new tutorial via the API.
+   *
+   * @param {object} tutorial - The tutorial data to create.
+   * @param {string} tutorial.title - The tutorial title.
+   * @param {string} tutorial.description - The tutorial description.
+   * @param {Array<string>} tutorial.topics - Array of topic strings.
+   * @returns {Promise<object>} The created tutorial object.
+   */
   const addTutorial = async (tutorial) => {
     const sanitizedTopics = Array.isArray(tutorial.topics)
       ? tutorial.topics.filter((topic) => typeof topic === 'string' && topic.trim() !== '')
@@ -131,6 +147,13 @@ export const TutorialProvider = ({ children }) => {
     }
   }
 
+  /**
+   * Updates an existing tutorial via the API.
+   *
+   * @param {string} id - The tutorial ID to update.
+   * @param {object} updatedTutorial - The updated tutorial data.
+   * @returns {Promise<object>} The updated tutorial object.
+   */
   const updateTutorial = async (id, updatedTutorial) => {
     const sanitizedTopics = Array.isArray(updatedTutorial.topics)
       ? updatedTutorial.topics.filter((topic) => typeof topic === 'string' && topic.trim() !== '')
@@ -157,6 +180,12 @@ export const TutorialProvider = ({ children }) => {
     }
   }
 
+  /**
+   * Deletes a tutorial via the API.
+   *
+   * @param {string} id - The tutorial ID to delete.
+   * @returns {Promise<void>}
+   */
   const deleteTutorial = async (id) => {
     try {
       await api.deleteTutorial(id)
@@ -167,10 +196,22 @@ export const TutorialProvider = ({ children }) => {
     }
   }
 
+  /**
+   * Retrieves a tutorial from the local state by ID.
+   *
+   * @param {string} id - The tutorial ID to retrieve.
+   * @returns {object|undefined} The tutorial object, or undefined if not found.
+   */
   const getTutorial = (id) => {
     return tutorials.find((t) => t.id === id)
   }
 
+  /**
+   * Retrieves a Lucide icon component by name.
+   *
+   * @param {string} iconName - The name of the icon.
+   * @returns {React.ComponentType} The icon component.
+   */
   const getIconComponent = (iconName) => getIconComponentFromMap(iconName)
 
   return (

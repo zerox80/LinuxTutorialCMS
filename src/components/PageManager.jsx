@@ -48,6 +48,15 @@ const defaultLayoutConfig = {
 
 const defaultLayoutJson = JSON.stringify(defaultLayoutConfig, null, 2)
 
+/**
+ * Parses a JSON string field and returns the parsed object.
+ * Throws an error with the field name if parsing fails.
+ *
+ * @param {string} value - The JSON string to parse.
+ * @param {string} field - The name of the field being parsed (for error messages).
+ * @returns {object} The parsed JSON object, or an empty object if the value is empty.
+ * @throws {Error} If the JSON is invalid.
+ */
 const parseJsonField = (value, field) => {
   const trimmed = (value ?? '').trim()
   if (!trimmed) {
@@ -62,6 +71,13 @@ const parseJsonField = (value, field) => {
   }
 }
 
+/**
+ * Sanitizes a value to ensure it's a valid integer.
+ *
+ * @param {*} value - The value to sanitize.
+ * @param {number} [fallback=0] - The fallback value if the input is invalid.
+ * @returns {number} The sanitized integer or the fallback value.
+ */
 const sanitizeInteger = (value, fallback = 0) => {
   if (value === '' || value === null || value === undefined) return fallback
   const parsed = Number(value)

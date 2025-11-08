@@ -50,6 +50,13 @@ export const AuthProvider = ({ children }) => {
     }
   }, [])
 
+  /**
+   * Attempts to authenticate a user with the provided credentials.
+   *
+   * @param {string} username - The username for authentication.
+   * @param {string} password - The password for authentication.
+   * @returns {Promise<{success: boolean, error?: string}>} An object indicating success or failure with an optional error message.
+   */
   const login = async (username, password) => {
     try {
       setError(null)
@@ -78,6 +85,11 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  /**
+   * Logs out the current user and clears authentication state.
+   *
+   * @returns {Promise<void>}
+   */
   const logout = async () => {
     try {
       await api.logout()

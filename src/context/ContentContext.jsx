@@ -205,6 +205,11 @@ export const ContentProvider = ({ children }) => {
   const [pageCache, setPageCache] = useState({})
   const pageCacheRef = useRef({})
 
+  /**
+   * Loads site content from the API and merges it with default content.
+   *
+   * @returns {Promise<void>}
+   */
   const loadContent = useCallback(async () => {
     try {
       setLoading(true)
@@ -229,6 +234,11 @@ export const ContentProvider = ({ children }) => {
     }
   }, [])
 
+  /**
+   * Loads dynamic navigation items from the API.
+   *
+   * @returns {Promise<void>}
+   */
   const loadNavigation = useCallback(async () => {
     try {
       setNavLoading(true)
@@ -244,6 +254,11 @@ export const ContentProvider = ({ children }) => {
     }
   }, [])
 
+  /**
+   * Loads the list of published page slugs from the API.
+   *
+   * @returns {Promise<void>}
+   */
   const loadPublishedPages = useCallback(async () => {
     try {
       setPublishedPagesLoading(true)
@@ -259,6 +274,15 @@ export const ContentProvider = ({ children }) => {
     }
   }, [])
 
+  /**
+   * Fetches a published page by slug, with optional caching.
+   *
+   * @param {string} slug - The page slug to fetch.
+   * @param {object} [options] - Fetch options.
+   * @param {boolean} [options.force=false] - Whether to force a fresh fetch, bypassing cache.
+   * @param {AbortSignal} [options.signal] - Optional abort signal for cancellation.
+   * @returns {Promise<object>} The page data including page metadata and posts.
+   */
   const fetchPublishedPage = useCallback(
     async (slug, { force = false, signal } = {}) => {
       if (!slug || typeof slug !== 'string') {
@@ -290,6 +314,12 @@ export const ContentProvider = ({ children }) => {
     [],
   )
 
+  /**
+   * Invalidates the cache for a specific page or all pages.
+   *
+   * @param {string} [slug] - The slug of the page to invalidate. If omitted, clears all cache.
+   * @returns {void}
+   */
   const invalidatePageCache = useCallback((slug) => {
     if (slug && typeof slug === 'string') {
       const normalizedSlug = slug.trim().toLowerCase()
@@ -322,6 +352,13 @@ export const ContentProvider = ({ children }) => {
     loadPublishedPages()
   }, [loadNavigation, loadPublishedPages])
 
+  /**
+   * Updates a specific content section via the API.
+   *
+   * @param {string} section - The section identifier to update.
+   * @param {object} newContent - The new content for the section.
+   * @returns {Promise<object>} The API response containing the updated content.
+   */
   const updateSection = useCallback(async (section, newContent) => {
     if (!section) {
       throw new Error('Section is required')

@@ -9,6 +9,12 @@ import 'katex/dist/katex.min.css'
 import CodeBlock from './CodeBlock'
 import remarkMergeInlineParagraphs from '../utils/remarkMergeInlineParagraphs'
 
+/**
+ * Merges multiple class names into a single string, filtering out falsy values.
+ *
+ * @param {...string} classes - Variable number of class name strings.
+ * @returns {string} The merged class names as a single string.
+ */
 const mergeClassNames = (...classes) => classes.filter(Boolean).join(' ')
 
 const headingClasses = {

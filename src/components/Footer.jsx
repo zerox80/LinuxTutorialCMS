@@ -6,6 +6,17 @@ import { navigateContentTarget } from '../utils/contentNavigation'
 import { getIconComponent } from '../utils/iconMap'
 import { sanitizeExternalUrl } from '../utils/urlValidation'
 
+/**
+ * Resolves the icon name for a contact link based on its label or href.
+ * Falls back to common patterns for email and GitHub links.
+ *
+ * @param {object} contact - The contact link object.
+ * @param {string} [contact.icon] - Explicitly defined icon name.
+ * @param {string} [contact.label] - Display label for the contact link.
+ * @param {string} [contact.href] - The URL of the contact link.
+ * @param {string} [contact.url] - Alternative property for the URL.
+ * @returns {string} The icon name to use for this contact link.
+ */
 const resolveContactFallbackIcon = (contact) => {
   const label = (contact?.label || '').toLowerCase()
   const rawHref = contact?.href || contact?.url || ''
@@ -122,6 +133,17 @@ const Footer = () => {
     return navigationQuickLinks
   }, [navigationQuickLinks])
 
+  /**
+   * Handles navigation when a quick link is clicked.
+   * Supports navigation targets, external links, and internal routes.
+   *
+   * @param {object} link - The link object containing navigation information.
+   * @param {object} [link.target] - Navigation target object with type and value.
+   * @param {string} [link.href] - External or direct URL.
+   * @param {string} [link.url] - Alternative property for URL.
+   * @param {string} [link.path] - Internal route path.
+   * @returns {void}
+   */
   const handleQuickLink = (link) => {
     if (!link) return
 

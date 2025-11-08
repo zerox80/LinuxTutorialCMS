@@ -37,6 +37,13 @@ const Login = () => {
     }
   }, [cooldownUntil])
 
+  /**
+   * Handles login form submission with validation and cooldown enforcement.
+   * Validates username and password, enforces rate limiting, and navigates on success.
+   *
+   * @param {Event} e - The form submit event.
+   * @returns {Promise<void>}
+   */
   const handleSubmit = async (e) => {
     e.preventDefault()
     

@@ -1,5 +1,11 @@
-﻿const ALLOWED_PROTOCOLS = new Set(['http:', 'https:', 'mailto:', 'tel:'])
+const ALLOWED_PROTOCOLS = new Set(['http:', 'https:', 'mailto:', 'tel:'])
 
+/**
+ * Checks if a string starts with a protocol scheme (e.g., "http:", "mailto:").
+ *
+ * @param {string} value - The string to check.
+ * @returns {boolean} True if the string starts with a protocol, otherwise false.
+ */
 const hasProtocol = (value) => /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value)
 
 /**

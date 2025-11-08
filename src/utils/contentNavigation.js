@@ -1,6 +1,12 @@
 import { scrollToSection } from './scrollToSection'
 import { sanitizeExternalUrl } from './urlValidation'
 
+/**
+ * Normalizes a section ID value to a trimmed string.
+ *
+ * @param {*} value - The value to normalize (string or number).
+ * @returns {string} The normalized section ID as a string.
+ */
 const normalizeSectionId = (value) => {
   if (typeof value === 'string') {
     return value.trim()
@@ -11,6 +17,12 @@ const normalizeSectionId = (value) => {
   return ''
 }
 
+/**
+ * Builds a page path from a value that can be a string or object with slug/path properties.
+ *
+ * @param {string|object} value - The value to build the path from.
+ * @returns {string|null} The built page path or null if invalid.
+ */
 const buildPagePath = (value) => {
   if (!value) {
     return null

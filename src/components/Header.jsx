@@ -35,6 +35,15 @@ const Header = () => {
   const ctaContent = headerContent?.cta ?? {}
   const CTAIcon = getIconComponent(ctaContent.icon, 'Lock')
 
+  /**
+   * Resolves the section ID from a navigation item.
+   *
+   * @param {object} item - The navigation item.
+   * @param {object} [item.target] - Target object with type and value.
+   * @param {string} [item.value] - Direct value property.
+   * @param {string} [item.id] - Direct id property.
+   * @returns {string|null} The resolved section ID, or null if not found.
+   */
   const resolveSectionId = (item) => {
     if (!item) return null
     if (item.target?.type === 'section') return item.target.value
@@ -53,6 +62,17 @@ const Header = () => {
     return FALLBACK_NAV_ITEMS
   }, [navigation?.items, contentNavItems])
 
+  /**
+   * Handles navigation when a navigation item is clicked.
+   * Supports targets, external URLs, routes, and section scrolling.
+   *
+   * @param {object} item - The navigation item.
+   * @param {object} [item.target] - Navigation target object.
+   * @param {string} [item.href] - External or direct URL.
+   * @param {string} [item.type] - Type of navigation (route, section).
+   * @param {string} [item.path] - Route path for navigation.
+   * @returns {void}
+   */
   const handleNavigation = (item) => {
     if (!item) return
 
@@ -101,6 +121,12 @@ const Header = () => {
     }
   }
 
+  /**
+   * Handles click on the call-to-action button.
+   * Navigates to admin page if authenticated, otherwise to login page.
+   *
+   * @returns {void}
+   */
   const handleCtaClick = () => {
     if (ctaContent.target) {
       navigateContentTarget(ctaContent.target, { navigate, location })

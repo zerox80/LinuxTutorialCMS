@@ -19,6 +19,13 @@ const Quiz = ({ questions }) => {
   const [showResults, setShowResults] = useState(false);
   const [score, setScore] = useState(0);
 
+  /**
+   * Records the user's answer for a specific question.
+   *
+   * @param {number} questionIndex - The index of the question being answered.
+   * @param {number} answerIndex - The index of the selected answer.
+   * @returns {void}
+   */
   const handleAnswer = (questionIndex, answerIndex) => {
     setSelectedAnswers(prev => ({
       ...prev,
@@ -26,6 +33,12 @@ const Quiz = ({ questions }) => {
     }));
   };
 
+  /**
+   * Evaluates the quiz by comparing selected answers with correct answers.
+   * Updates the score and displays the results.
+   *
+   * @returns {void}
+   */
   const handleSubmit = () => {
     let correctCount = 0;
     questions.forEach((q, idx) => {
@@ -37,6 +50,11 @@ const Quiz = ({ questions }) => {
     setShowResults(true);
   };
 
+  /**
+   * Resets the quiz to its initial state, clearing all answers and results.
+   *
+   * @returns {void}
+   */
   const handleReset = () => {
     setCurrentQuestion(0);
     setSelectedAnswers({});

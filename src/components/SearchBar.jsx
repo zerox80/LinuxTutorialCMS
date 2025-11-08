@@ -62,11 +62,24 @@ const SearchBar = ({ onClose }) => {
     return () => clearTimeout(timeoutId);
   }, [query, selectedTopic]);
 
+  /**
+   * Handles navigation to a tutorial detail page when a result is clicked.
+   *
+   * @param {string} id - The ID of the tutorial to navigate to.
+   * @returns {void}
+   */
   const handleResultClick = (id) => {
     navigate(`/tutorials/${id}`);
     if (onClose) onClose();
   };
 
+  /**
+   * Handles keyboard events in the search input.
+   * Closes the modal when the Escape key is pressed.
+   *
+   * @param {KeyboardEvent} e - The keyboard event.
+   * @returns {void}
+   */
   const handleKeyDown = (e) => {
     if (e.key === 'Escape') {
       if (onClose) onClose();

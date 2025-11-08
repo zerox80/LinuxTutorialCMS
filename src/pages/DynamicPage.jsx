@@ -92,6 +92,13 @@ const DynamicPage = () => {
     '{count} veröffentlichte Beiträge',
   )
 
+  /**
+   * Formats the posts count based on the provided count and the posts count labels.
+   * If the count is 1, it uses the singular label, otherwise it uses the plural label.
+   * If the label includes '{count}', it replaces it with the actual count.
+   * @param {number} count The number of posts.
+   * @returns {string} The formatted posts count.
+   */
   const formatPostsCount = (count) => {
     const template = count === 1 ? postsCountSingular : postsCountPlural
     if (typeof template === 'string' && template.includes('{count}')) {

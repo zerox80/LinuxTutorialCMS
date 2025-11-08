@@ -17,6 +17,11 @@ import { scrollToSection } from '../utils/scrollToSection'
  * @returns {JSX.Element} The rendered tutorial card.
  */
 const TutorialCard = ({ icon: Icon, title, description, topics, color, onSelect, buttonLabel }) => {
+  /**
+   * Handles card selection by invoking the onSelect callback or scrolling to the tutorials section.
+   *
+   * @returns {void}
+   */
   const handleSelect = () => {
     if (typeof onSelect === 'function') {
       onSelect()

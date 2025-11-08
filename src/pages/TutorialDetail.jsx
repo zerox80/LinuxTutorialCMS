@@ -64,6 +64,11 @@ const TutorialDetail = () => {
     return Array.isArray(tutorial.topics) ? tutorial.topics : []
   }, [tutorial])
 
+  /**
+   * Navigates back to the previous page or to the home page if there's no history.
+   *
+   * @returns {void}
+   */
   const handleBack = () => {
     if (window.history.length > 1) {
       navigate(-1)

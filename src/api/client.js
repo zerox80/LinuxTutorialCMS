@@ -73,6 +73,11 @@ const isBinaryBody = (body) => {
 const CSRF_COOKIE_NAME = 'ltcms_csrf'
 const CSRF_HEADER_NAME = 'x-csrf-token'
 
+/**
+ * Retrieves the CSRF token from the browser's cookies.
+ *
+ * @returns {string|null} The CSRF token, or null if not found.
+ */
 const getCsrfToken = () => {
   if (typeof document === 'undefined' || !document.cookie) {
     return null

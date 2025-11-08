@@ -72,6 +72,13 @@ const TutorialForm = ({ tutorial, onClose }) => {
     { value: 'from-red-500 to-pink-500', label: 'Rot' },
   ]
 
+  /**
+   * Handles form submission to create or update a tutorial.
+   * Validates the form data and handles errors.
+   *
+   * @param {Event} e - The form submit event.
+   * @returns {Promise<void>}
+   */
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (submitting) {
@@ -141,16 +148,34 @@ const TutorialForm = ({ tutorial, onClose }) => {
     }
   }
 
+  /**
+   * Updates a specific topic in the topics array.
+   *
+   * @param {number} index - The index of the topic to update.
+   * @param {string} value - The new value for the topic.
+   * @returns {void}
+   */
   const handleTopicChange = (index, value) => {
     const newTopics = [...formData.topics]
     newTopics[index] = value
     setFormData({ ...formData, topics: newTopics })
   }
 
+  /**
+   * Adds a new empty topic field to the topics array.
+   *
+   * @returns {void}
+   */
   const addTopic = () => {
     setFormData({ ...formData, topics: [...formData.topics, ''] })
   }
 
+  /**
+   * Removes a topic from the topics array by index.
+   *
+   * @param {number} index - The index of the topic to remove.
+   * @returns {void}
+   */
   const removeTopic = (index) => {
     const newTopics = formData.topics.filter((_, i) => i !== index)
     setFormData({ ...formData, topics: newTopics })

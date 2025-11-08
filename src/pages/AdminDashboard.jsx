@@ -43,27 +43,55 @@ const AdminDashboard = () => {
     [tutorials],
   )
 
+  /**
+   * Logs out the current user and navigates to the login page.
+   *
+   * @returns {void}
+   */
   const handleLogout = () => {
     logout()
     navigate('/login')
   }
 
+  /**
+   * Opens the tutorial form modal in edit mode with the specified tutorial.
+   *
+   * @param {object} tutorial - The tutorial object to edit.
+   * @returns {void}
+   */
   const handleEdit = (tutorial) => {
     setEditingTutorial(tutorial)
     setShowForm(true)
   }
 
+  /**
+   * Initiates a delete confirmation for the specified tutorial ID.
+   *
+   * @param {string} id - The ID of the tutorial to delete.
+   * @returns {void}
+   */
   const handleDeleteRequest = (id) => {
     setDeleteError(null)
     setConfirmingId(id)
   }
 
+  /**
+   * Cancels the delete operation and resets error states.
+   *
+   * @returns {void}
+   */
   const handleDeleteCancel = () => {
     setConfirmingId(null)
     setDeletingId(null)
     setDeleteError(null)
   }
 
+  /**
+   * Confirms and executes the tutorial deletion.
+   *
+   * @param {string} id - The ID of the tutorial to delete.
+   * @returns {Promise<void>}
+   */
   const handleDeleteConfirm = async (id) => {
     setDeleteError(null)
     setDeletingId(id)
@@ -93,6 +121,11 @@ const AdminDashboard = () => {
     }
   }, [])
 
+  /**
+   * Closes the tutorial form modal and resets the editing state.
+   *
+   * @returns {void}
+   */
   const handleCloseForm = () => {
     setShowForm(false)
     setEditingTutorial(null)

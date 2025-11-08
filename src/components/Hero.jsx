@@ -20,6 +20,15 @@ const Hero = () => {
   const HeroIcon = getIconComponent(heroContent.icon, 'Terminal')
   const features = Array.isArray(heroContent.features) ? heroContent.features : []
 
+  /**
+   * Handles navigation when a hero CTA button is clicked.
+   * Supports section scrolling, route navigation, and external links.
+   *
+   * @param {object} target - The navigation target object.
+   * @param {string} target.type - The type of navigation (section, route, external, href).
+   * @param {string} target.value - The target value (section ID, route path, or URL).
+   * @returns {void}
+   */
   const handleTarget = (target) => {
     if (!target || !target.type) {
       return
