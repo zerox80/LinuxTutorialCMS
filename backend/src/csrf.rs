@@ -232,7 +232,10 @@ where
 {
     type Rejection = (StatusCode, Json<ErrorResponse>);
 
-    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts<'a>(
+        parts: &'a mut Parts,
+        _state: &S,
+    ) -> Result<Self, Self::Rejection> {
         if matches!(
             parts.method,
             Method::GET | Method::HEAD | Method::OPTIONS | Method::TRACE

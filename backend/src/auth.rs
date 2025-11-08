@@ -216,7 +216,10 @@ where
 {
     type Rejection = (StatusCode, String);
 
-    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts<'a>(
+        parts: &'a mut Parts,
+        _state: &S,
+    ) -> Result<Self, Self::Rejection> {
         let token = extract_token(&parts.headers).ok_or_else(|| {
             (
                 StatusCode::UNAUTHORIZED,
