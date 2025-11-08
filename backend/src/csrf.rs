@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use axum::{
     extract::FromRequestParts,
     http::{
@@ -225,15 +224,14 @@ fn build_csrf_removal() -> Cookie<'static> {
 /// ensuring they match and are valid for the authenticated user.
 pub struct CsrfGuard;
 
-#[async_trait]
 impl<S> FromRequestParts<S> for CsrfGuard
 where
     S: Send + Sync,
 {
     type Rejection = (StatusCode, Json<ErrorResponse>);
 
-    async fn from_request_parts<'a>(
-        parts: &'a mut Parts,
+    async fn from_request_parts(
+        parts: &mut Parts,
         _state: &S,
     ) -> Result<Self, Self::Rejection> {
         if matches!(
