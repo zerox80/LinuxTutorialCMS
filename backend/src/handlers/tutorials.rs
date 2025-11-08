@@ -46,14 +46,23 @@ fn validate_tutorial_data(title: &str, description: &str, content: &str) -> Resu
 
 pub(crate) fn validate_icon(icon: &str) -> Result<(), String> {
     const ALLOWED_ICONS: &[&str] = &[
-        "Terminal", "FolderTree", "FileText", "Settings",
-        "Shield", "Network", "Database", "Server"
+        "Terminal",
+        "FolderTree",
+        "FileText",
+        "Settings",
+        "Shield",
+        "Network",
+        "Database",
+        "Server",
     ];
-    
+
     if ALLOWED_ICONS.contains(&icon) {
         Ok(())
     } else {
-        Err(format!("Invalid icon '{}'. Must be one of: {:?}", icon, ALLOWED_ICONS))
+        Err(format!(
+            "Invalid icon '{}'. Must be one of: {:?}",
+            icon, ALLOWED_ICONS
+        ))
     }
 }
 
@@ -67,12 +76,17 @@ pub(crate) fn validate_color(color: &str) -> Result<(), String> {
         let suffix = &segment[prefix.len()..];
         !suffix.is_empty()
             && suffix.len() <= MAX_SEGMENT_LEN
-            && suffix.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
+            && suffix
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '-')
     }
 
     let segments: Vec<&str> = color.split_whitespace().collect();
     if !(segments.len() == 2 || segments.len() == 3) {
-        return Err("Invalid color gradient. Expected Tailwind style 'from-… [via-…] to-…' format.".to_string());
+        return Err(
+            "Invalid color gradient. Expected Tailwind style 'from-… [via-…] to-…' format."
+                .to_string(),
+        );
     }
 
     if !validate_segment(segments[0], "from-") {
@@ -81,10 +95,14 @@ pub(crate) fn validate_color(color: &str) -> Result<(), String> {
 
     if segments.len() == 3 {
         if !validate_segment(segments[1], "via-") {
-            return Err("Invalid color gradient: 'via-*' segment malformed or too long.".to_string());
+            return Err(
+                "Invalid color gradient: 'via-*' segment malformed or too long.".to_string(),
+            );
         }
         if !validate_segment(segments[2], "to-") {
-            return Err("Invalid color gradient: 'to-*' segment malformed or too long.".to_string());
+            return Err(
+                "Invalid color gradient: 'to-*' segment malformed or too long.".to_string(),
+            );
         }
     } else if !validate_segment(segments[1], "to-") {
         return Err("Invalid color gradient: 'to-*' segment malformed or too long.".to_string());
@@ -176,17 +194,15 @@ pub async fn list_tutorials(
 
     let mut responses = Vec::with_capacity(tutorials.len());
     for tutorial in tutorials {
-        let response: TutorialResponse = tutorial
-            .try_into()
-            .map_err(|err: String| {
-                tracing::error!("Tutorial data corruption detected: {}", err);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ErrorResponse {
-                        error: "Failed to parse stored tutorial data".to_string(),
-                    }),
-                )
-            })?;
+        let response: TutorialResponse = tutorial.try_into().map_err(|err: String| {
+            tracing::error!("Tutorial data corruption detected: {}", err);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Failed to parse stored tutorial data".to_string(),
+                }),
+            )
+        })?;
         responses.push(response);
     }
 
@@ -200,10 +216,7 @@ pub async fn get_tutorial(
 ) -> Result<Json<TutorialResponse>, (StatusCode, Json<ErrorResponse>)> {
     // Validate ID
     if let Err(e) = validate_tutorial_id(&id) {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: e }),
-        ));
+        return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
     }
 
     let tutorial = sqlx::query_as::<_, Tutorial>("SELECT * FROM tutorials WHERE id = ?")
@@ -264,33 +277,20 @@ pub async fn create_tutorial(
     let content = payload.content.trim().to_string();
 
     if let Err(e) = validate_tutorial_data(&title, &description, &content) {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: e }),
-        ));
+        return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
     }
-    
+
     // Validate icon and color
     if let Err(e) = validate_icon(&payload.icon) {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: e }),
-        ));
+        return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
     }
     if let Err(e) = validate_color(&payload.color) {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: e }),
-        ));
+        return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
     }
 
     let id = Uuid::new_v4().to_string();
-    let sanitized_topics = sanitize_topics(&payload.topics).map_err(|e| {
-        (
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: e }),
-        )
-    })?;
+    let sanitized_topics = sanitize_topics(&payload.topics)
+        .map_err(|e| (StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })))?;
     let topics_json = serde_json::to_string(&sanitized_topics).map_err(|e| {
         tracing::error!("Failed to serialize topics: {}", e);
         (
@@ -300,18 +300,15 @@ pub async fn create_tutorial(
             }),
         )
     })?;
-    let mut tx = pool
-        .begin()
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to begin transaction for tutorial {}: {}", id, e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse {
-                    error: "Failed to create tutorial".to_string(),
-                }),
-            )
-        })?;
+    let mut tx = pool.begin().await.map_err(|e| {
+        tracing::error!("Failed to begin transaction for tutorial {}: {}", id, e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                error: "Failed to create tutorial".to_string(),
+            }),
+        )
+    })?;
 
     sqlx::query(
         r#"
@@ -367,20 +364,22 @@ pub async fn create_tutorial(
         )
     })?;
 
-    tx.commit()
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to commit tutorial transaction for {}: {}", id, e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse {
-                    error: "Failed to create tutorial".to_string(),
-                }),
-            )
-        })?;
+    tx.commit().await.map_err(|e| {
+        tracing::error!("Failed to commit tutorial transaction for {}: {}", id, e);
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                error: "Failed to create tutorial".to_string(),
+            }),
+        )
+    })?;
 
     let response: TutorialResponse = tutorial.try_into().map_err(|err: String| {
-        tracing::error!("Tutorial data corruption detected after create {}: {}", id, err);
+        tracing::error!(
+            "Tutorial data corruption detected after create {}: {}",
+            id,
+            err
+        );
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse {
@@ -402,10 +401,14 @@ pub async fn update_tutorial(
     Json(payload): Json<UpdateTutorialRequest>,
 ) -> Result<Json<TutorialResponse>, (StatusCode, Json<ErrorResponse>)> {
     tracing::info!("Updating tutorial with id: {}", id);
-    
+
     // Check if user is admin
     if claims.role != "admin" {
-        tracing::warn!("Unauthorized update attempt for tutorial {} by user {}", id, claims.sub);
+        tracing::warn!(
+            "Unauthorized update attempt for tutorial {} by user {}",
+            id,
+            claims.sub
+        );
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse {
@@ -417,24 +420,22 @@ pub async fn update_tutorial(
     // Validate ID
     if let Err(e) = validate_tutorial_id(&id) {
         tracing::warn!("Invalid tutorial ID during update: {}", id);
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: e }),
-        ));
+        return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
     }
 
-    let mut tx = pool
-        .begin()
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to begin transaction for tutorial update {}: {}", id, e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse {
-                    error: "Failed to update tutorial".to_string(),
-                }),
-            )
-        })?;
+    let mut tx = pool.begin().await.map_err(|e| {
+        tracing::error!(
+            "Failed to begin transaction for tutorial update {}: {}",
+            id,
+            e
+        );
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                error: "Failed to update tutorial".to_string(),
+            }),
+        )
+    })?;
 
     // Fetch existing tutorial within transaction
     let tutorial = sqlx::query_as::<_, Tutorial>("SELECT * FROM tutorials WHERE id = ?")
@@ -519,24 +520,15 @@ pub async fn update_tutorial(
     // Validate updated data
     if let Err(e) = validate_tutorial_data(&title, &description, &content) {
         tracing::warn!("Validation failed for tutorial {}: {}", id, e);
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: e }),
-        ));
+        return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
     }
-    
+
     // Validate icon and color
     if let Err(e) = validate_icon(&icon) {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: e }),
-        ));
+        return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
     }
     if let Err(e) = validate_color(&color) {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: e }),
-        ));
+        return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
     }
     // Check for version overflow (extremely unlikely but theoretically possible)
     let new_version = tutorial.version.checked_add(1).ok_or_else(|| {
@@ -548,14 +540,10 @@ pub async fn update_tutorial(
             }),
         )
     })?;
-    
+
     let (topics_json, topics_vec) = if let Some(t) = payload.topics {
-        let sanitized = sanitize_topics(&t).map_err(|e| {
-            (
-                StatusCode::BAD_REQUEST,
-                Json(ErrorResponse { error: e }),
-            )
-        })?;
+        let sanitized = sanitize_topics(&t)
+            .map_err(|e| (StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })))?;
 
         let serialized = serde_json::to_string(&sanitized).map_err(|e| {
             tracing::error!("Failed to serialize topics: {}", e);
@@ -574,7 +562,8 @@ pub async fn update_tutorial(
             Err(e) => {
                 tracing::error!(
                     "Failed to deserialize topics for tutorial {}: {}",
-                    tutorial.id, e
+                    tutorial.id,
+                    e
                 );
                 return Err((
                     StatusCode::INTERNAL_SERVER_ERROR,
@@ -613,13 +602,14 @@ pub async fn update_tutorial(
             }),
         )
     })?;
-    
+
     // Check if the update actually happened (optimistic lock check)
     if result.rows_affected() == 0 {
         return Err((
             StatusCode::CONFLICT,
             Json(ErrorResponse {
-                error: "Tutorial was modified by another request. Please refresh and try again.".to_string(),
+                error: "Tutorial was modified by another request. Please refresh and try again."
+                    .to_string(),
             }),
         ));
     }
@@ -654,21 +644,27 @@ pub async fn update_tutorial(
         )
     })?;
 
-    tx.commit()
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to commit tutorial update transaction for {}: {}", id, e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse {
-                    error: "Failed to update tutorial".to_string(),
-                }),
-            )
-        })?;
+    tx.commit().await.map_err(|e| {
+        tracing::error!(
+            "Failed to commit tutorial update transaction for {}: {}",
+            id,
+            e
+        );
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                error: "Failed to update tutorial".to_string(),
+            }),
+        )
+    })?;
 
     tracing::info!("Successfully updated tutorial {}", id);
     let response: TutorialResponse = updated_tutorial.try_into().map_err(|err: String| {
-        tracing::error!("Tutorial data corruption detected after update {}: {}", id, err);
+        tracing::error!(
+            "Tutorial data corruption detected after update {}: {}",
+            id,
+            err
+        );
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse {
@@ -698,10 +694,7 @@ pub async fn delete_tutorial(
 
     // Validate ID
     if let Err(e) = validate_tutorial_id(&id) {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: e }),
-        ));
+        return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
     }
 
     let result = sqlx::query("DELETE FROM tutorials WHERE id = ?")

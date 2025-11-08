@@ -1,9 +1,9 @@
+use regex::Regex;
+use serde_json::{json, Value};
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqlitePoolOptions},
     SqlitePool,
 };
-use regex::Regex;
-use serde_json::{json, Value};
 use std::env;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
@@ -23,7 +23,7 @@ pub async fn create_pool() -> Result<DbPool, sqlx::Error> {
         tracing::warn!("DATABASE_URL not set, defaulting to sqlite:./database.db");
         "sqlite:./database.db".to_string()
     });
-    
+
     ensure_sqlite_directory(&database_url)?;
 
     let connect_options = SqliteConnectOptions::from_str(&database_url)?
@@ -70,10 +70,8 @@ pub fn validate_slug(slug: &str) -> Result<(), sqlx::Error> {
 
     if slug.len() > MAX_SLUG_LENGTH {
         return Err(sqlx::Error::Protocol(
-            format!(
-                "Invalid slug. Maximum length is {MAX_SLUG_LENGTH} characters: '{slug}'"
-            )
-            .into(),
+            format!("Invalid slug. Maximum length is {MAX_SLUG_LENGTH} characters: '{slug}'")
+                .into(),
         ));
     }
 
@@ -89,12 +87,14 @@ pub fn validate_slug(slug: &str) -> Result<(), sqlx::Error> {
 
 /// Serializes a `serde_json::Value` to a `String`.
 fn serialize_json_value(value: &Value) -> Result<String, sqlx::Error> {
-    serde_json::to_string(value).map_err(|e| sqlx::Error::Protocol(format!("Failed to serialize JSON: {e}").into()))
+    serde_json::to_string(value)
+        .map_err(|e| sqlx::Error::Protocol(format!("Failed to serialize JSON: {e}").into()))
 }
 
 /// Deserializes a `&str` into a `serde_json::Value`.
 fn deserialize_json_value(value: &str) -> Result<Value, sqlx::Error> {
-    serde_json::from_str(value).map_err(|e| sqlx::Error::Protocol(format!("Failed to deserialize JSON: {e}").into()))
+    serde_json::from_str(value)
+        .map_err(|e| sqlx::Error::Protocol(format!("Failed to deserialize JSON: {e}").into()))
 }
 
 /// Fetches all site pages from the database, ordered by `order_index` and `title`.
@@ -119,7 +119,9 @@ pub async fn list_nav_pages(pool: &DbPool) -> Result<Vec<crate::models::SitePage
 }
 
 /// Fetches all published pages.
-pub async fn list_published_pages(pool: &DbPool) -> Result<Vec<crate::models::SitePage>, sqlx::Error> {
+pub async fn list_published_pages(
+    pool: &DbPool,
+) -> Result<Vec<crate::models::SitePage>, sqlx::Error> {
     sqlx::query_as::<_, crate::models::SitePage>(
         "SELECT id, slug, title, description, nav_label, show_in_nav, order_index, is_published, hero_json, layout_json, created_at, updated_at
          FROM site_pages
@@ -201,7 +203,9 @@ pub async fn update_site_page(
         validate_slug(slug)?;
     }
 
-    let mut existing = get_site_page_by_id(pool, id).await?.ok_or(sqlx::Error::RowNotFound)?;
+    let mut existing = get_site_page_by_id(pool, id)
+        .await?
+        .ok_or(sqlx::Error::RowNotFound)?;
 
     if let Some(slug) = payload.slug {
         existing.slug = slug;
@@ -374,7 +378,9 @@ pub async fn update_site_post(
         validate_slug(slug)?;
     }
 
-    let mut existing = get_site_post_by_id(pool, id).await?.ok_or(sqlx::Error::RowNotFound)?;
+    let mut existing = get_site_post_by_id(pool, id)
+        .await?
+        .ok_or(sqlx::Error::RowNotFound)?;
 
     if let Some(title) = payload.title {
         existing.title = title;
@@ -468,9 +474,11 @@ async fn ensure_site_page_schema(pool: &DbPool) -> Result<(), sqlx::Error> {
     .execute(&mut *tx)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_site_pages_nav ON site_pages(show_in_nav, order_index)")
-        .execute(&mut *tx)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_site_pages_nav ON site_pages(show_in_nav, order_index)",
+    )
+    .execute(&mut *tx)
+    .await?;
 
     // Posts table referencing pages
     sqlx::query(
@@ -492,9 +500,11 @@ async fn ensure_site_page_schema(pool: &DbPool) -> Result<(), sqlx::Error> {
     .execute(&mut *tx)
     .await?;
 
-    sqlx::query("CREATE UNIQUE INDEX IF NOT EXISTS idx_site_posts_unique_slug ON site_posts(page_id, slug)")
-        .execute(&mut *tx)
-        .await?;
+    sqlx::query(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_site_posts_unique_slug ON site_posts(page_id, slug)",
+    )
+    .execute(&mut *tx)
+    .await?;
 
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_site_posts_page_published ON site_posts(page_id, is_published, published_at)",
@@ -508,7 +518,9 @@ async fn ensure_site_page_schema(pool: &DbPool) -> Result<(), sqlx::Error> {
 }
 
 /// Applies the core database schema migrations.
-async fn apply_core_migrations(tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>) -> Result<(), sqlx::Error> {
+async fn apply_core_migrations(
+    tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+) -> Result<(), sqlx::Error> {
     // Create users table
     sqlx::query(
         r#"
@@ -591,9 +603,11 @@ async fn apply_core_migrations(tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>) -> 
     .execute(&mut **tx)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorial_topics_tutorial ON tutorial_topics(tutorial_id)")
-        .execute(&mut **tx)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_tutorial_topics_tutorial ON tutorial_topics(tutorial_id)",
+    )
+    .execute(&mut **tx)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_tutorial_topics_topic ON tutorial_topics(topic)")
         .execute(&mut **tx)
         .await?;
@@ -693,7 +707,9 @@ async fn apply_core_migrations(tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>) -> 
 }
 
 /// Fetches all site content sections from the database.
-pub async fn fetch_all_site_content(pool: &DbPool) -> Result<Vec<crate::models::SiteContent>, sqlx::Error> {
+pub async fn fetch_all_site_content(
+    pool: &DbPool,
+) -> Result<Vec<crate::models::SiteContent>, sqlx::Error> {
     sqlx::query_as::<_, crate::models::SiteContent>(
         "SELECT section, content_json, updated_at FROM site_content ORDER BY section",
     )
@@ -743,24 +759,21 @@ async fn seed_site_content_tx(
     tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
 ) -> Result<(), sqlx::Error> {
     for (section, content) in default_site_content() {
-        let exists: Option<(String,)> = sqlx::query_as(
-            "SELECT section FROM site_content WHERE section = ?",
-        )
-        .bind(section)
-        .fetch_optional(&mut **tx)
-        .await?;
+        let exists: Option<(String,)> =
+            sqlx::query_as("SELECT section FROM site_content WHERE section = ?")
+                .bind(section)
+                .fetch_optional(&mut **tx)
+                .await?;
 
         if exists.is_some() {
             continue;
         }
 
-        sqlx::query(
-            "INSERT INTO site_content (section, content_json) VALUES (?, ?)",
-        )
-        .bind(section)
-        .bind(content.to_string())
-        .execute(&mut **tx)
-        .await?;
+        sqlx::query("INSERT INTO site_content (section, content_json) VALUES (?, ?)")
+            .bind(section)
+            .bind(content.to_string())
+            .execute(&mut **tx)
+            .await?;
     }
 
     Ok(())
@@ -1005,50 +1018,56 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     match (admin_username, admin_password) {
         (Some(username), Some(password)) if !username.is_empty() && !password.is_empty() => {
             if password.len() < 12 {
-                tracing::error!("ADMIN_PASSWORD must be at least 12 characters long (NIST recommendation)!");
+                tracing::error!(
+                    "ADMIN_PASSWORD must be at least 12 characters long (NIST recommendation)!"
+                );
                 return Err(sqlx::Error::Protocol("Admin password too weak".into()));
             }
-            let existing_user: Option<(i64, String)> = sqlx::query_as(
-                "SELECT id, password_hash FROM users WHERE username = ?",
-            )
-            .bind(&username)
-            .fetch_optional(pool)
-            .await?;
+            let existing_user: Option<(i64, String)> =
+                sqlx::query_as("SELECT id, password_hash FROM users WHERE username = ?")
+                    .bind(&username)
+                    .fetch_optional(pool)
+                    .await?;
 
             match existing_user {
-                Some((_, current_hash)) => {
-                    match bcrypt::verify(&password, &current_hash) {
-                        Ok(true) => {
-                            tracing::info!("Admin user '{}' already exists with correct password", username);
-                        }
-                        Ok(false) => {
-                            tracing::warn!("ADMIN_PASSWORD for '{}' differs from stored credentials; keeping existing hash to preserve runtime changes.", username);
-                        }
-                        Err(e) => {
-                            tracing::error!("Password verification failed: {}", e);
-                            return Err(sqlx::Error::Protocol("Password verification error".into()));
-                        }
+                Some((_, current_hash)) => match bcrypt::verify(&password, &current_hash) {
+                    Ok(true) => {
+                        tracing::info!(
+                            "Admin user '{}' already exists with correct password",
+                            username
+                        );
                     }
-                }
+                    Ok(false) => {
+                        tracing::warn!("ADMIN_PASSWORD for '{}' differs from stored credentials; keeping existing hash to preserve runtime changes.", username);
+                    }
+                    Err(e) => {
+                        tracing::error!("Password verification failed: {}", e);
+                        return Err(sqlx::Error::Protocol("Password verification error".into()));
+                    }
+                },
                 None => {
-                    let password_hash = bcrypt::hash(&password, bcrypt::DEFAULT_COST)
-                        .map_err(|e| {
+                    let password_hash =
+                        bcrypt::hash(&password, bcrypt::DEFAULT_COST).map_err(|e| {
                             tracing::error!("Failed to hash admin password: {}", e);
                             sqlx::Error::Protocol("Failed to hash admin password".into())
                         })?;
-                    sqlx::query("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)")
-                        .bind(&username)
-                        .bind(password_hash)
-                        .bind("admin")
-                        .execute(pool)
-                        .await?;
+                    sqlx::query(
+                        "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+                    )
+                    .bind(&username)
+                    .bind(password_hash)
+                    .bind("admin")
+                    .execute(pool)
+                    .await?;
 
                     tracing::info!("Created admin user '{}'", username);
                 }
             }
         }
         _ => {
-            tracing::warn!("ADMIN_USERNAME and ADMIN_PASSWORD not set or empty. No admin user created.");
+            tracing::warn!(
+                "ADMIN_USERNAME and ADMIN_PASSWORD not set or empty. No admin user created."
+            );
             tracing::warn!("Set these environment variables to create an admin user on startup.");
         }
     }
@@ -1061,11 +1080,10 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     let mut tx = pool.begin().await?;
 
     if seed_enabled {
-        let already_seeded: Option<(String,)> = sqlx::query_as(
-            "SELECT value FROM app_metadata WHERE key = 'default_tutorials_seeded'",
-        )
-        .fetch_optional(&mut *tx)
-        .await?;
+        let already_seeded: Option<(String,)> =
+            sqlx::query_as("SELECT value FROM app_metadata WHERE key = 'default_tutorials_seeded'")
+                .fetch_optional(&mut *tx)
+                .await?;
 
         let tutorial_count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM tutorials")
             .fetch_one(&mut *tx)
@@ -1084,7 +1102,9 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
             tracing::info!("Inserted default tutorials");
         }
     } else {
-        tracing::info!("ENABLE_DEFAULT_TUTORIALS disabled or not set – skipping default tutorial seeding");
+        tracing::info!(
+            "ENABLE_DEFAULT_TUTORIALS disabled or not set – skipping default tutorial seeding"
+        );
     }
 
     tx.commit().await?;
@@ -1093,16 +1113,107 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
 }
 
 /// Inserts the default set of tutorials into the database within a transaction.
-async fn insert_default_tutorials_tx(tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>) -> Result<(), sqlx::Error> {
+async fn insert_default_tutorials_tx(
+    tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+) -> Result<(), sqlx::Error> {
     let tutorials = vec![
-        ("1", "Grundlegende Befehle", "Lerne die wichtigsten Linux-Befehle für die tägliche Arbeit im Terminal.", "Terminal", "from-blue-500 to-cyan-500", vec!["ls", "cd", "pwd", "mkdir", "rm", "cp", "mv", "cat", "grep", "find", "chmod", "chown"]),
-        ("2", "Dateisystem & Navigation", "Verstehe die Linux-Dateistruktur und navigiere effizient durch Verzeichnisse.", "FolderTree", "from-green-500 to-emerald-500", vec!["Verzeichnisstruktur", "Absolute vs. Relative Pfade", "Symlinks", "Mount Points"]),
-        ("3", "Text-Editoren", "Beherrsche vim, nano und andere Editoren für die Arbeit in der Kommandozeile.", "FileText", "from-purple-500 to-pink-500", vec!["vim Basics", "nano Befehle", "sed & awk", "Regex Patterns"]),
-        ("4", "Prozessverwaltung", "Verwalte und überwache Prozesse effektiv in deinem Linux-System.", "Settings", "from-orange-500 to-red-500", vec!["ps", "top", "htop", "kill", "pkill", "Background Jobs", "systemctl"]),
-        ("5", "Berechtigungen & Sicherheit", "Verstehe Benutzerrechte, Gruppen und Sicherheitskonzepte.", "Shield", "from-indigo-500 to-blue-500", vec!["User & Groups", "chmod & chown", "sudo & su", "SSH & Keys"]),
-        ("6", "Netzwerk-Grundlagen", "Konfiguriere Netzwerke und nutze wichtige Netzwerk-Tools.", "Network", "from-teal-500 to-green-500", vec!["ip & ifconfig", "ping", "traceroute", "netstat", "ss", "curl & wget"]),
-        ("7", "Bash Scripting", "Automatisiere Aufgaben mit Shell-Scripts und Bash-Programmierung.", "Database", "from-yellow-500 to-orange-500", vec!["Variables & Loops", "If-Statements", "Functions", "Cron Jobs"]),
-        ("8", "System Administration", "Erweiterte Admin-Aufgaben und Systemwartung.", "Server", "from-red-500 to-pink-500", vec!["Package Manager", "Logs & Monitoring", "Backup & Recovery", "Performance Tuning"]),
+        (
+            "1",
+            "Grundlegende Befehle",
+            "Lerne die wichtigsten Linux-Befehle für die tägliche Arbeit im Terminal.",
+            "Terminal",
+            "from-blue-500 to-cyan-500",
+            vec![
+                "ls", "cd", "pwd", "mkdir", "rm", "cp", "mv", "cat", "grep", "find", "chmod",
+                "chown",
+            ],
+        ),
+        (
+            "2",
+            "Dateisystem & Navigation",
+            "Verstehe die Linux-Dateistruktur und navigiere effizient durch Verzeichnisse.",
+            "FolderTree",
+            "from-green-500 to-emerald-500",
+            vec![
+                "Verzeichnisstruktur",
+                "Absolute vs. Relative Pfade",
+                "Symlinks",
+                "Mount Points",
+            ],
+        ),
+        (
+            "3",
+            "Text-Editoren",
+            "Beherrsche vim, nano und andere Editoren für die Arbeit in der Kommandozeile.",
+            "FileText",
+            "from-purple-500 to-pink-500",
+            vec!["vim Basics", "nano Befehle", "sed & awk", "Regex Patterns"],
+        ),
+        (
+            "4",
+            "Prozessverwaltung",
+            "Verwalte und überwache Prozesse effektiv in deinem Linux-System.",
+            "Settings",
+            "from-orange-500 to-red-500",
+            vec![
+                "ps",
+                "top",
+                "htop",
+                "kill",
+                "pkill",
+                "Background Jobs",
+                "systemctl",
+            ],
+        ),
+        (
+            "5",
+            "Berechtigungen & Sicherheit",
+            "Verstehe Benutzerrechte, Gruppen und Sicherheitskonzepte.",
+            "Shield",
+            "from-indigo-500 to-blue-500",
+            vec!["User & Groups", "chmod & chown", "sudo & su", "SSH & Keys"],
+        ),
+        (
+            "6",
+            "Netzwerk-Grundlagen",
+            "Konfiguriere Netzwerke und nutze wichtige Netzwerk-Tools.",
+            "Network",
+            "from-teal-500 to-green-500",
+            vec![
+                "ip & ifconfig",
+                "ping",
+                "traceroute",
+                "netstat",
+                "ss",
+                "curl & wget",
+            ],
+        ),
+        (
+            "7",
+            "Bash Scripting",
+            "Automatisiere Aufgaben mit Shell-Scripts und Bash-Programmierung.",
+            "Database",
+            "from-yellow-500 to-orange-500",
+            vec![
+                "Variables & Loops",
+                "If-Statements",
+                "Functions",
+                "Cron Jobs",
+            ],
+        ),
+        (
+            "8",
+            "System Administration",
+            "Erweiterte Admin-Aufgaben und Systemwartung.",
+            "Server",
+            "from-red-500 to-pink-500",
+            vec![
+                "Package Manager",
+                "Logs & Monitoring",
+                "Backup & Recovery",
+                "Performance Tuning",
+            ],
+        ),
     ];
 
     for (id, title, description, icon, color, topics) in tutorials {
@@ -1118,21 +1229,33 @@ async fn insert_default_tutorials_tx(tx: &mut sqlx::Transaction<'_, sqlx::Sqlite
         }
 
         if let Err(err) = crate::handlers::tutorials::validate_icon(icon) {
-            tracing::warn!("Skipping default tutorial '{}' due to invalid icon: {}", id, err);
+            tracing::warn!(
+                "Skipping default tutorial '{}' due to invalid icon: {}",
+                id,
+                err
+            );
             continue;
         }
 
         if let Err(err) = crate::handlers::tutorials::validate_color(color) {
-            tracing::warn!("Skipping default tutorial '{}' due to invalid color: {}", id, err);
+            tracing::warn!(
+                "Skipping default tutorial '{}' due to invalid color: {}",
+                id,
+                err
+            );
             continue;
         }
 
         let topics_json = serde_json::to_string(&topics_vec).map_err(|e| {
             sqlx::Error::Protocol(
-                format!("Failed to serialize topics for default tutorial '{}': {}", id, e).into(),
+                format!(
+                    "Failed to serialize topics for default tutorial '{}': {}",
+                    id, e
+                )
+                .into(),
             )
         })?;
-        
+
         sqlx::query(
             "INSERT INTO tutorials (id, title, description, icon, color, topics, content, version) VALUES (?, ?, ?, ?, ?, ?, ?, 1)"
         )

@@ -145,8 +145,9 @@ async fn main() -> Result<()> {
 
     if let Some(parent) = path.parent() {
         if !parent.as_os_str().is_empty() {
-            fs::create_dir_all(parent)
-                .with_context(|| format!("Failed to create export directory: {}", parent.display()))?;
+            fs::create_dir_all(parent).with_context(|| {
+                format!("Failed to create export directory: {}", parent.display())
+            })?;
         }
     }
 
@@ -239,8 +240,9 @@ async fn main() -> Result<()> {
     let tutorials = tutorial_rows
         .into_iter()
         .map(|row| {
-            let topics: Vec<String> = serde_json::from_str(&row.topics)
-                .with_context(|| format!("Failed to parse topics JSON for tutorial '{}'", row.id))?;
+            let topics: Vec<String> = serde_json::from_str(&row.topics).with_context(|| {
+                format!("Failed to parse topics JSON for tutorial '{}'", row.id)
+            })?;
             Ok(TutorialExport {
                 id: row.id,
                 title: row.title,
@@ -279,12 +281,14 @@ async fn main() -> Result<()> {
         tutorial_topics,
     };
 
-    let json = serde_json::to_string_pretty(&bundle).context("Failed to serialize export bundle")?;
+    let json =
+        serde_json::to_string_pretty(&bundle).context("Failed to serialize export bundle")?;
 
     if let Some(parent) = path.parent() {
         if !parent.as_os_str().is_empty() {
-            fs::create_dir_all(parent)
-                .with_context(|| format!("Failed to create export directory {}", parent.display()))?;
+            fs::create_dir_all(parent).with_context(|| {
+                format!("Failed to create export directory {}", parent.display())
+            })?;
         }
     }
 

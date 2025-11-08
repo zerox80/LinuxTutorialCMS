@@ -13,11 +13,7 @@ use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::{Duration, Utc};
 use hmac::{Hmac, Mac};
 use sha2::Sha256;
-use std::{
-    collections::HashSet,
-    env,
-    sync::OnceLock,
-};
+use std::{collections::HashSet, env, sync::OnceLock};
 use time::{Duration as TimeDuration, OffsetDateTime};
 use uuid::Uuid;
 
@@ -236,10 +232,7 @@ where
 {
     type Rejection = (StatusCode, Json<ErrorResponse>);
 
-    async fn from_request_parts(
-        parts: &mut Parts,
-        _state: &S,
-    ) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         if matches!(
             parts.method,
             Method::GET | Method::HEAD | Method::OPTIONS | Method::TRACE
@@ -288,14 +281,8 @@ where
             ));
         }
 
-        validate_csrf_token(header_value, &claims.sub).map_err(|err| {
-            (
-                StatusCode::FORBIDDEN,
-                Json(ErrorResponse {
-                    error: err,
-                }),
-            )
-        })?;
+        validate_csrf_token(header_value, &claims.sub)
+            .map_err(|err| (StatusCode::FORBIDDEN, Json(ErrorResponse { error: err })))?;
 
         Ok(Self)
     }

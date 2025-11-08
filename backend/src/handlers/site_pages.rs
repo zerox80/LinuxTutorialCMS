@@ -1,6 +1,5 @@
 use crate::{
-    auth,
-    db,
+    auth, db,
     models::{
         CreateSitePageRequest, ErrorResponse, NavigationItemResponse, NavigationResponse,
         SitePageListResponse, SitePageResponse, SitePageWithPostsResponse, SitePostDetailResponse,
@@ -55,7 +54,9 @@ fn map_sqlx_error(err: sqlx::Error, context: &str) -> (StatusCode, Json<ErrorRes
                         error: db_err
                             .constraint()
                             .map(|c| format!("Duplicate value violates unique constraint '{c}'"))
-                            .unwrap_or_else(|| "Duplicate value violates unique constraint".to_string()),
+                            .unwrap_or_else(|| {
+                                "Duplicate value violates unique constraint".to_string()
+                            }),
                     }),
                 )
             } else {
@@ -150,7 +151,9 @@ fn sanitize_create_payload(
             return Err((
                 StatusCode::BAD_REQUEST,
                 Json(ErrorResponse {
-                    error: format!("Navigation label too long (max {MAX_NAV_LABEL_LEN} characters)"),
+                    error: format!(
+                        "Navigation label too long (max {MAX_NAV_LABEL_LEN} characters)"
+                    ),
                 }),
             ));
         }
@@ -288,15 +291,14 @@ fn map_page(
 
     let sanitized_description = description.trim().to_string();
 
-    let sanitized_nav_label = nav_label
-        .and_then(|label| {
-            let trimmed = label.trim();
-            if trimmed.is_empty() {
-                None
-            } else {
-                Some(trimmed.to_string())
-            }
-        });
+    let sanitized_nav_label = nav_label.and_then(|label| {
+        let trimmed = label.trim();
+        if trimmed.is_empty() {
+            None
+        } else {
+            Some(trimmed.to_string())
+        }
+    });
 
     Ok(SitePageResponse {
         id,

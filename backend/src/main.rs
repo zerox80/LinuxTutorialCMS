@@ -4,6 +4,13 @@ mod db;
 mod handlers;
 mod models;
 
+use axum::http::{
+    header::{
+        AUTHORIZATION, CACHE_CONTROL, CONTENT_SECURITY_POLICY, CONTENT_TYPE, EXPIRES, PRAGMA,
+        STRICT_TRANSPORT_SECURITY, X_CONTENT_TYPE_OPTIONS, X_FRAME_OPTIONS,
+    },
+    HeaderName, HeaderValue, Method,
+};
 use axum::{
     extract::Request,
     middleware::{self, Next},
@@ -13,24 +20,14 @@ use axum::{
 };
 use dotenv::dotenv;
 use std::env;
-use axum::http::{
-    header::{
-        AUTHORIZATION, CACHE_CONTROL, CONTENT_SECURITY_POLICY, CONTENT_TYPE, EXPIRES,
-        PRAGMA, STRICT_TRANSPORT_SECURITY, X_CONTENT_TYPE_OPTIONS, X_FRAME_OPTIONS,
-    },
-    HeaderName, HeaderValue, Method,
-};
+use std::io::ErrorKind;
+use std::net::SocketAddr;
+use tokio::signal;
+use tower_governor::key_extractor::{PeerIpKeyExtractor, SmartIpKeyExtractor};
+use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
 use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tower_http::limit::RequestBodyLimitLayer;
-use tower_governor::{
-    governor::GovernorConfigBuilder,
-    GovernorLayer,
-};
 use tracing_subscriber;
-use tokio::signal;
-use std::net::SocketAddr;
-use std::io::ErrorKind;
-use tower_governor::key_extractor::{PeerIpKeyExtractor, SmartIpKeyExtractor};
 
 const PERMISSIONS_POLICY: HeaderName = HeaderName::from_static("permissions-policy");
 const REFERRER_POLICY: HeaderName = HeaderName::from_static("referrer-policy");
@@ -107,10 +104,7 @@ async fn strip_untrusted_forwarded_headers(mut request: Request, next: Next) -> 
 /// # Returns
 ///
 /// The response with security headers added.
-async fn security_headers(
-    request: Request,
-    next: Next,
-) -> Response {
+async fn security_headers(request: Request, next: Next) -> Response {
     use axum::http::Method;
 
     let method = request.method().clone();
@@ -125,7 +119,7 @@ async fn security_headers(
         .unwrap_or(false);
     let mut response = next.run(request).await;
     let headers = response.headers_mut();
-    
+
     let cacheable = method == Method::GET
         && (path == "/api/tutorials"
             || path.starts_with("/api/tutorials/")
@@ -146,7 +140,7 @@ async fn security_headers(
         headers.insert(PRAGMA, HeaderValue::from_static("no-cache"));
         headers.insert(EXPIRES, HeaderValue::from_static("0"));
     }
-    
+
     // Content Security Policy - Environment-dependent for dev mode support
     let csp = if cfg!(debug_assertions) {
         // Development mode: Allow WebSocket for Vite HMR
@@ -155,12 +149,9 @@ async fn security_headers(
         // Production mode: Strict CSP (no inline styles)
         "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;"
     };
-    
-    headers.insert(
-        CONTENT_SECURITY_POLICY,
-        HeaderValue::from_static(csp),
-    );
-    
+
+    headers.insert(CONTENT_SECURITY_POLICY, HeaderValue::from_static(csp));
+
     // HSTS - Only set if request came via HTTPS
     if is_https {
         headers.insert(
@@ -168,34 +159,22 @@ async fn security_headers(
             HeaderValue::from_static("max-age=31536000; includeSubDomains; preload"),
         );
     }
-    
-    // Prevent MIME sniffing
-    headers.insert(
-        X_CONTENT_TYPE_OPTIONS,
-        HeaderValue::from_static("nosniff"),
-    );
-    
-    // Prevent clickjacking
-    headers.insert(
-        X_FRAME_OPTIONS,
-        HeaderValue::from_static("DENY"),
-    );
 
-    headers.insert(
-        REFERRER_POLICY,
-        HeaderValue::from_static("no-referrer"),
-    );
+    // Prevent MIME sniffing
+    headers.insert(X_CONTENT_TYPE_OPTIONS, HeaderValue::from_static("nosniff"));
+
+    // Prevent clickjacking
+    headers.insert(X_FRAME_OPTIONS, HeaderValue::from_static("DENY"));
+
+    headers.insert(REFERRER_POLICY, HeaderValue::from_static("no-referrer"));
 
     headers.insert(
         PERMISSIONS_POLICY,
         HeaderValue::from_static("geolocation=(), microphone=(), camera=()"),
     );
 
-    headers.insert(
-        X_XSS_PROTECTION,
-        HeaderValue::from_static("0"),
-    );
-    
+    headers.insert(X_XSS_PROTECTION, HeaderValue::from_static("0"));
+
     response
 }
 
@@ -203,10 +182,7 @@ const LOGIN_BODY_LIMIT: usize = 64 * 1024; // 64 KB for auth
 const PUBLIC_BODY_LIMIT: usize = 2 * 1024 * 1024; // 2 MB for general routes
 const ADMIN_BODY_LIMIT: usize = 8 * 1024 * 1024; // 8 MB for admin write operations
 
-const DEV_DEFAULT_FRONTEND_ORIGINS: &[&str] = &[
-    "http://localhost:5173",
-    "http://localhost:3000",
-];
+const DEV_DEFAULT_FRONTEND_ORIGINS: &[&str] = &["http://localhost:5173", "http://localhost:3000"];
 
 /// Parses a list of allowed CORS origins from an iterator of string slices.
 ///
@@ -230,7 +206,9 @@ where
             }
 
             if !trimmed.starts_with("http://") && !trimmed.starts_with("https://") {
-                tracing::warn!("Ignoring invalid origin (must start with http:// or https://): '{trimmed}'");
+                tracing::warn!(
+                    "Ignoring invalid origin (must start with http:// or https://): '{trimmed}'"
+                );
                 return None;
             }
 
@@ -258,7 +236,7 @@ where
 async fn main() {
     // Load environment variables
     dotenv().ok();
-    
+
     // Initialize tracing
     tracing_subscriber::fmt::init();
 
@@ -271,7 +249,9 @@ async fn main() {
     tracing::info!("CSRF secret initialized successfully");
 
     // Initialize database
-    let pool = db::create_pool().await.expect("Failed to create database pool");
+    let pool = db::create_pool()
+        .await
+        .expect("Failed to create database pool");
 
     // Configure CORS
     let allowed_origins: Vec<HeaderValue> = match env::var("FRONTEND_ORIGINS") {
@@ -283,7 +263,10 @@ async fn main() {
             parsed
         }
         Err(_) if cfg!(debug_assertions) => {
-            tracing::warn!("FRONTEND_ORIGINS not set; using development defaults: {:?}", DEV_DEFAULT_FRONTEND_ORIGINS);
+            tracing::warn!(
+                "FRONTEND_ORIGINS not set; using development defaults: {:?}",
+                DEV_DEFAULT_FRONTEND_ORIGINS
+            );
             parse_allowed_origins(DEV_DEFAULT_FRONTEND_ORIGINS.iter().copied())
         }
         Err(_) => {
@@ -350,8 +333,7 @@ async fn main() {
         .route("/api/tutorials", post(handlers::tutorials::create_tutorial))
         .route(
             "/api/tutorials/{id}",
-            put(handlers::tutorials::update_tutorial)
-                .delete(handlers::tutorials::delete_tutorial),
+            put(handlers::tutorials::update_tutorial).delete(handlers::tutorials::delete_tutorial),
         )
         // Site content admin routes
         .route(
@@ -361,8 +343,7 @@ async fn main() {
         // Site page admin routes
         .route(
             "/api/pages",
-            get(handlers::site_pages::list_site_pages)
-                .post(handlers::site_pages::create_site_page),
+            get(handlers::site_pages::list_site_pages).post(handlers::site_pages::create_site_page),
         )
         .route(
             "/api/pages/{id}",
@@ -373,8 +354,7 @@ async fn main() {
         // Site post admin routes
         .route(
             "/api/pages/{page_id}/posts",
-            get(handlers::site_posts::list_posts_for_page)
-                .post(handlers::site_posts::create_post),
+            get(handlers::site_posts::list_posts_for_page).post(handlers::site_posts::create_post),
         )
         .route(
             "/api/posts/{id}",
@@ -400,24 +380,33 @@ async fn main() {
         .merge(login_router)
         // Auth routes
         .route("/api/auth/me", get(handlers::auth::me))
-        
         // Tutorial routes
         .route("/api/tutorials", get(handlers::tutorials::list_tutorials))
-        .route("/api/tutorials/{id}", get(handlers::tutorials::get_tutorial))
-        
+        .route(
+            "/api/tutorials/{id}",
+            get(handlers::tutorials::get_tutorial),
+        )
         // Search routes
-        .route("/api/search/tutorials", get(handlers::search::search_tutorials))
+        .route(
+            "/api/search/tutorials",
+            get(handlers::search::search_tutorials),
+        )
         .route("/api/search/topics", get(handlers::search::get_all_topics))
-        
         // Comment routes (public read, admin write)
-        .route("/api/tutorials/{id}/comments", get(handlers::comments::list_comments))
-
+        .route(
+            "/api/tutorials/{id}/comments",
+            get(handlers::comments::list_comments),
+        )
         // Site content routes
-        .route("/api/content", get(handlers::site_content::list_site_content))
-        .route("/api/content/{section}", get(handlers::site_content::get_site_content))
-
+        .route(
+            "/api/content",
+            get(handlers::site_content::list_site_content),
+        )
+        .route(
+            "/api/content/{section}",
+            get(handlers::site_content::get_site_content),
+        )
         .merge(admin_routes)
-
         // Public page routes
         .route(
             "/api/public/pages/{slug}",
@@ -427,15 +416,16 @@ async fn main() {
             "/api/public/pages/{slug}/posts/{post_slug}",
             get(handlers::site_pages::get_published_post_by_slug),
         )
-        .route("/api/public/navigation", get(handlers::site_pages::get_navigation))
+        .route(
+            "/api/public/navigation",
+            get(handlers::site_pages::get_navigation),
+        )
         .route(
             "/api/public/published-pages",
             get(handlers::site_pages::list_published_page_slugs),
         )
-
         // Health check
         .route("/api/health", get(|| async { "OK" }))
-        
         .layer(RequestBodyLimitLayer::new(PUBLIC_BODY_LIMIT))
         .layer(cors)
         .layer(middleware::from_fn(security_headers))
@@ -450,16 +440,22 @@ async fn main() {
     let port: u16 = match port_str.parse() {
         Ok(port) => port,
         Err(e) => {
-            panic!("Invalid PORT '{}': {}. Please set PORT to a valid u16 value.", port_str, e);
+            panic!(
+                "Invalid PORT '{}': {}. Please set PORT to a valid u16 value.",
+                port_str, e
+            );
         }
     };
-    
+
     if port < 1024 {
-        tracing::warn!("PORT {} is in privileged range (< 1024). May require elevated permissions.", port);
+        tracing::warn!(
+            "PORT {} is in privileged range (< 1024). May require elevated permissions.",
+            port
+        );
     }
-    
+
     let addr = format!("0.0.0.0:{}", port);
-    
+
     tracing::info!("Starting server on {}", addr);
 
     // Start server
@@ -473,19 +469,18 @@ async fn main() {
             }
         }
     };
-    
+
     // Graceful shutdown handler
     let make_service = app.into_make_service_with_connect_info::<SocketAddr>();
 
-    let server = axum::serve(listener, make_service)
-        .with_graceful_shutdown(shutdown_signal());
-        
+    let server = axum::serve(listener, make_service).with_graceful_shutdown(shutdown_signal());
+
     tracing::info!("Server is ready to accept connections");
-    
+
     if let Err(e) = server.await {
         tracing::error!("Server error: {}", e);
     }
-    
+
     tracing::info!("Server shutdown complete");
 }
 
@@ -516,6 +511,6 @@ async fn shutdown_signal() {
             tracing::info!("Received SIGTERM signal");
         },
     }
-    
+
     tracing::info!("Starting graceful shutdown...");
 }

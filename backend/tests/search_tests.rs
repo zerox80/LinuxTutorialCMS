@@ -7,7 +7,7 @@ mod search_tests {
         // Test empty query
         let empty_query = "";
         assert!(empty_query.trim().is_empty());
-        
+
         // Test query length
         let long_query = "a".repeat(501);
         assert!(long_query.len() > 500);

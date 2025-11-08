@@ -1,6 +1,5 @@
 use crate::{
-    auth,
-    db,
+    auth, db,
     models::{
         CreateSitePostRequest, ErrorResponse, SitePostListResponse, SitePostResponse,
         UpdateSitePostRequest,
@@ -53,7 +52,9 @@ fn map_sqlx_error(err: sqlx::Error, context: &str) -> (StatusCode, Json<ErrorRes
                         error: db_err
                             .constraint()
                             .map(|c| format!("Duplicate value violates unique constraint '{c}'"))
-                            .unwrap_or_else(|| "Duplicate value violates unique constraint".to_string()),
+                            .unwrap_or_else(|| {
+                                "Duplicate value violates unique constraint".to_string()
+                            }),
                     }),
                 )
             } else {
@@ -171,12 +172,14 @@ pub async fn list_posts_for_page(
     db::get_site_page_by_id(&pool, &page_id)
         .await
         .map_err(|err| map_sqlx_error(err, "Site page"))?
-        .ok_or_else(|| (
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse {
-                error: "Site page not found".to_string(),
-            }),
-        ))?;
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse {
+                    error: "Site page not found".to_string(),
+                }),
+            )
+        })?;
 
     let posts = db::list_site_posts_for_page(&pool, &page_id)
         .await
@@ -201,12 +204,14 @@ pub async fn get_post(
     let post = db::get_site_post_by_id(&pool, &id)
         .await
         .map_err(|err| map_sqlx_error(err, "Site post"))?
-        .ok_or_else(|| (
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse {
-                error: "Site post not found".to_string(),
-            }),
-        ))?;
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse {
+                    error: "Site post not found".to_string(),
+                }),
+            )
+        })?;
 
     Ok(Json(map_post(post)))
 }
@@ -223,17 +228,24 @@ pub async fn create_post(
     let trimmed_title = payload.title.trim().to_string();
     let sanitized_slug = sanitize_slug(&payload.slug);
     let excerpt = payload.excerpt.as_ref().map(|e| e.trim());
-    validate_post_fields(&trimmed_title, &sanitized_slug, excerpt, &payload.content_markdown)?;
+    validate_post_fields(
+        &trimmed_title,
+        &sanitized_slug,
+        excerpt,
+        &payload.content_markdown,
+    )?;
 
     db::get_site_page_by_id(&pool, &page_id)
         .await
         .map_err(|err| map_sqlx_error(err, "Site page"))?
-        .ok_or_else(|| (
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse {
-                error: "Site page not found".to_string(),
-            }),
-        ))?;
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse {
+                    error: "Site page not found".to_string(),
+                }),
+            )
+        })?;
 
     let record = db::create_site_post(
         &pool,

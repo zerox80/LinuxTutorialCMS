@@ -101,7 +101,9 @@ impl Claims {
         let expiration = Utc::now()
             .checked_add_signed(Duration::hours(24))
             .and_then(|dt| usize::try_from(dt.timestamp()).ok())
-            .expect("Failed to calculate JWT expiration timestamp. System time may be misconfigured.");
+            .expect(
+                "Failed to calculate JWT expiration timestamp. System time may be misconfigured.",
+            );
 
         Claims {
             sub: username,
@@ -124,7 +126,7 @@ impl Claims {
 pub fn create_jwt(username: String, role: String) -> Result<String, jsonwebtoken::errors::Error> {
     let claims = Claims::new(username, role);
     let secret = get_jwt_secret();
-    
+
     encode(
         &Header::default(),
         &claims,
@@ -143,17 +145,17 @@ pub fn create_jwt(username: String, role: String) -> Result<String, jsonwebtoken
 /// A `Result` containing the decoded `Claims` or a `jsonwebtoken::errors::Error`.
 pub fn verify_jwt(token: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
     let secret = get_jwt_secret();
-    
+
     let mut validation = Validation::default();
     validation.leeway = 60; // 60 seconds leeway for clock skew
     validation.validate_exp = true;
-    
+
     let token_data = decode::<Claims>(
         token,
         &DecodingKey::from_secret(secret.as_bytes()),
         &validation,
     )?;
-    
+
     Ok(token_data.claims)
 }
 
@@ -215,16 +217,16 @@ where
     type Rejection = (StatusCode, String);
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        let token = extract_token(&parts.headers)
-            .ok_or_else(|| (StatusCode::UNAUTHORIZED, "Missing authentication token".to_string()))?;
-
-        // Decode the user data
-        let claims = verify_jwt(&token).map_err(|e| {
+        let token = extract_token(&parts.headers).ok_or_else(|| {
             (
                 StatusCode::UNAUTHORIZED,
-                format!("Invalid token: {}", e),
+                "Missing authentication token".to_string(),
             )
         })?;
+
+        // Decode the user data
+        let claims = verify_jwt(&token)
+            .map_err(|e| (StatusCode::UNAUTHORIZED, format!("Invalid token: {}", e)))?;
 
         Ok(claims)
     }

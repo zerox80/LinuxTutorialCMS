@@ -5,9 +5,9 @@ use axum::{
     Json,
 };
 use chrono::{DateTime, Duration as ChronoDuration, Utc};
+use sha2::{Digest, Sha256};
 use sqlx::{self, FromRow};
 use std::{env, sync::OnceLock, time::Duration};
-use sha2::{Digest, Sha256};
 
 #[derive(Debug, FromRow, Clone)]
 struct LoginAttempt {
@@ -36,19 +36,20 @@ fn hash_login_identifier(username: &str) -> String {
 }
 
 fn parse_rfc3339_opt(value: &Option<String>) -> Option<DateTime<Utc>> {
-    value.as_ref().and_then(|timestamp| chrono::DateTime::parse_from_rfc3339(timestamp).ok()).map(|dt| dt.with_timezone(&Utc))
+    value
+        .as_ref()
+        .and_then(|timestamp| chrono::DateTime::parse_from_rfc3339(timestamp).ok())
+        .map(|dt| dt.with_timezone(&Utc))
 }
 
 fn dummy_bcrypt_hash() -> &'static str {
     static DUMMY_HASH: OnceLock<String> = OnceLock::new();
 
-    DUMMY_HASH.get_or_init(|| {
-        match bcrypt::hash("dummy", bcrypt::DEFAULT_COST) {
-            Ok(hash) => hash,
-            Err(err) => {
-                tracing::error!("Failed to generate dummy hash: {}", err);
-                "$2b$12$eImiTXuWVxfM37uY4JANjQPzMzXZjQDzqzQpMv0xoGrTplPPNaE3W".to_string()
-            }
+    DUMMY_HASH.get_or_init(|| match bcrypt::hash("dummy", bcrypt::DEFAULT_COST) {
+        Ok(hash) => hash,
+        Err(err) => {
+            tracing::error!("Failed to generate dummy hash: {}", err);
+            "$2b$12$eImiTXuWVxfM37uY4JANjQPzMzXZjQDzqzQpMv0xoGrTplPPNaE3W".to_string()
         }
     })
 }
@@ -62,7 +63,10 @@ fn validate_username(username: &str) -> Result<(), String> {
         return Err("Username too long".to_string());
     }
     // Allow alphanumeric, underscore, hyphen, dot
-    if !username.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-' || c == '.') {
+    if !username
+        .chars()
+        .all(|c| c.is_alphanumeric() || c == '_' || c == '-' || c == '.')
+    {
         return Err("Username contains invalid characters".to_string());
     }
     Ok(())
@@ -102,16 +106,10 @@ pub async fn login(
 
     // Validate input
     if let Err(e) = validate_username(&username) {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: e }),
-        ));
+        return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
     }
     if let Err(e) = validate_password(&payload.password) {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse { error: e }),
-        ));
+        return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
     }
 
     // Load login attempt metadata to enforce server-side cooldowns
@@ -173,11 +171,13 @@ pub async fn login(
     // Use a dummy hash that matches DEFAULT_COST to ensure consistent timing
     // This hash was generated with bcrypt::DEFAULT_COST for the password "dummy"
     let hash_to_verify_owned = user.as_ref().map(|u| u.password_hash.clone());
-    let hash_to_verify = hash_to_verify_owned.as_deref().unwrap_or(dummy_bcrypt_hash());
-    
+    let hash_to_verify = hash_to_verify_owned
+        .as_deref()
+        .unwrap_or(dummy_bcrypt_hash());
+
     // Always perform verification regardless of whether user exists
     let verification_result = bcrypt::verify(&payload.password, hash_to_verify);
-    
+
     let (password_valid, user_record) = match (user, verification_result) {
         (Some(user), Ok(true)) => (true, Some(user)),
         (Some(_), Ok(false)) => (false, None),
@@ -246,15 +246,16 @@ pub async fn login(
 
     // Generate JWT token
     let user_record = user_record.expect("Successful login must have user record");
-    let token = auth::create_jwt(user_record.username.clone(), user_record.role.clone()).map_err(|e| {
-        tracing::error!("JWT creation error: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse {
-                error: "Failed to create token".to_string(),
-            }),
-        )
-    })?;
+    let token =
+        auth::create_jwt(user_record.username.clone(), user_record.role.clone()).map_err(|e| {
+            tracing::error!("JWT creation error: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Failed to create token".to_string(),
+                }),
+            )
+        })?;
 
     let mut headers = HeaderMap::new();
     auth::append_auth_cookie(&mut headers, auth::build_auth_cookie(&token));
@@ -262,7 +263,10 @@ pub async fn login(
     if let Ok(csrf_token) = csrf::issue_csrf_token(&user_record.username) {
         csrf::append_csrf_cookie(&mut headers, &csrf_token);
     } else {
-        tracing::error!("Failed to issue CSRF token for user {}", user_record.username);
+        tracing::error!(
+            "Failed to issue CSRF token for user {}",
+            user_record.username
+        );
         return Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse {
@@ -308,9 +312,7 @@ pub async fn me(
 /// # Returns
 ///
 /// An HTTP `204 No Content` response with a `Set-Cookie` header to clear the auth cookie.
-pub async fn logout(
-    claims: auth::Claims,
-) -> (StatusCode, HeaderMap) {
+pub async fn logout(claims: auth::Claims) -> (StatusCode, HeaderMap) {
     let mut headers = HeaderMap::new();
     auth::append_auth_cookie(&mut headers, auth::build_cookie_removal());
     csrf::append_csrf_removal(&mut headers);

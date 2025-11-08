@@ -101,7 +101,10 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn import_site_content(tx: &mut Transaction<'_, Sqlite>, items: &[SiteContentImport]) -> Result<()> {
+async fn import_site_content(
+    tx: &mut Transaction<'_, Sqlite>,
+    items: &[SiteContentImport],
+) -> Result<()> {
     for item in items {
         let serialized = serde_json::to_string(&item.content)
             .context("Failed to serialize site_content entry")?;
@@ -121,12 +124,15 @@ async fn import_site_content(tx: &mut Transaction<'_, Sqlite>, items: &[SiteCont
     Ok(())
 }
 
-async fn import_site_pages(tx: &mut Transaction<'_, Sqlite>, items: &[SitePageImport]) -> Result<()> {
+async fn import_site_pages(
+    tx: &mut Transaction<'_, Sqlite>,
+    items: &[SitePageImport],
+) -> Result<()> {
     for item in items {
-        let hero_serialized = serde_json::to_string(&item.hero)
-            .context("Failed to serialize page hero JSON")?;
-        let layout_serialized = serde_json::to_string(&item.layout)
-            .context("Failed to serialize page layout JSON")?;
+        let hero_serialized =
+            serde_json::to_string(&item.hero).context("Failed to serialize page hero JSON")?;
+        let layout_serialized =
+            serde_json::to_string(&item.layout).context("Failed to serialize page layout JSON")?;
 
         sqlx::query(
             "INSERT INTO site_pages (id, slug, title, description, nav_label, show_in_nav, order_index, is_published, hero_json, layout_json, created_at, updated_at) \
@@ -153,7 +159,10 @@ async fn import_site_pages(tx: &mut Transaction<'_, Sqlite>, items: &[SitePageIm
     Ok(())
 }
 
-async fn import_site_posts(tx: &mut Transaction<'_, Sqlite>, items: &[SitePostImport]) -> Result<()> {
+async fn import_site_posts(
+    tx: &mut Transaction<'_, Sqlite>,
+    items: &[SitePostImport],
+) -> Result<()> {
     for item in items {
         sqlx::query(
             "INSERT INTO site_posts (id, page_id, title, slug, excerpt, content_markdown, is_published, published_at, order_index, created_at, updated_at) \
@@ -178,4 +187,3 @@ async fn import_site_posts(tx: &mut Transaction<'_, Sqlite>, items: &[SitePostIm
 
     Ok(())
 }
-

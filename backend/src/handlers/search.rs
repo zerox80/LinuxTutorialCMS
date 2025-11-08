@@ -86,26 +86,17 @@ pub async fn search_tutorials(
 
     let limit = params.limit.min(100).max(1);
 
-    let search_query = sanitize_fts_query(params.q.trim()).map_err(|err| {
-        (
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse {
-                error: err,
-            }),
-        )
-    })?;
+    let search_query = sanitize_fts_query(params.q.trim())
+        .map_err(|err| (StatusCode::BAD_REQUEST, Json(ErrorResponse { error: err })))?;
 
-    let topic_pattern = params
-        .topic
-        .as_ref()
-        .and_then(|topic| {
-            let trimmed = topic.trim();
-            if trimmed.is_empty() {
-                None
-            } else {
-                Some(format!("%{}%", escape_like_pattern(trimmed)))
-            }
-        });
+    let topic_pattern = params.topic.as_ref().and_then(|topic| {
+        let trimmed = topic.trim();
+        if trimmed.is_empty() {
+            None
+        } else {
+            Some(format!("%{}%", escape_like_pattern(trimmed)))
+        }
+    });
 
     let tutorials = if let Some(pattern) = topic_pattern {
         sqlx::query_as::<_, Tutorial>(
@@ -169,20 +160,19 @@ pub async fn search_tutorials(
 pub async fn get_all_topics(
     State(pool): State<DbPool>,
 ) -> Result<Json<Vec<String>>, (StatusCode, Json<ErrorResponse>)> {
-    let topics: Vec<(String,)> = sqlx::query_as(
-        "SELECT DISTINCT topic FROM tutorial_topics ORDER BY topic ASC",
-    )
-    .fetch_all(&pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to fetch topics: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse {
-                error: "Failed to fetch topics".to_string(),
-            }),
-        )
-    })?;
+    let topics: Vec<(String,)> =
+        sqlx::query_as("SELECT DISTINCT topic FROM tutorial_topics ORDER BY topic ASC")
+            .fetch_all(&pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to fetch topics: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse {
+                        error: "Failed to fetch topics".to_string(),
+                    }),
+                )
+            })?;
 
     Ok(Json(topics.into_iter().map(|(t,)| t).collect()))
 }

@@ -1,4 +1,4 @@
-use crate::{auth, db::DbPool, models::*, handlers::tutorials::validate_tutorial_id};
+use crate::{auth, db::DbPool, handlers::tutorials::validate_tutorial_id, models::*};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -55,9 +55,7 @@ fn comment_author_display_name(claims: &auth::Claims) -> String {
         .unwrap_or_else(|| claims.sub.clone())
 }
 
-fn sanitize_comment_content(
-    raw: &str,
-) -> Result<String, (StatusCode, Json<ErrorResponse>)> {
+fn sanitize_comment_content(raw: &str) -> Result<String, (StatusCode, Json<ErrorResponse>)> {
     let trimmed = raw.trim();
 
     if trimmed.is_empty() {
@@ -97,12 +95,7 @@ pub async fn list_comments(
     Query(params): Query<CommentListQuery>,
 ) -> Result<Json<Vec<Comment>>, (StatusCode, Json<ErrorResponse>)> {
     if let Err(e) = validate_tutorial_id(&tutorial_id) {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse {
-                error: e,
-            }),
-        ));
+        return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
     }
 
     let exists: Option<(i64,)> = sqlx::query_as("SELECT 1 FROM tutorials WHERE id = ? LIMIT 1")
@@ -133,7 +126,7 @@ pub async fn list_comments(
 
     let comments = sqlx::query_as::<_, Comment>(
         "SELECT id, tutorial_id, author, content, created_at \
-         FROM comments WHERE tutorial_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?"
+         FROM comments WHERE tutorial_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?",
     )
     .bind(&tutorial_id)
     .bind(limit)
@@ -170,12 +163,7 @@ pub async fn create_comment(
     }
 
     if let Err(e) = validate_tutorial_id(&tutorial_id) {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse {
-                error: e,
-            }),
-        ));
+        return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
     }
 
     let exists: Option<(i64,)> = sqlx::query_as("SELECT 1 FROM tutorials WHERE id = ? LIMIT 1")
@@ -183,7 +171,10 @@ pub async fn create_comment(
         .fetch_optional(&pool)
         .await
         .map_err(|e| {
-            tracing::error!("Failed to verify tutorial existence before comment creation: {}", e);
+            tracing::error!(
+                "Failed to verify tutorial existence before comment creation: {}",
+                e
+            );
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ErrorResponse {

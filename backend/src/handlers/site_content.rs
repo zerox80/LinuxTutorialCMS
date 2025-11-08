@@ -1,7 +1,8 @@
 use crate::{
-    auth,
-    db,
-    models::{ErrorResponse, SiteContentListResponse, SiteContentResponse, UpdateSiteContentRequest},
+    auth, db,
+    models::{
+        ErrorResponse, SiteContentListResponse, SiteContentResponse, UpdateSiteContentRequest,
+    },
 };
 use axum::{
     extract::{Path, State},
@@ -43,7 +44,10 @@ fn validate_section(section: &str) -> Result<(), (StatusCode, Json<ErrorResponse
     }
 }
 
-fn validate_content_structure(section: &str, content: &Value) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
+fn validate_content_structure(
+    section: &str,
+    content: &Value,
+) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
     let result = match section {
         "hero" => validate_hero_structure(content),
         "tutorial_section" => validate_tutorial_section_structure(content),
@@ -90,7 +94,11 @@ fn validate_header_structure(content: &Value) -> Result<(), &'static str> {
     if !obj
         .get("navItems")
         .and_then(|items| items.as_array())
-        .map(|items| items.iter().all(|item| item.get("id").is_some() && item.get("label").is_some()))
+        .map(|items| {
+            items
+                .iter()
+                .all(|item| item.get("id").is_some() && item.get("label").is_some())
+        })
         .unwrap_or(false)
     {
         return Err("Each navigation item must include 'id' and 'label'");
