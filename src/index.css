@@ -174,8 +174,11 @@
   }
 
   .markdown-renderer li > p + p {
-    display: block;
-    @apply mt-2;
+    display: inline;
+  }
+
+  .markdown-renderer li > p + p::before {
+    content: ' ';
   }
 
   .markdown-renderer code {
