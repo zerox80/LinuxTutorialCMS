@@ -76,7 +76,7 @@ const SectionToolbar = ({ onBack, onReset, onSave, isSaving, hasChanges }) => (
     <button
       type="button"
       onClick={onBack}
-      className="inline-flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700"
+      className="inline-flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
     >
       <ArrowLeft className="h-4 w-4" />
       Zurück zur Auswahl
@@ -85,7 +85,7 @@ const SectionToolbar = ({ onBack, onReset, onSave, isSaving, hasChanges }) => (
       <button
         type="button"
         onClick={onReset}
-        className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+        className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         disabled={!hasChanges || isSaving}
       >
         Änderungen verwerfen
