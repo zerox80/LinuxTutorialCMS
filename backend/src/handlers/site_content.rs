@@ -8,7 +8,7 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use serde_json::{json, Value};
+use serde_json::Value;
 use std::collections::HashSet;
 
 const MAX_CONTENT_BYTES: usize = 200_000;

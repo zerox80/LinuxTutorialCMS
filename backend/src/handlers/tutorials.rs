@@ -5,12 +5,9 @@ use axum::{
     Json,
 };
 use serde::Deserialize;
-use regex::Regex;
 use std::collections::HashSet;
 use std::convert::TryInto;
-use std::sync::OnceLock;
 use uuid::Uuid;
-use unicode_normalization::UnicodeNormalization;
 
 // Input validation
 pub(crate) fn validate_tutorial_id(id: &str) -> Result<(), String> {
