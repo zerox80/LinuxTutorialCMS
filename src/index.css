@@ -178,7 +178,7 @@
     @apply mt-2;
   }
 
-  .markdown-renderer :not(pre) > code {
+  .markdown-renderer code {
     @apply align-baseline;
     white-space: normal;
     word-break: break-word;
@@ -192,7 +192,7 @@
   }
 
   .markdown-renderer pre > code {
-    display: block;
+    display: block !important;
     white-space: pre;
     margin: 0;
     padding: 0;
