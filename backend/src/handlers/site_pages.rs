@@ -314,6 +314,7 @@ fn map_page(
     })
 }
 
+/// Maps a `db::SitePost` model to a `SitePostResponse`.
 fn map_post(post: crate::models::SitePost) -> SitePostResponse {
     SitePostResponse {
         id: post.id,
@@ -330,6 +331,7 @@ fn map_post(post: crate::models::SitePost) -> SitePostResponse {
     }
 }
 
+/// Lists all site pages. (Admin only)
 pub async fn list_site_pages(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -348,6 +350,7 @@ pub async fn list_site_pages(
     Ok(Json(SitePageListResponse { items }))
 }
 
+/// Retrieves a single site page by its ID. (Admin only)
 pub async fn get_site_page(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -370,6 +373,7 @@ pub async fn get_site_page(
     Ok(Json(map_page(record)?))
 }
 
+/// Creates a new site page. (Admin only)
 pub async fn create_site_page(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -386,6 +390,7 @@ pub async fn create_site_page(
     Ok(Json(map_page(record)?))
 }
 
+/// Updates an existing site page. (Admin only)
 pub async fn update_site_page(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -403,6 +408,7 @@ pub async fn update_site_page(
     Ok(Json(map_page(record)?))
 }
 
+/// Deletes a site page by its ID. (Admin only)
 pub async fn delete_site_page(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -417,6 +423,7 @@ pub async fn delete_site_page(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/// Retrieves a published page and its published posts by the page slug.
 pub async fn get_published_page_by_slug(
     State(pool): State<db::DbPool>,
     Path(slug): Path<String>,
@@ -467,6 +474,7 @@ pub async fn get_published_page_by_slug(
     }))
 }
 
+/// Retrieves the navigation menu structure, containing published pages marked for navigation.
 pub async fn get_navigation(
     State(pool): State<db::DbPool>,
 ) -> Result<Json<NavigationResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -491,6 +499,7 @@ pub async fn get_navigation(
     Ok(Json(NavigationResponse { items }))
 }
 
+/// Retrieves a single published post by its parent page slug and its own slug.
 pub async fn get_published_post_by_slug(
     State(pool): State<db::DbPool>,
     Path((page_slug, post_slug)): Path<(String, String)>,
@@ -546,6 +555,7 @@ pub async fn get_published_post_by_slug(
     }))
 }
 
+/// Lists the slugs of all published pages, typically for sitemap generation.
 pub async fn list_published_page_slugs(
     State(pool): State<db::DbPool>,
 ) -> Result<Json<Vec<String>>, (StatusCode, Json<ErrorResponse>)> {

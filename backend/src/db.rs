@@ -10,6 +10,14 @@ use std::str::FromStr;
 
 pub type DbPool = SqlitePool;
 
+/// Creates and configures the database connection pool.
+///
+/// This function reads the `DATABASE_URL` environment variable, ensures the
+/// necessary directory structure exists for SQLite, and runs database migrations.
+///
+/// # Returns
+///
+/// A `Result` containing the configured `DbPool` or a `sqlx::Error`.
 pub async fn create_pool() -> Result<DbPool, sqlx::Error> {
     let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| {
         tracing::warn!("DATABASE_URL not set, defaulting to sqlite:./database.db");
@@ -40,6 +48,7 @@ pub async fn create_pool() -> Result<DbPool, sqlx::Error> {
     Ok(pool)
 }
 
+/// Returns a cached regex for slug validation.
 fn slug_regex() -> &'static Regex {
     use std::sync::OnceLock;
 
@@ -47,6 +56,15 @@ fn slug_regex() -> &'static Regex {
     SLUG_RE.get_or_init(|| Regex::new(r"^[a-z0-9]+(?:-[a-z0-9]+)*$").expect("valid slug regex"))
 }
 
+/// Validates a slug string.
+///
+/// A valid slug must:
+/// - Be no longer than 100 characters.
+/// - Contain only lowercase letters, numbers, and single hyphens.
+///
+/// # Returns
+///
+/// `Ok(())` if the slug is valid, otherwise an `Err(sqlx::Error)`.
 pub fn validate_slug(slug: &str) -> Result<(), sqlx::Error> {
     const MAX_SLUG_LENGTH: usize = 100;
 
@@ -69,14 +87,17 @@ pub fn validate_slug(slug: &str) -> Result<(), sqlx::Error> {
     }
 }
 
+/// Serializes a `serde_json::Value` to a `String`.
 fn serialize_json_value(value: &Value) -> Result<String, sqlx::Error> {
     serde_json::to_string(value).map_err(|e| sqlx::Error::Protocol(format!("Failed to serialize JSON: {e}").into()))
 }
 
+/// Deserializes a `&str` into a `serde_json::Value`.
 fn deserialize_json_value(value: &str) -> Result<Value, sqlx::Error> {
     serde_json::from_str(value).map_err(|e| sqlx::Error::Protocol(format!("Failed to deserialize JSON: {e}").into()))
 }
 
+/// Fetches all site pages from the database, ordered by `order_index` and `title`.
 pub async fn list_site_pages(pool: &DbPool) -> Result<Vec<crate::models::SitePage>, sqlx::Error> {
     sqlx::query_as::<_, crate::models::SitePage>(
         "SELECT id, slug, title, description, nav_label, show_in_nav, order_index, is_published, hero_json, layout_json, created_at, updated_at FROM site_pages ORDER BY order_index, title",
@@ -85,6 +106,7 @@ pub async fn list_site_pages(pool: &DbPool) -> Result<Vec<crate::models::SitePag
     .await
 }
 
+/// Fetches all published pages that should be shown in navigation menus.
 pub async fn list_nav_pages(pool: &DbPool) -> Result<Vec<crate::models::SitePage>, sqlx::Error> {
     sqlx::query_as::<_, crate::models::SitePage>(
         "SELECT id, slug, title, description, nav_label, show_in_nav, order_index, is_published, hero_json, layout_json, created_at, updated_at
@@ -96,6 +118,7 @@ pub async fn list_nav_pages(pool: &DbPool) -> Result<Vec<crate::models::SitePage
     .await
 }
 
+/// Fetches all published pages.
 pub async fn list_published_pages(pool: &DbPool) -> Result<Vec<crate::models::SitePage>, sqlx::Error> {
     sqlx::query_as::<_, crate::models::SitePage>(
         "SELECT id, slug, title, description, nav_label, show_in_nav, order_index, is_published, hero_json, layout_json, created_at, updated_at
@@ -107,6 +130,7 @@ pub async fn list_published_pages(pool: &DbPool) -> Result<Vec<crate::models::Si
     .await
 }
 
+/// Fetches a single site page by its ID.
 pub async fn get_site_page_by_id(
     pool: &DbPool,
     id: &str,
@@ -119,6 +143,7 @@ pub async fn get_site_page_by_id(
     .await
 }
 
+/// Fetches a single site page by its slug.
 pub async fn get_site_page_by_slug(
     pool: &DbPool,
     slug: &str,
@@ -131,6 +156,7 @@ pub async fn get_site_page_by_slug(
     .await
 }
 
+/// Creates a new site page in the database.
 pub async fn create_site_page(
     pool: &DbPool,
     page: crate::models::CreateSitePageRequest,
@@ -165,6 +191,7 @@ pub async fn create_site_page(
         .ok_or_else(|| sqlx::Error::RowNotFound)
 }
 
+/// Updates an existing site page.
 pub async fn update_site_page(
     pool: &DbPool,
     id: &str,
@@ -227,6 +254,7 @@ pub async fn update_site_page(
         .ok_or_else(|| sqlx::Error::RowNotFound)
 }
 
+/// Deletes a site page by its ID.
 pub async fn delete_site_page(pool: &DbPool, id: &str) -> Result<(), sqlx::Error> {
     let result = sqlx::query("DELETE FROM site_pages WHERE id = ?")
         .bind(id)
@@ -240,6 +268,7 @@ pub async fn delete_site_page(pool: &DbPool, id: &str) -> Result<(), sqlx::Error
     }
 }
 
+/// Fetches all posts associated with a specific page, for admin views.
 pub async fn list_site_posts_for_page(
     pool: &DbPool,
     page_id: &str,
@@ -255,6 +284,7 @@ pub async fn list_site_posts_for_page(
     .await
 }
 
+/// Fetches all published posts for a specific page.
 pub async fn list_published_posts_for_page(
     pool: &DbPool,
     page_id: &str,
@@ -270,6 +300,7 @@ pub async fn list_published_posts_for_page(
     .await
 }
 
+/// Fetches a single published post by its slug and parent page ID.
 pub async fn get_published_post_by_slug(
     pool: &DbPool,
     page_id: &str,
@@ -286,6 +317,7 @@ pub async fn get_published_post_by_slug(
     .await
 }
 
+/// Fetches a single post by its ID.
 pub async fn get_site_post_by_id(
     pool: &DbPool,
     id: &str,
@@ -299,6 +331,7 @@ pub async fn get_site_post_by_id(
     .await
 }
 
+/// Creates a new site post.
 pub async fn create_site_post(
     pool: &DbPool,
     page_id: &str,
@@ -331,6 +364,7 @@ pub async fn create_site_post(
         .ok_or_else(|| sqlx::Error::RowNotFound)
 }
 
+/// Updates an existing site post.
 pub async fn update_site_post(
     pool: &DbPool,
     id: &str,
@@ -385,6 +419,7 @@ pub async fn update_site_post(
         .ok_or_else(|| sqlx::Error::RowNotFound)
 }
 
+/// Deletes a site post by its ID.
 pub async fn delete_site_post(pool: &DbPool, id: &str) -> Result<(), sqlx::Error> {
     let result = sqlx::query("DELETE FROM site_posts WHERE id = ?")
         .bind(id)
@@ -398,6 +433,7 @@ pub async fn delete_site_post(pool: &DbPool, id: &str) -> Result<(), sqlx::Error
     }
 }
 
+/// Ensures the schema for site pages and posts exists.
 async fn ensure_site_page_schema(pool: &DbPool) -> Result<(), sqlx::Error> {
     let mut tx = pool.begin().await?;
 
@@ -471,6 +507,7 @@ async fn ensure_site_page_schema(pool: &DbPool) -> Result<(), sqlx::Error> {
     Ok(())
 }
 
+/// Applies the core database schema migrations.
 async fn apply_core_migrations(tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>) -> Result<(), sqlx::Error> {
     // Create users table
     sqlx::query(
@@ -655,6 +692,7 @@ async fn apply_core_migrations(tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>) -> 
     Ok(())
 }
 
+/// Fetches all site content sections from the database.
 pub async fn fetch_all_site_content(pool: &DbPool) -> Result<Vec<crate::models::SiteContent>, sqlx::Error> {
     sqlx::query_as::<_, crate::models::SiteContent>(
         "SELECT section, content_json, updated_at FROM site_content ORDER BY section",
@@ -663,6 +701,7 @@ pub async fn fetch_all_site_content(pool: &DbPool) -> Result<Vec<crate::models::
     .await
 }
 
+/// Fetches a single site content section by its name.
 pub async fn fetch_site_content_by_section(
     pool: &DbPool,
     section: &str,
@@ -675,6 +714,7 @@ pub async fn fetch_site_content_by_section(
     .await
 }
 
+/// Inserts or updates a site content section.
 pub async fn upsert_site_content(
     pool: &DbPool,
     section: &str,
@@ -698,6 +738,7 @@ pub async fn upsert_site_content(
         .ok_or_else(|| sqlx::Error::RowNotFound)
 }
 
+/// Seeds the database with default site content if it doesn't already exist.
 async fn seed_site_content_tx(
     tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
 ) -> Result<(), sqlx::Error> {
@@ -725,6 +766,7 @@ async fn seed_site_content_tx(
     Ok(())
 }
 
+/// Provides the default site content data.
 fn default_site_content() -> Vec<(&'static str, serde_json::Value)> {
     vec![
         (
@@ -885,6 +927,8 @@ fn default_site_content() -> Vec<(&'static str, serde_json::Value)> {
         ),
     ]
 }
+
+/// Ensures that the directory for a SQLite database file exists.
 fn ensure_sqlite_directory(database_url: &str) -> Result<(), sqlx::Error> {
     if let Some(db_path) = sqlite_file_path(database_url) {
         if let Some(parent) = db_path.parent() {
@@ -901,6 +945,7 @@ fn ensure_sqlite_directory(database_url: &str) -> Result<(), sqlx::Error> {
     Ok(())
 }
 
+/// Parses the file path from a SQLite database URL.
 fn sqlite_file_path(database_url: &str) -> Option<PathBuf> {
     const PREFIX: &str = "sqlite:";
 
@@ -933,6 +978,7 @@ fn sqlite_file_path(database_url: &str) -> Option<PathBuf> {
     Some(PathBuf::from(normalized))
 }
 
+/// Runs all database migrations and seeding operations.
 pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     let mut tx = pool.begin().await?;
 
@@ -1046,6 +1092,7 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     Ok(())
 }
 
+/// Inserts the default set of tutorials into the database within a transaction.
 async fn insert_default_tutorials_tx(tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>) -> Result<(), sqlx::Error> {
     let tutorials = vec![
         ("1", "Grundlegende Befehle", "Lerne die wichtigsten Linux-Befehle für die tägliche Arbeit im Terminal.", "Terminal", "from-blue-500 to-cyan-500", vec!["ls", "cd", "pwd", "mkdir", "rm", "cp", "mv", "cat", "grep", "find", "chmod", "chown"]),
@@ -1105,6 +1152,7 @@ async fn insert_default_tutorials_tx(tx: &mut sqlx::Transaction<'_, sqlx::Sqlite
     Ok(())
 }
 
+/// Replaces the topics for a given tutorial within a transaction.
 pub(crate) async fn replace_tutorial_topics_tx(
     tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
     tutorial_id: &str,
@@ -1126,6 +1174,7 @@ pub(crate) async fn replace_tutorial_topics_tx(
     Ok(())
 }
 
+/// Replaces the topics for a given tutorial.
 pub async fn replace_tutorial_topics(
     pool: &DbPool,
     tutorial_id: &str,

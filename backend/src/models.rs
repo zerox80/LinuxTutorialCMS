@@ -3,6 +3,7 @@ use serde_json::Value;
 use sqlx::FromRow;
 use std::convert::TryFrom;
 
+/// Represents a user record in the database.
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct User {
     pub id: i64,
@@ -13,24 +14,28 @@ pub struct User {
     pub created_at: String,
 }
 
+/// Represents the JSON payload for a login request.
 #[derive(Debug, Deserialize)]
 pub struct LoginRequest {
     pub username: String,
     pub password: String,
 }
 
+/// Represents the JSON response after a successful login.
 #[derive(Debug, Serialize)]
 pub struct LoginResponse {
     pub token: String,
     pub user: UserResponse,
 }
 
+/// Represents public-facing user information.
 #[derive(Debug, Serialize)]
 pub struct UserResponse {
     pub username: String,
     pub role: String,
 }
 
+/// Represents a tutorial record in the database.
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Tutorial {
     pub id: String,
@@ -45,6 +50,7 @@ pub struct Tutorial {
     pub updated_at: String,
 }
 
+/// Represents the JSON payload for creating a new tutorial.
 #[derive(Debug, Deserialize)]
 pub struct CreateTutorialRequest {
     pub title: String,
@@ -55,6 +61,7 @@ pub struct CreateTutorialRequest {
     pub content: String,
 }
 
+/// Represents the JSON payload for updating a tutorial.
 #[derive(Debug, Deserialize)]
 pub struct UpdateTutorialRequest {
     pub title: Option<String>,
@@ -65,6 +72,7 @@ pub struct UpdateTutorialRequest {
     pub content: Option<String>,
 }
 
+/// Represents the JSON response for a tutorial.
 #[derive(Debug, Serialize)]
 pub struct TutorialResponse {
     pub id: String,
@@ -105,11 +113,13 @@ impl TryFrom<Tutorial> for TutorialResponse {
     }
 }
 
+/// A generic error response structure.
 #[derive(Debug, Serialize)]
 pub struct ErrorResponse {
     pub error: String,
 }
 
+/// Represents a generic site content record from the database.
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct SiteContent {
     pub section: String,
@@ -117,6 +127,7 @@ pub struct SiteContent {
     pub updated_at: String,
 }
 
+/// Represents a site content section in an API response.
 #[derive(Debug, Serialize)]
 pub struct SiteContentResponse {
     pub section: String,
@@ -124,16 +135,19 @@ pub struct SiteContentResponse {
     pub updated_at: String,
 }
 
+/// Represents a list of all site content sections.
 #[derive(Debug, Serialize)]
 pub struct SiteContentListResponse {
     pub items: Vec<SiteContentResponse>,
 }
 
+/// Represents the JSON payload for updating a site content section.
 #[derive(Debug, Deserialize)]
 pub struct UpdateSiteContentRequest {
     pub content: Value,
 }
 
+/// Represents a dynamic site page from the database.
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 pub struct SitePage {
     pub id: String,
@@ -150,6 +164,7 @@ pub struct SitePage {
     pub updated_at: String,
 }
 
+/// Represents a site page in an API response.
 #[derive(Debug, Serialize)]
 pub struct SitePageResponse {
     pub id: String,
@@ -166,23 +181,27 @@ pub struct SitePageResponse {
     pub updated_at: String,
 }
 
+/// Represents a list of site pages.
 #[derive(Debug, Serialize)]
 pub struct SitePageListResponse {
     pub items: Vec<SitePageResponse>,
 }
 
+/// Represents a site page along with its associated posts.
 #[derive(Debug, Serialize)]
 pub struct SitePageWithPostsResponse {
     pub page: SitePageResponse,
     pub posts: Vec<SitePostResponse>,
 }
 
+/// Represents a single post with its parent page context.
 #[derive(Debug, Serialize)]
 pub struct SitePostDetailResponse {
     pub page: SitePageResponse,
     pub post: SitePostResponse,
 }
 
+/// Represents the JSON payload for creating a new site page.
 #[derive(Debug, Deserialize)]
 pub struct CreateSitePageRequest {
     pub slug: String,
@@ -200,6 +219,7 @@ pub struct CreateSitePageRequest {
     pub layout: Value,
 }
 
+/// Represents the JSON payload for updating a site page.
 #[derive(Debug, Deserialize)]
 pub struct UpdateSitePageRequest {
     pub slug: Option<String>,
@@ -213,6 +233,7 @@ pub struct UpdateSitePageRequest {
     pub layout: Option<Value>,
 }
 
+/// Represents a blog post associated with a site page.
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 pub struct SitePost {
     pub id: String,
@@ -228,6 +249,7 @@ pub struct SitePost {
     pub updated_at: String,
 }
 
+/// Represents a site post in an API response.
 #[derive(Debug, Serialize)]
 pub struct SitePostResponse {
     pub id: String,
@@ -243,11 +265,13 @@ pub struct SitePostResponse {
     pub updated_at: String,
 }
 
+/// Represents a list of site posts.
 #[derive(Debug, Serialize)]
 pub struct SitePostListResponse {
     pub items: Vec<SitePostResponse>,
 }
 
+/// Represents the JSON payload for creating a new site post.
 #[derive(Debug, Deserialize)]
 pub struct CreateSitePostRequest {
     pub title: String,
@@ -260,6 +284,7 @@ pub struct CreateSitePostRequest {
     pub order_index: Option<i64>,
 }
 
+/// Represents the JSON payload for updating a site post.
 #[derive(Debug, Deserialize)]
 pub struct UpdateSitePostRequest {
     pub title: Option<String>,
@@ -271,6 +296,7 @@ pub struct UpdateSitePostRequest {
     pub order_index: Option<i64>,
 }
 
+/// Represents a single item in the navigation menu.
 #[derive(Debug, Serialize)]
 pub struct NavigationItemResponse {
     pub id: String,
@@ -279,6 +305,7 @@ pub struct NavigationItemResponse {
     pub order_index: i64,
 }
 
+/// Represents the entire navigation structure.
 #[derive(Debug, Serialize)]
 pub struct NavigationResponse {
     pub items: Vec<NavigationItemResponse>,

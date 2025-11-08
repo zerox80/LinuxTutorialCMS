@@ -64,6 +64,22 @@ fn validate_password(password: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// Handles user login requests.
+///
+/// This function validates credentials, implements brute-force protection with exponential backoff,
+/// and issues a JWT upon successful authentication. It is designed to be resistant to timing attacks.
+///
+/// # Arguments
+///
+/// * `State(pool)` - The database connection pool.
+/// * `Json(payload)` - The `LoginRequest` containing the username and password.
+///
+/// # Returns
+///
+/// * `Ok((HeaderMap, Json<LoginResponse>))` - On success, returns headers with a `Set-Cookie`
+///   and a JSON response with the JWT and user information.
+/// * `Err((StatusCode, Json<ErrorResponse>))` - On failure, returns an appropriate HTTP status
+///   code and an error message.
 pub async fn login(
     State(pool): State<DbPool>,
     Json(payload): Json<LoginRequest>,
@@ -250,6 +266,15 @@ pub async fn login(
     ))
 }
 
+/// Retrieves the current authenticated user's information from their JWT claims.
+///
+/// # Arguments
+///
+/// * `claims` - The `Claims` extracted from a valid JWT.
+///
+/// # Returns
+///
+/// A `Json<UserResponse>` containing the user's username and role.
 pub async fn me(
     claims: auth::Claims,
 ) -> Result<Json<UserResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -259,6 +284,13 @@ pub async fn me(
     }))
 }
 
+/// Handles user logout requests.
+///
+/// This function clears the authentication cookie, effectively logging the user out.
+///
+/// # Returns
+///
+/// An HTTP `204 No Content` response with a `Set-Cookie` header to clear the auth cookie.
 pub async fn logout() -> (StatusCode, HeaderMap) {
     let mut headers = HeaderMap::new();
     auth::append_auth_cookie(&mut headers, auth::build_cookie_removal());

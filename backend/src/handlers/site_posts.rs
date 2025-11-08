@@ -159,6 +159,7 @@ fn validate_post_fields(
     Ok(())
 }
 
+/// Lists all posts for a specific page. (Admin only)
 pub async fn list_posts_for_page(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -189,6 +190,7 @@ pub async fn list_posts_for_page(
     Ok(Json(SitePostListResponse { items }))
 }
 
+/// Retrieves a single post by its ID. (Admin only)
 pub async fn get_post(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -209,6 +211,7 @@ pub async fn get_post(
     Ok(Json(map_post(post)))
 }
 
+/// Creates a new post for a specific page. (Admin only)
 pub async fn create_post(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -251,6 +254,7 @@ pub async fn create_post(
     Ok(Json(map_post(record)))
 }
 
+/// Updates an existing post. (Admin only)
 pub async fn update_post(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -324,6 +328,7 @@ pub async fn update_post(
     Ok(Json(map_post(record)))
 }
 
+/// Deletes a post by its ID. (Admin only)
 pub async fn delete_post(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
