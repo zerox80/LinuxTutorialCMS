@@ -259,18 +259,12 @@ async fn main() {
         tracing::info!("Proxy headers will be stripped before rate limiting to prevent spoofing");
     }
 
-    let login_key_extractor = if trust_proxy_ip_headers {
-        SmartIpKeyExtractor
-    } else {
-        PeerIpKeyExtractor
-    };
-
     // Configure rate limiting (average 1 request/sec for login, burst up to 5)
     let rate_limit_config = std::sync::Arc::new(
         GovernorConfigBuilder::default()
             .per_second(1)
             .burst_size(5)
-            .key_extractor(login_key_extractor)
+            .key_extractor(SmartIpKeyExtractor)
             .finish()
             .expect("Failed to build governor config"),
     );
@@ -283,17 +277,11 @@ async fn main() {
         .layer(RequestBodyLimitLayer::new(LOGIN_BODY_LIMIT))
         .layer(GovernorLayer::new(rate_limit_config));
 
-    let admin_key_extractor = if trust_proxy_ip_headers {
-        SmartIpKeyExtractor
-    } else {
-        PeerIpKeyExtractor
-    };
-
     let admin_rate_limit_config = std::sync::Arc::new(
         GovernorConfigBuilder::default()
             .per_second(1)
             .burst_size(3)
-            .key_extractor(admin_key_extractor)
+            .key_extractor(SmartIpKeyExtractor)
             .finish()
             .expect("Failed to build governor config for write routes"),
     );
