@@ -42,7 +42,11 @@
 @layer components {
   .code-block {
     background: linear-gradient(to bottom right, #111827, #1f2937);
-    @apply text-green-400 p-6 rounded-2xl font-mono text-sm overflow-x-auto shadow-2xl border border-gray-700/50;
+    @apply text-green-400 p-6 rounded-2xl font-mono text-sm shadow-2xl border border-gray-700/50;
+    white-space: pre-wrap !important;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    overflow-x: auto;
   }
   
   .tutorial-card {
@@ -212,7 +216,9 @@
 
   .markdown-renderer pre > code {
     display: block !important;
-    white-space: pre;
+    white-space: pre-wrap !important;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
     margin: 0;
     padding: 0;
   }
