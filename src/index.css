@@ -198,6 +198,10 @@
     padding: 0;
   }
   
+  .markdown-renderer {
+    white-space: normal;
+  }
+  
   .markdown-renderer li {
     @apply break-normal;
   }
@@ -208,6 +212,7 @@
     word-wrap: break-word;
     overflow-wrap: break-word;
     hyphens: none;
+    white-space: normal;
   }
 }
 
