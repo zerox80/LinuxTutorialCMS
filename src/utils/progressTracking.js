@@ -19,7 +19,9 @@ export const getProgress = () => {
 
 /**
  * Marks a tutorial as read and saves the progress to localStorage.
+ *
  * @param {string} tutorialId - The ID of the tutorial to mark as read.
+ * @returns {void}
  */
 export const markAsRead = (tutorialId) => {
   try {
@@ -46,6 +48,8 @@ export const isRead = (tutorialId) => {
 
 /**
  * Clears all tutorial progress from localStorage.
+ *
+ * @returns {void}
  */
 export const clearProgress = () => {
   try {

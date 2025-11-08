@@ -246,6 +246,11 @@ SectionPreview.propTypes = {
   content: PropTypes.object.isRequired,
 }
 
+/**
+ * CMS workspace for editing hero, header, footer, and grundlagen sections with live previews.
+ *
+ * @returns {JSX.Element} Editor layout that lets admins select a section, tweak JSON, and save changes.
+ */
 const SiteContentEditor = () => {
   const {
     content,

@@ -750,6 +750,11 @@ PostsPanel.propTypes = {
  * and displays an overview of navigation and published content.
  * @returns {JSX.Element} The rendered page manager component.
  */
+/**
+ * Administrative dashboard widget for browsing, filtering, and editing site pages and their posts.
+ *
+ * @returns {JSX.Element} Management console with navigation tree, detail panels, and editor modals.
+ */
 const PageManager = () => {
   const { navigation, pages: publishedPages } = useContent()
   const [pages, setPages] = useState([])

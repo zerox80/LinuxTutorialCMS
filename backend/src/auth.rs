@@ -15,6 +15,7 @@ use std::env;
 use std::sync::OnceLock;
 use time::{Duration as TimeDuration, OffsetDateTime};
 
+/// Lazily initialized JWT signing secret sourced from the `JWT_SECRET` environment variable.
 pub static JWT_SECRET: OnceLock<String> = OnceLock::new();
 
 const SECRET_BLACKLIST: &[&str] = &[

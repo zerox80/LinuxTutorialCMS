@@ -89,6 +89,16 @@ fn sanitize_comment_content(raw: &str) -> Result<String, (StatusCode, Json<Error
 }
 
 /// Lists all comments for a specific tutorial, with pagination.
+///
+/// # Arguments
+///
+/// * `State(pool)` - Database pool used to execute comment queries.
+/// * `Path(tutorial_id)` - ID of the tutorial whose comments should be listed.
+/// * `Query(params)` - Pagination parameters (`limit` and `offset`).
+///
+/// # Returns
+///
+/// A JSON array of comments or an error tuple with status and payload.
 pub async fn list_comments(
     State(pool): State<DbPool>,
     Path(tutorial_id): Path<String>,
@@ -147,6 +157,17 @@ pub async fn list_comments(
 }
 
 /// Creates a new comment for a tutorial. (Admin only)
+///
+/// # Arguments
+///
+/// * `claims` - Authenticated user claims, used to enforce admin-only access.
+/// * `State(pool)` - Database pool.
+/// * `Path(tutorial_id)` - ID of the tutorial to attach the comment to.
+/// * `Json(payload)` - Comment body payload.
+///
+/// # Returns
+///
+/// JSON representation of the created comment or an error tuple.
 pub async fn create_comment(
     claims: auth::Claims,
     State(pool): State<DbPool>,
@@ -228,6 +249,16 @@ pub async fn create_comment(
 }
 
 /// Deletes a comment by its ID. (Admin only)
+///
+/// # Arguments
+///
+/// * `claims` - Authenticated user claims, used to enforce admin-only access.
+/// * `State(pool)` - Database pool.
+/// * `Path(id)` - Identifier of the comment to delete.
+///
+/// # Returns
+///
+/// `StatusCode::NO_CONTENT` on success or an error tuple.
 pub async fn delete_comment(
     claims: auth::Claims,
     State(pool): State<DbPool>,

@@ -22,4 +22,9 @@ i18n
     },
   });
 
+/**
+ * Configured i18next instance with German and English resources for the frontend.
+ *
+ * @returns {import('i18next').i18n} Initialized translation engine.
+ */
 export default i18n;

@@ -6,15 +6,33 @@ import { AlertCircle, RefreshCw } from 'lucide-react'
  * logs those errors, and displays a fallback UI instead of the component tree that crashed.
  */
 class ErrorBoundary extends Component {
+  /**
+   * Creates the error boundary with initial error state.
+   *
+   * @param {object} props - React component props.
+   */
   constructor(props) {
     super(props)
     this.state = { hasError: false, error: null, errorInfo: null }
   }
 
+  /**
+   * Updates component state when a child throws to trigger the fallback UI.
+   *
+   * @param {Error} error - The error thrown by a descendant.
+   * @returns {{ hasError: boolean }} State patch instructing React to render the fallback.
+   */
   static getDerivedStateFromError(error) {
     return { hasError: true }
   }
 
+  /**
+   * Lifecycle hook for logging and storing details about caught errors.
+   *
+   * @param {Error} error - The runtime error that was intercepted.
+   * @param {React.ErrorInfo} errorInfo - Component stack information for debugging.
+   * @returns {void}
+   */
   componentDidCatch(error, errorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo)
     this.setState({
@@ -23,6 +41,11 @@ class ErrorBoundary extends Component {
     })
   }
 
+  /**
+   * Clears the error state and navigates the user back to the home page.
+   *
+   * @returns {void}
+   */
   handleReset = () => {
     this.setState({ hasError: false, error: null, errorInfo: null })
     if (typeof window !== 'undefined' && window.history) {
@@ -31,6 +54,11 @@ class ErrorBoundary extends Component {
     }
   }
 
+  /**
+   * Renders either the fallback interface or the wrapped children tree.
+   *
+   * @returns {React.ReactNode} The rendered fallback UI or original children.
+   */
   render() {
     if (this.state.hasError) {
       return (

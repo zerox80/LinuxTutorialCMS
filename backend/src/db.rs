@@ -8,6 +8,7 @@ use std::env;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
+/// Convenience alias for the shared SQLite connection pool used throughout the backend.
 pub type DbPool = SqlitePool;
 
 /// Creates and configures the database connection pool.
@@ -62,9 +63,13 @@ fn slug_regex() -> &'static Regex {
 /// - Be no longer than 100 characters.
 /// - Contain only lowercase letters, numbers, and single hyphens.
 ///
+/// # Arguments
+///
+/// * `slug` - Candidate slug to verify.
+///
 /// # Returns
 ///
-/// `Ok(())` if the slug is valid, otherwise an `Err(sqlx::Error)`.
+/// `Ok(())` if the slug is valid; otherwise an `Err(sqlx::Error)` describing the validation failure.
 pub fn validate_slug(slug: &str) -> Result<(), sqlx::Error> {
     const MAX_SLUG_LENGTH: usize = 100;
 
@@ -98,6 +103,14 @@ fn deserialize_json_value(value: &str) -> Result<Value, sqlx::Error> {
 }
 
 /// Fetches all site pages from the database, ordered by `order_index` and `title`.
+///
+/// # Arguments
+///
+/// * `pool` - Database connection pool used to execute the query.
+///
+/// # Returns
+///
+/// Vector of `SitePage` rows on success or a `sqlx::Error`.
 pub async fn list_site_pages(pool: &DbPool) -> Result<Vec<crate::models::SitePage>, sqlx::Error> {
     sqlx::query_as::<_, crate::models::SitePage>(
         "SELECT id, slug, title, description, nav_label, show_in_nav, order_index, is_published, hero_json, layout_json, created_at, updated_at FROM site_pages ORDER BY order_index, title",
@@ -107,6 +120,14 @@ pub async fn list_site_pages(pool: &DbPool) -> Result<Vec<crate::models::SitePag
 }
 
 /// Fetches all published pages that should be shown in navigation menus.
+///
+/// # Arguments
+///
+/// * `pool` - Database connection pool used to execute the query.
+///
+/// # Returns
+///
+/// Vector of `SitePage` rows filtered for navigation use or a `sqlx::Error`.
 pub async fn list_nav_pages(pool: &DbPool) -> Result<Vec<crate::models::SitePage>, sqlx::Error> {
     sqlx::query_as::<_, crate::models::SitePage>(
         "SELECT id, slug, title, description, nav_label, show_in_nav, order_index, is_published, hero_json, layout_json, created_at, updated_at
@@ -119,6 +140,14 @@ pub async fn list_nav_pages(pool: &DbPool) -> Result<Vec<crate::models::SitePage
 }
 
 /// Fetches all published pages.
+///
+/// # Arguments
+///
+/// * `pool` - Database connection pool used to execute the query.
+///
+/// # Returns
+///
+/// Vector of published `SitePage` rows or a `sqlx::Error`.
 pub async fn list_published_pages(
     pool: &DbPool,
 ) -> Result<Vec<crate::models::SitePage>, sqlx::Error> {
@@ -133,6 +162,15 @@ pub async fn list_published_pages(
 }
 
 /// Fetches a single site page by its ID.
+///
+/// # Arguments
+///
+/// * `pool` - Database pool reference.
+/// * `id` - UUID of the page to load.
+///
+/// # Returns
+///
+/// An optional `SitePage` if found or a `sqlx::Error`.
 pub async fn get_site_page_by_id(
     pool: &DbPool,
     id: &str,
@@ -146,6 +184,15 @@ pub async fn get_site_page_by_id(
 }
 
 /// Fetches a single site page by its slug.
+///
+/// # Arguments
+///
+/// * `pool` - Database pool reference.
+/// * `slug` - Slug of the page to load.
+///
+/// # Returns
+///
+/// An optional `SitePage` if found or a `sqlx::Error`.
 pub async fn get_site_page_by_slug(
     pool: &DbPool,
     slug: &str,
@@ -159,6 +206,15 @@ pub async fn get_site_page_by_slug(
 }
 
 /// Creates a new site page in the database.
+///
+/// # Arguments
+///
+/// * `pool` - Database pool used to run the insert.
+/// * `page` - Validated payload containing the new page fields.
+///
+/// # Returns
+///
+/// The freshly created `SitePage` fetched back from the database or a `sqlx::Error`.
 pub async fn create_site_page(
     pool: &DbPool,
     page: crate::models::CreateSitePageRequest,
@@ -194,6 +250,16 @@ pub async fn create_site_page(
 }
 
 /// Updates an existing site page.
+///
+/// # Arguments
+///
+/// * `pool` - Database pool reference.
+/// * `id` - Identifier of the page to update.
+/// * `payload` - Partial update payload describing the fields to change.
+///
+/// # Returns
+///
+/// The updated `SitePage` record or a `sqlx::Error`.
 pub async fn update_site_page(
     pool: &DbPool,
     id: &str,
@@ -259,6 +325,15 @@ pub async fn update_site_page(
 }
 
 /// Deletes a site page by its ID.
+///
+/// # Arguments
+///
+/// * `pool` - Database pool reference.
+/// * `id` - Identifier of the page to remove.
+///
+/// # Returns
+///
+/// `Ok(())` if exactly one row was deleted; otherwise a `sqlx::Error`.
 pub async fn delete_site_page(pool: &DbPool, id: &str) -> Result<(), sqlx::Error> {
     let result = sqlx::query("DELETE FROM site_pages WHERE id = ?")
         .bind(id)
@@ -273,6 +348,15 @@ pub async fn delete_site_page(pool: &DbPool, id: &str) -> Result<(), sqlx::Error
 }
 
 /// Fetches all posts associated with a specific page, for admin views.
+///
+/// # Arguments
+///
+/// * `pool` - Database pool reference.
+/// * `page_id` - Identifier of the parent page.
+///
+/// # Returns
+///
+/// Vector of `SitePost` rows or a `sqlx::Error`.
 pub async fn list_site_posts_for_page(
     pool: &DbPool,
     page_id: &str,
@@ -289,6 +373,15 @@ pub async fn list_site_posts_for_page(
 }
 
 /// Fetches all published posts for a specific page.
+///
+/// # Arguments
+///
+/// * `pool` - Database pool reference.
+/// * `page_id` - Identifier of the parent page.
+///
+/// # Returns
+///
+/// Vector of published `SitePost` rows or a `sqlx::Error`.
 pub async fn list_published_posts_for_page(
     pool: &DbPool,
     page_id: &str,
@@ -305,6 +398,16 @@ pub async fn list_published_posts_for_page(
 }
 
 /// Fetches a single published post by its slug and parent page ID.
+///
+/// # Arguments
+///
+/// * `pool` - Database pool reference.
+/// * `page_id` - ID of the parent page.
+/// * `post_slug` - Post slug to look up.
+///
+/// # Returns
+///
+/// Optional `SitePost` if found or a `sqlx::Error`.
 pub async fn get_published_post_by_slug(
     pool: &DbPool,
     page_id: &str,
@@ -322,6 +425,15 @@ pub async fn get_published_post_by_slug(
 }
 
 /// Fetches a single post by its ID.
+///
+/// # Arguments
+///
+/// * `pool` - Database pool reference.
+/// * `id` - Post identifier.
+///
+/// # Returns
+///
+/// Optional `SitePost` if found or a `sqlx::Error`.
 pub async fn get_site_post_by_id(
     pool: &DbPool,
     id: &str,
@@ -336,6 +448,16 @@ pub async fn get_site_post_by_id(
 }
 
 /// Creates a new site post.
+///
+/// # Arguments
+///
+/// * `pool` - Database pool reference.
+/// * `page_id` - Identifier of the parent page.
+/// * `payload` - Fields describing the new post.
+///
+/// # Returns
+///
+/// The created `SitePost` as reloaded from the database or a `sqlx::Error`.
 pub async fn create_site_post(
     pool: &DbPool,
     page_id: &str,
@@ -369,6 +491,16 @@ pub async fn create_site_post(
 }
 
 /// Updates an existing site post.
+///
+/// # Arguments
+///
+/// * `pool` - Database pool reference.
+/// * `id` - Identifier of the post to update.
+/// * `payload` - Partial update payload.
+///
+/// # Returns
+///
+/// The updated `SitePost` record or a `sqlx::Error`.
 pub async fn update_site_post(
     pool: &DbPool,
     id: &str,
@@ -426,6 +558,15 @@ pub async fn update_site_post(
 }
 
 /// Deletes a site post by its ID.
+///
+/// # Arguments
+///
+/// * `pool` - Database pool reference.
+/// * `id` - Identifier of the post to remove.
+///
+/// # Returns
+///
+/// `Ok(())` if a row was deleted; otherwise a `sqlx::Error`.
 pub async fn delete_site_post(pool: &DbPool, id: &str) -> Result<(), sqlx::Error> {
     let result = sqlx::query("DELETE FROM site_posts WHERE id = ?")
         .bind(id)
@@ -707,6 +848,14 @@ async fn apply_core_migrations(
 }
 
 /// Fetches all site content sections from the database.
+///
+/// # Arguments
+///
+/// * `pool` - Database pool reference.
+///
+/// # Returns
+///
+/// Vector of `SiteContent` rows or a `sqlx::Error`.
 pub async fn fetch_all_site_content(
     pool: &DbPool,
 ) -> Result<Vec<crate::models::SiteContent>, sqlx::Error> {
@@ -718,6 +867,15 @@ pub async fn fetch_all_site_content(
 }
 
 /// Fetches a single site content section by its name.
+///
+/// # Arguments
+///
+/// * `pool` - Database pool reference.
+/// * `section` - Section key to load.
+///
+/// # Returns
+///
+/// Optional `SiteContent` if present or a `sqlx::Error`.
 pub async fn fetch_site_content_by_section(
     pool: &DbPool,
     section: &str,
@@ -731,6 +889,16 @@ pub async fn fetch_site_content_by_section(
 }
 
 /// Inserts or updates a site content section.
+///
+/// # Arguments
+///
+/// * `pool` - Database pool reference.
+/// * `section` - Section identifier to insert or update.
+/// * `content_json` - Serialized JSON payload to persist.
+///
+/// # Returns
+///
+/// The upserted `SiteContent` row or a `sqlx::Error`.
 pub async fn upsert_site_content(
     pool: &DbPool,
     section: &str,
@@ -992,6 +1160,14 @@ fn sqlite_file_path(database_url: &str) -> Option<PathBuf> {
 }
 
 /// Runs all database migrations and seeding operations.
+///
+/// # Arguments
+///
+/// * `pool` - Database pool used to open the migration transaction.
+///
+/// # Returns
+///
+/// `Ok(())` when migrations succeed or a `sqlx::Error`.
 pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     let mut tx = pool.begin().await?;
 
@@ -1276,6 +1452,16 @@ async fn insert_default_tutorials_tx(
 }
 
 /// Replaces the topics for a given tutorial within a transaction.
+///
+/// # Arguments
+///
+/// * `tx` - Open SQL transaction to mutate.
+/// * `tutorial_id` - Tutorial identifier whose topics should be replaced.
+/// * `topics` - Ordered list of topic strings to persist.
+///
+/// # Returns
+///
+/// `Ok(())` when the replacement succeeds or a `sqlx::Error`.
 pub(crate) async fn replace_tutorial_topics_tx(
     tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
     tutorial_id: &str,
@@ -1298,6 +1484,16 @@ pub(crate) async fn replace_tutorial_topics_tx(
 }
 
 /// Replaces the topics for a given tutorial.
+///
+/// # Arguments
+///
+/// * `pool` - Database pool reference.
+/// * `tutorial_id` - Tutorial identifier whose topics should be replaced.
+/// * `topics` - Ordered list of topic strings to persist.
+///
+/// # Returns
+///
+/// `Ok(())` when the replacement succeeds or a `sqlx::Error`.
 pub async fn replace_tutorial_topics(
     pool: &DbPool,
     tutorial_id: &str,

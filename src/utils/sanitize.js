@@ -62,6 +62,11 @@ export const sanitizeURL = (url) => {
   }
 };
 
+/**
+ * Collection of sanitizer helpers for HTML, text, and URLs.
+ *
+ * @returns {{sanitizeHTML: typeof sanitizeHTML, sanitizeText: typeof sanitizeText, sanitizeURL: typeof sanitizeURL}}
+ */
 export default {
   sanitizeHTML,
   sanitizeText,

@@ -69,6 +69,14 @@ fn get_secret() -> &'static [u8] {
 /// Issues a new CSRF token for a given username.
 ///
 /// The token embeds the username, expiry, and a nonce, signed with HMAC-SHA256.
+///
+/// # Arguments
+///
+/// * `username` - Authenticated username the token should be bound to.
+///
+/// # Returns
+///
+/// A base64-encoded token string or an error if generation fails.
 pub fn issue_csrf_token(username: &str) -> Result<String, String> {
     if username.is_empty() {
         return Err("Username required for CSRF token".to_string());
@@ -168,6 +176,15 @@ fn subtle_equals(a: &[u8], b: &[u8]) -> bool {
 }
 
 /// Appends a `Set-Cookie` header for the CSRF token to a `HeaderMap`.
+///
+/// # Arguments
+///
+/// * `headers` - Outgoing response headers to mutate.
+/// * `token` - Freshly issued CSRF token string.
+///
+/// # Returns
+///
+/// Nothing. Any serialization error is logged.
 pub fn append_csrf_cookie(headers: &mut HeaderMap, token: &str) {
     let cookie = build_csrf_cookie(token);
     if let Ok(value) = HeaderValue::from_str(&cookie.to_string()) {
@@ -178,6 +195,14 @@ pub fn append_csrf_cookie(headers: &mut HeaderMap, token: &str) {
 }
 
 /// Appends a `Set-Cookie` header to clear the CSRF cookie.
+///
+/// # Arguments
+///
+/// * `headers` - Outgoing response headers to mutate.
+///
+/// # Returns
+///
+/// Nothing. Any serialization error is logged.
 pub fn append_csrf_removal(headers: &mut HeaderMap) {
     let cookie = build_csrf_removal();
     if let Ok(value) = HeaderValue::from_str(&cookie.to_string()) {
@@ -287,11 +312,19 @@ where
 }
 
 /// Returns the name of the CSRF cookie.
+///
+/// # Returns
+///
+/// Static string slice with the cookie name.
 pub fn csrf_cookie_name() -> &'static str {
     CSRF_COOKIE_NAME
 }
 
 /// Returns the name of the CSRF header.
+///
+/// # Returns
+///
+/// Static string slice with the header name.
 pub fn csrf_header_name() -> &'static str {
     CSRF_HEADER_NAME
 }

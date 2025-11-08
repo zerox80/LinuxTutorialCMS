@@ -167,6 +167,15 @@ fn default_tutorial_limit() -> i64 {
 }
 
 /// Fetches a paginated list of all tutorials.
+///
+/// # Arguments
+///
+/// * `State(pool)` - Database pool used for the query.
+/// * `Query(params)` - Pagination parameters (`limit` and `offset`).
+///
+/// # Returns
+///
+/// JSON array with tutorial summaries or an error tuple.
 pub async fn list_tutorials(
     State(pool): State<DbPool>,
     Query(params): Query<TutorialListQuery>,
@@ -210,6 +219,15 @@ pub async fn list_tutorials(
 }
 
 /// Fetches a single tutorial by its ID.
+///
+/// # Arguments
+///
+/// * `State(pool)` - Database pool used for the lookup.
+/// * `Path(id)` - Tutorial identifier to load.
+///
+/// # Returns
+///
+/// JSON tutorial representation or an error tuple.
 pub async fn get_tutorial(
     State(pool): State<DbPool>,
     Path(id): Path<String>,
@@ -256,6 +274,16 @@ pub async fn get_tutorial(
 }
 
 /// Creates a new tutorial. (Admin only)
+///
+/// # Arguments
+///
+/// * `claims` - Authenticated user claims, used to enforce admin-only access.
+/// * `State(pool)` - Database pool reference.
+/// * `Json(payload)` - Tutorial creation payload.
+///
+/// # Returns
+///
+/// JSON representation of the created tutorial or an error tuple.
 pub async fn create_tutorial(
     claims: auth::Claims,
     State(pool): State<DbPool>,
@@ -394,6 +422,17 @@ pub async fn create_tutorial(
 /// Updates an existing tutorial. (Admin only)
 ///
 /// This handler uses optimistic locking via a `version` field to prevent concurrent edit conflicts.
+///
+/// # Arguments
+///
+/// * `claims` - Authenticated user claims, used to enforce admin-only access.
+/// * `State(pool)` - Database pool reference.
+/// * `Path(id)` - Tutorial identifier to update.
+/// * `Json(payload)` - Partial update payload.
+///
+/// # Returns
+///
+/// JSON representation of the updated tutorial or an error tuple.
 pub async fn update_tutorial(
     claims: auth::Claims,
     State(pool): State<DbPool>,
@@ -677,6 +716,16 @@ pub async fn update_tutorial(
 }
 
 /// Deletes a tutorial by its ID. (Admin only)
+///
+/// # Arguments
+///
+/// * `claims` - Authenticated user claims, used to enforce admin-only access.
+/// * `State(pool)` - Database pool reference.
+/// * `Path(id)` - Tutorial identifier to delete.
+///
+/// # Returns
+///
+/// `StatusCode::NO_CONTENT` on success or an error tuple.
 pub async fn delete_tutorial(
     claims: auth::Claims,
     State(pool): State<DbPool>,

@@ -309,9 +309,14 @@ pub async fn me(
 ///
 /// This function clears the authentication cookie, effectively logging the user out.
 ///
+/// # Arguments
+///
+/// * `_csrf` - Ensures the request passed CSRF validation before logging out.
+/// * `claims` - Authenticated user claims used for logging/auditing.
+///
 /// # Returns
 ///
-/// An HTTP `204 No Content` response with a `Set-Cookie` header to clear the auth cookie.
+/// An HTTP `204 No Content` response with headers that clear auth and CSRF cookies.
 pub async fn logout(_csrf: csrf::CsrfGuard, claims: auth::Claims) -> (StatusCode, HeaderMap) {
     let mut headers = HeaderMap::new();
     auth::append_auth_cookie(&mut headers, auth::build_cookie_removal());

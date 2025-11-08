@@ -33,16 +33,15 @@ const buildPagePath = (value) => {
 }
 
 /**
- * Handles navigation based on a content target object.
- * This function interprets a target object (e.g., from a CMS) and performs the appropriate
- * navigation action, such as scrolling to a section, changing the route, or opening an external link.
+ * Handles navigation based on a CMS content target object by matching section, route, page, or external URLs.
  *
- * @param {object} target - The content target object.
- * @param {string} target.type - The type of navigation target (e.g., 'section', 'route', 'page', 'external', 'href').
- * @param {*} [target.value] - The value associated with the target (e.g., section ID, route path, URL).
- * @param {object} [options] - Navigation options.
- * @param {Function} [options.navigate] - The `navigate` function from `react-router-dom`.
- * @param {object} [options.location] - The `location` object from `react-router-dom`.
+ * @param {object} target - Content target descriptor.
+ * @param {string} target.type - Type of navigation target (e.g., 'section', 'route', 'page', 'external', 'href').
+ * @param {*} [target.value] - Value that identifies the destination (section ID, path, or URL).
+ * @param {object} [options] - Navigation helpers from React Router.
+ * @param {Function} [options.navigate] - Router navigate function.
+ * @param {object} [options.location] - Current router location.
+ * @returns {void}
  */
 export const navigateContentTarget = (target, { navigate, location } = {}) => {
   if (!target || typeof target !== 'object' || !target.type) {

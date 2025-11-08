@@ -19,8 +19,10 @@ export const registerServiceWorker = async () => {
 let deferredPrompt = null;
 
 /**
- * Initializes the PWA installation flow by listening for the `beforeinstallprompt` event.
- * When the event is fired, it captures the prompt and makes it available for later use.
+ * Initializes the PWA installation flow by listening for the `beforeinstallprompt` event
+ * and caching the resulting prompt so it can be shown via a custom UI.
+ *
+ * @returns {void}
  */
 export const initPWA = () => {
   // Listen for beforeinstallprompt event

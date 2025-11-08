@@ -334,6 +334,15 @@ fn map_post(post: crate::models::SitePost) -> SitePostResponse {
 }
 
 /// Lists all site pages. (Admin only)
+///
+/// # Arguments
+///
+/// * `claims` - Authenticated user claims, used to enforce admin-only access.
+/// * `State(pool)` - Database pool reference.
+///
+/// # Returns
+///
+/// JSON list response or an error tuple.
 pub async fn list_site_pages(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -353,6 +362,16 @@ pub async fn list_site_pages(
 }
 
 /// Retrieves a single site page by its ID. (Admin only)
+///
+/// # Arguments
+///
+/// * `claims` - Authenticated user claims, used to enforce admin-only access.
+/// * `State(pool)` - Database pool reference.
+/// * `Path(id)` - Page identifier to load.
+///
+/// # Returns
+///
+/// JSON response describing the page or an error tuple.
 pub async fn get_site_page(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -376,6 +395,16 @@ pub async fn get_site_page(
 }
 
 /// Creates a new site page. (Admin only)
+///
+/// # Arguments
+///
+/// * `claims` - Authenticated user claims.
+/// * `State(pool)` - Database pool reference.
+/// * `Json(payload)` - Page creation payload.
+///
+/// # Returns
+///
+/// JSON representation of the created page or an error tuple.
 pub async fn create_site_page(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -393,6 +422,17 @@ pub async fn create_site_page(
 }
 
 /// Updates an existing site page. (Admin only)
+///
+/// # Arguments
+///
+/// * `claims` - Authenticated user claims.
+/// * `State(pool)` - Database pool reference.
+/// * `Path(id)` - Identifier of the page to update.
+/// * `Json(payload)` - Partial update payload.
+///
+/// # Returns
+///
+/// JSON representation of the updated page or an error tuple.
 pub async fn update_site_page(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -411,6 +451,16 @@ pub async fn update_site_page(
 }
 
 /// Deletes a site page by its ID. (Admin only)
+///
+/// # Arguments
+///
+/// * `claims` - Authenticated user claims.
+/// * `State(pool)` - Database pool reference.
+/// * `Path(id)` - Identifier of the page to remove.
+///
+/// # Returns
+///
+/// `StatusCode::NO_CONTENT` on success or an error tuple.
 pub async fn delete_site_page(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -426,6 +476,15 @@ pub async fn delete_site_page(
 }
 
 /// Retrieves a published page and its published posts by the page slug.
+///
+/// # Arguments
+///
+/// * `State(pool)` - Database pool reference.
+/// * `Path(slug)` - Page slug to resolve.
+///
+/// # Returns
+///
+/// JSON response containing the page and its published posts or an error tuple.
 pub async fn get_published_page_by_slug(
     State(pool): State<db::DbPool>,
     Path(slug): Path<String>,
@@ -477,6 +536,14 @@ pub async fn get_published_page_by_slug(
 }
 
 /// Retrieves the navigation menu structure, containing published pages marked for navigation.
+///
+/// # Arguments
+///
+/// * `State(pool)` - Database pool reference.
+///
+/// # Returns
+///
+/// JSON navigation payload or an error tuple.
 pub async fn get_navigation(
     State(pool): State<db::DbPool>,
 ) -> Result<Json<NavigationResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -502,6 +569,15 @@ pub async fn get_navigation(
 }
 
 /// Retrieves a single published post by its parent page slug and its own slug.
+///
+/// # Arguments
+///
+/// * `State(pool)` - Database pool reference.
+/// * `Path((page_slug, post_slug))` - Tuple of page slug and post slug.
+///
+/// # Returns
+///
+/// JSON response combining page and post metadata or an error tuple.
 pub async fn get_published_post_by_slug(
     State(pool): State<db::DbPool>,
     Path((page_slug, post_slug)): Path<(String, String)>,
@@ -558,6 +634,14 @@ pub async fn get_published_post_by_slug(
 }
 
 /// Lists the slugs of all published pages, typically for sitemap generation.
+///
+/// # Arguments
+///
+/// * `State(pool)` - Database pool reference.
+///
+/// # Returns
+///
+/// JSON array of slug strings or an error tuple.
 pub async fn list_published_page_slugs(
     State(pool): State<db::DbPool>,
 ) -> Result<Json<Vec<String>>, (StatusCode, Json<ErrorResponse>)> {

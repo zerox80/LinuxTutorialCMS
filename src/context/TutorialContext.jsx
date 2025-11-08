@@ -195,9 +195,8 @@ export const TutorialProvider = ({ children }) => {
 /**
  * Custom hook to access the tutorial context.
  *
- * @returns {object} The tutorial context value, including `tutorials`, `loading`, `error`,
- * and functions to manage tutorials.
- * @throws {Error} If used outside of a `TutorialProvider`.
+ * @returns {object} The tutorial context value with tutorials, loading state, errors, and CRUD helpers.
+ * @throws {Error} Thrown when the hook is used outside of a `TutorialProvider`.
  */
 export const useTutorials = () => {
   const context = useContext(TutorialContext)

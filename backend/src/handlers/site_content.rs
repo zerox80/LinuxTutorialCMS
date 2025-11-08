@@ -152,6 +152,14 @@ fn map_record(
 }
 
 /// Fetches all site content sections.
+///
+/// # Arguments
+///
+/// * `State(pool)` - Database pool reference.
+///
+/// # Returns
+///
+/// JSON list response or an error tuple.
 pub async fn list_site_content(
     State(pool): State<db::DbPool>,
 ) -> Result<Json<SiteContentListResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -174,6 +182,15 @@ pub async fn list_site_content(
 }
 
 /// Fetches a single site content section by name.
+///
+/// # Arguments
+///
+/// * `State(pool)` - Database pool reference.
+/// * `Path(section)` - Section identifier to load.
+///
+/// # Returns
+///
+/// JSON response for the section or an error tuple.
 pub async fn get_site_content(
     State(pool): State<db::DbPool>,
     Path(section): Path<String>,
@@ -204,6 +221,17 @@ pub async fn get_site_content(
 }
 
 /// Updates a site content section. (Admin only)
+///
+/// # Arguments
+///
+/// * `claims` - Authenticated user claims, used to enforce admin-only access.
+/// * `State(pool)` - Database pool reference.
+/// * `Path(section)` - Section identifier to update.
+/// * `Json(payload)` - Replacement content payload.
+///
+/// # Returns
+///
+/// JSON response for the updated section or an error tuple.
 pub async fn update_site_content(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,

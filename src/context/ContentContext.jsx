@@ -12,6 +12,11 @@ import { api } from '../api/client'
 
 const ContentContext = createContext(null)
 
+/**
+ * Canonical fallback copy for every editable CMS section when no custom content exists.
+ *
+ * @type {Record<string, unknown>}
+ */
 export const DEFAULT_CONTENT = {
   hero: {
     badgeText: 'Professionelles Linux Training',
@@ -164,6 +169,11 @@ export const DEFAULT_CONTENT = {
 }
 
 
+/**
+ * Ordered list of editable section keys referenced throughout the CMS UI.
+ *
+ * @type {string[]}
+ */
 export const CONTENT_SECTIONS = Object.keys(DEFAULT_CONTENT)
 
 /**
@@ -173,6 +183,13 @@ export const CONTENT_SECTIONS = Object.keys(DEFAULT_CONTENT)
  * @param {object} props - The component props.
  * @param {React.ReactNode} props.children - The child components that need access to the content context.
  * @returns {JSX.Element} The ContentContext provider.
+ */
+/**
+ * Supplies site copy, navigation metadata, and mutation helpers to all descendants.
+ *
+ * @param {object} props - Component props.
+ * @param {React.ReactNode} props.children - React nodes that consume the content context.
+ * @returns {JSX.Element} Provider element that shares content state and helpers.
  */
 export const ContentProvider = ({ children }) => {
   const [content, setContent] = useState(DEFAULT_CONTENT)
@@ -416,9 +433,8 @@ ContentProvider.propTypes = {
 /**
  * Custom hook to access the content context.
  *
- * @returns {object} The content context value, providing access to site content,
- * navigation data, page data, and functions to manage them.
- * @throws {Error} If used outside of a `ContentProvider`.
+ * @returns {object} Content state, navigation helpers, and mutation utilities.
+ * @throws {Error} Thrown when called outside of a `ContentProvider`.
  */
 export const useContent = () => {
   const ctx = useContext(ContentContext)

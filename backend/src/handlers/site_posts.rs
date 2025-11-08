@@ -161,6 +161,16 @@ fn validate_post_fields(
 }
 
 /// Lists all posts for a specific page. (Admin only)
+///
+/// # Arguments
+///
+/// * `claims` - Authenticated user claims.
+/// * `State(pool)` - Database pool reference.
+/// * `Path(page_id)` - Identifier of the parent page.
+///
+/// # Returns
+///
+/// JSON response containing the posts or an error tuple.
 pub async fn list_posts_for_page(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -194,6 +204,16 @@ pub async fn list_posts_for_page(
 }
 
 /// Retrieves a single post by its ID. (Admin only)
+///
+/// # Arguments
+///
+/// * `claims` - Authenticated user claims.
+/// * `State(pool)` - Database pool reference.
+/// * `Path(id)` - Post identifier.
+///
+/// # Returns
+///
+/// JSON response describing the post or an error tuple.
 pub async fn get_post(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -217,6 +237,17 @@ pub async fn get_post(
 }
 
 /// Creates a new post for a specific page. (Admin only)
+///
+/// # Arguments
+///
+/// * `claims` - Authenticated user claims.
+/// * `State(pool)` - Database pool reference.
+/// * `Path(page_id)` - Identifier of the parent page.
+/// * `Json(payload)` - Post creation payload.
+///
+/// # Returns
+///
+/// JSON representation of the created post or an error tuple.
 pub async fn create_post(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -267,6 +298,17 @@ pub async fn create_post(
 }
 
 /// Updates an existing post. (Admin only)
+///
+/// # Arguments
+///
+/// * `claims` - Authenticated user claims.
+/// * `State(pool)` - Database pool reference.
+/// * `Path(id)` - Identifier of the post to update.
+/// * `Json(payload)` - Partial update payload.
+///
+/// # Returns
+///
+/// JSON representation of the updated post or an error tuple.
 pub async fn update_post(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -341,6 +383,16 @@ pub async fn update_post(
 }
 
 /// Deletes a post by its ID. (Admin only)
+///
+/// # Arguments
+///
+/// * `claims` - Authenticated user claims.
+/// * `State(pool)` - Database pool reference.
+/// * `Path(id)` - Identifier of the post to delete.
+///
+/// # Returns
+///
+/// `StatusCode::NO_CONTENT` on success or an error tuple.
 pub async fn delete_post(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,

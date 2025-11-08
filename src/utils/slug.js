@@ -1,6 +1,8 @@
 /**
- * Normalize user-provided slug strings so they match the backend expectation:
- * only lowercase letters, digits and single hyphens in between.
+ * Normalizes a user-supplied slug so it only contains lowercase letters, digits, and single hyphens.
+ *
+ * @param {string} value - Raw slug input from a form field.
+ * @returns {string} Sanitized slug that can be safely sent to the backend.
  */
 export const sanitizeSlug = (value) => {
   if (!value) return ''
@@ -24,4 +26,10 @@ export const sanitizeSlug = (value) => {
 
 const SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
+/**
+ * Validates whether a string already conforms to the slug format used by the CMS.
+ *
+ * @param {string} value - Slug candidate to validate.
+ * @returns {boolean} True if the slug matches the expected pattern.
+ */
 export const isValidSlug = (value) => SLUG_REGEX.test(value)

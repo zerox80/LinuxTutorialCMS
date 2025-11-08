@@ -660,4 +660,9 @@ class ApiClient {
   }
 }
 
+/**
+ * Singleton API client used throughout the frontend to communicate with the backend.
+ *
+ * @type {ApiClient}
+ */
 export const api = new ApiClient()
