@@ -183,8 +183,8 @@
 
   .markdown-renderer code {
     @apply align-baseline;
-    white-space: nowrap;
-    display: inline;
+    white-space: nowrap !important;
+    display: inline !important;
     /* Prevent line breaks around inline code */
     padding-left: 0.15em;
     padding-right: 0.15em;
@@ -192,13 +192,22 @@
 
   /* Ensure inline code in lists stays inline */
   .markdown-renderer li code {
-    white-space: nowrap;
-    display: inline;
+    white-space: nowrap !important;
+    display: inline !important;
   }
 
-  /* Allow line breaks between elements but not within code */
-  .markdown-renderer li {
+  /* Prevent list items from breaking code incorrectly */
+  .markdown-renderer ol li,
+  .markdown-renderer ul li {
     white-space: normal;
+  }
+  
+  /* Ensure text and code flow together */
+  .markdown-renderer li p,
+  .markdown-renderer li code,
+  .markdown-renderer li strong,
+  .markdown-renderer li em {
+    display: inline !important;
   }
 
   .markdown-renderer pre > code {
