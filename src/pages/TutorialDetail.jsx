@@ -5,6 +5,12 @@ import { useTutorials } from '../context/TutorialContext'
 import { api } from '../api/client'
 import MarkdownRenderer from '../components/MarkdownRenderer'
 
+/**
+ * Renders the detailed view of a single tutorial.
+ * It fetches the tutorial content based on the ID from the URL,
+ * displays it using a Markdown renderer, and handles loading and error states.
+ * @returns {JSX.Element} The rendered tutorial detail page.
+ */
 const TutorialDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()

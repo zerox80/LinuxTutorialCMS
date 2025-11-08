@@ -24,6 +24,12 @@ const resolveContactFallbackIcon = (contact) => {
   return 'Terminal'
 }
 
+/**
+ * Renders the site-wide footer.
+ * The footer displays branding, quick links, contact information, and a copyright notice.
+ * Content is dynamically sourced from the `ContentContext`.
+ * @returns {JSX.Element} The rendered footer component.
+ */
 const Footer = () => {
   const { getSection, navigation } = useContent()
   const footerContent = getSection('footer') ?? {}

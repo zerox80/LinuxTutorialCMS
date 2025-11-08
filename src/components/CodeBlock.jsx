@@ -2,6 +2,14 @@ import { useState } from 'react';
 import { Check, Copy } from 'lucide-react';
 import PropTypes from 'prop-types';
 
+/**
+ * Renders a preformatted code block with a copy button.
+ *
+ * @param {object} props - The component props.
+ * @param {React.ReactNode} props.children - The code content to be displayed.
+ * @param {string} [props.className] - Optional CSS class for styling the <pre> element.
+ * @returns {JSX.Element} The rendered code block component.
+ */
 const CodeBlock = ({ children, className }) => {
   const [copied, setCopied] = useState(false);
   

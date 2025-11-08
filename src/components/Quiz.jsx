@@ -2,6 +2,17 @@ import { useState } from 'react';
 import { Check, X, RotateCcw } from 'lucide-react';
 import PropTypes from 'prop-types';
 
+/**
+ * Renders an interactive quiz component.
+ * It displays questions one by one, records user answers, and shows the results at the end.
+ *
+ * @param {object} props - The component props.
+ * @param {Array<object>} props.questions - An array of question objects.
+ * @param {string} props.questions[].question - The question text.
+ * @param {Array<string>} props.questions[].answers - An array of possible answers.
+ * @param {number} props.questions[].correctAnswer - The index of the correct answer.
+ * @returns {JSX.Element} The rendered quiz component.
+ */
 const Quiz = ({ questions }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({});

@@ -4,6 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { api } from '../api/client';
 
+/**
+ * A modal search bar component for searching tutorials.
+ * It features a live search input, topic filtering, and displays a list of results.
+ *
+ * @param {object} props - The component props.
+ * @param {Function} [props.onClose] - A callback function to close the search bar modal.
+ * @returns {JSX.Element} The rendered search bar component.
+ */
 const SearchBar = ({ onClose }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);

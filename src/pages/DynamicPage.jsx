@@ -10,6 +10,12 @@ import {
   normalizeSlug,
 } from '../utils/postUtils'
 
+/**
+ * Renders a dynamic page based on the slug provided in the URL.
+ * It fetches the page content and its associated posts from the `ContentContext`,
+ * handling loading and error states.
+ * @returns {JSX.Element} The rendered dynamic page.
+ */
 const DynamicPage = () => {
   const { slug = '' } = useParams()
   const navigate = useNavigate()

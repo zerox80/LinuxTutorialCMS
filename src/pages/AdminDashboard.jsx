@@ -20,6 +20,12 @@ import TutorialForm from '../components/TutorialForm'
 import SiteContentEditor from '../components/SiteContentEditor'
 import PageManager from '../components/PageManager'
 
+/**
+ * Renders the admin dashboard, which provides a user interface for managing tutorials,
+ * site content, and dynamic pages. It includes a tabbed interface to switch between
+ * different management sections.
+ * @returns {JSX.Element} The rendered admin dashboard page.
+ */
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('tutorials')
   const [showForm, setShowForm] = useState(false)

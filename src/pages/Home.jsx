@@ -4,6 +4,12 @@ import Hero from '../components/Hero'
 import TutorialSection from '../components/TutorialSection'
 import { scrollToSection } from '../utils/scrollToSection'
 
+/**
+ * Renders the home page of the application.
+ * It is composed of the `Hero` and `TutorialSection` components and handles
+ * smooth scrolling to a specific section if directed by the navigation state.
+ * @returns {JSX.Element} The rendered home page.
+ */
 const Home = () => {
   const location = useLocation()
   const navigate = useNavigate()

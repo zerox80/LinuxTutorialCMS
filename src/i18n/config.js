@@ -1,3 +1,8 @@
+/**
+ * @file This file configures the i18next library for internationalization.
+ * It initializes i18next with English and German translations, sets the default language,
+ * and integrates with React.
+ */
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import de from './locales/de.json';

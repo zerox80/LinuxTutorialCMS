@@ -3,6 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Terminal, Lock, User, AlertCircle } from 'lucide-react'
 
+/**
+ * Renders a login form for administrative access.
+ * It handles user input, form submission, displays error messages,
+ * and implements a cooldown mechanism to prevent brute-force attacks.
+ * @returns {JSX.Element} The rendered login page.
+ */
 const Login = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')

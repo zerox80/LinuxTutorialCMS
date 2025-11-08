@@ -1,5 +1,11 @@
 import { Terminal, Code, Book, Zap, Sparkles, ArrowRight } from 'lucide-react'
 
+/**
+ * Renders a static hero section for the homepage.
+ * This component is a variant of the main Hero component but with hardcoded content,
+ * serving as a fallback or for specific presentational purposes.
+ * @returns {JSX.Element} The rendered static hero section.
+ */
 const Hero = () => {
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-indigo-900">

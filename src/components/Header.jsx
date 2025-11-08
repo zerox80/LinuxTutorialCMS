@@ -15,6 +15,12 @@ const FALLBACK_NAV_ITEMS = [
   { id: 'grundlagen', label: 'Grundlagen', type: 'route', path: '/grundlagen' },
 ]
 
+/**
+ * Renders the site-wide header.
+ * Includes branding, navigation links, a theme toggle, a search button, and a call-to-action button.
+ * The header is responsive and provides a mobile-friendly navigation menu.
+ * @returns {JSX.Element} The rendered header component.
+ */
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)

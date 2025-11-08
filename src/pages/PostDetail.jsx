@@ -5,6 +5,12 @@ import MarkdownRenderer from '../components/MarkdownRenderer'
 import { useContent } from '../context/ContentContext'
 import { formatDate, normalizeSlug } from '../utils/postUtils'
 
+/**
+ * Renders the detailed view of a single post.
+ * It fetches the post's content based on the page and post slugs from the URL,
+ * displays it using a Markdown renderer, and handles loading and error states.
+ * @returns {JSX.Element} The rendered post detail page.
+ */
 const PostDetail = () => {
   const { pageSlug = '', postSlug = '' } = useParams()
   const navigate = useNavigate()

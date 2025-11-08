@@ -1,6 +1,10 @@
 import { Component } from 'react'
 import { AlertCircle, RefreshCw } from 'lucide-react'
 
+/**
+ * A React component that catches JavaScript errors anywhere in its child component tree,
+ * logs those errors, and displays a fallback UI instead of the component tree that crashed.
+ */
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props)

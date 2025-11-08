@@ -6,6 +6,12 @@ import { AlertCircle } from 'lucide-react'
 import { useContent } from '../context/ContentContext'
 import { navigateContentTarget } from '../utils/contentNavigation'
 
+/**
+ * A section that displays a collection of tutorial cards.
+ * It fetches tutorial data from the `TutorialContext`, handles loading and error states,
+ * and includes a call-to-action block.
+ * @returns {JSX.Element} The rendered tutorial section.
+ */
 const TutorialSection = () => {
   const { tutorials, getIconComponent, loading, error } = useTutorials()
   const navigate = useNavigate()

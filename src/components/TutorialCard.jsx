@@ -2,6 +2,20 @@ import { ChevronRight, Sparkles } from 'lucide-react'
 import PropTypes from 'prop-types'
 import { scrollToSection } from '../utils/scrollToSection'
 
+/**
+ * A card component to display a summary of a tutorial.
+ * It includes an icon, title, description, a list of topics, and a call-to-action button.
+ *
+ * @param {object} props - The component props.
+ * @param {React.ElementType} props.icon - The icon component for the card.
+ * @param {string} props.title - The title of the tutorial.
+ * @param {string} props.description - A brief description of the tutorial.
+ * @param {Array<string>} props.topics - A list of topics covered in the tutorial.
+ * @param {string} props.color - The color theme for the card (e.g., 'from-blue-500 to-cyan-500').
+ * @param {Function} [props.onSelect] - A callback function to execute when the card is selected.
+ * @param {string} [props.buttonLabel] - The label for the call-to-action button.
+ * @returns {JSX.Element} The rendered tutorial card.
+ */
 const TutorialCard = ({ icon: Icon, title, description, topics, color, onSelect, buttonLabel }) => {
   const handleSelect = () => {
     if (typeof onSelect === 'function') {

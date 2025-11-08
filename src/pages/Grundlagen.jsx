@@ -2,6 +2,11 @@ import { BookOpen } from 'lucide-react'
 import { useContent } from '../context/ContentContext'
 import { getIconComponent } from '../utils/iconMap'
 
+/**
+ * Renders the "Grundlagen" (Basics) page, which provides an overview of the foundational
+ * Linux course. The content for this page is dynamically sourced from the `ContentContext`.
+ * @returns {JSX.Element} The rendered Grundlagen page.
+ */
 const Grundlagen = () => {
   const { getSection } = useContent()
   const pageContent = getSection('grundlagen_page') ?? {}

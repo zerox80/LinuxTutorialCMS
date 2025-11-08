@@ -3,6 +3,10 @@
 const STORAGE_KEY = 'tutorial_progress';
 const BOOKMARKS_KEY = 'tutorial_bookmarks';
 
+/**
+ * Retrieves the user's tutorial progress from localStorage.
+ * @returns {object} An object where keys are tutorial IDs and values are progress data.
+ */
 export const getProgress = () => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -13,6 +17,10 @@ export const getProgress = () => {
   }
 };
 
+/**
+ * Marks a tutorial as read and saves the progress to localStorage.
+ * @param {string} tutorialId - The ID of the tutorial to mark as read.
+ */
 export const markAsRead = (tutorialId) => {
   try {
     const progress = getProgress();
@@ -26,11 +34,19 @@ export const markAsRead = (tutorialId) => {
   }
 };
 
+/**
+ * Checks if a tutorial has been marked as read.
+ * @param {string} tutorialId - The ID of the tutorial to check.
+ * @returns {boolean} True if the tutorial is marked as read, otherwise false.
+ */
 export const isRead = (tutorialId) => {
   const progress = getProgress();
   return progress[tutorialId]?.read || false;
 };
 
+/**
+ * Clears all tutorial progress from localStorage.
+ */
 export const clearProgress = () => {
   try {
     localStorage.removeItem(STORAGE_KEY);
@@ -40,6 +56,10 @@ export const clearProgress = () => {
 };
 
 // Bookmarks
+/**
+ * Retrieves the user's bookmarked tutorial IDs from localStorage.
+ * @returns {Array<string>} An array of bookmarked tutorial IDs.
+ */
 export const getBookmarks = () => {
   try {
     const stored = localStorage.getItem(BOOKMARKS_KEY);
@@ -50,6 +70,12 @@ export const getBookmarks = () => {
   }
 };
 
+/**
+ * Toggles a bookmark for a given tutorial.
+ * If the tutorial is already bookmarked, it will be removed; otherwise, it will be added.
+ * @param {string} tutorialId - The ID of the tutorial to toggle the bookmark for.
+ * @returns {Array<string>} The updated list of bookmarked tutorial IDs.
+ */
 export const toggleBookmark = (tutorialId) => {
   try {
     const bookmarks = getBookmarks();
@@ -69,6 +95,11 @@ export const toggleBookmark = (tutorialId) => {
   }
 };
 
+/**
+ * Checks if a tutorial is bookmarked.
+ * @param {string} tutorialId - The ID of the tutorial to check.
+ * @returns {boolean} True if the tutorial is bookmarked, otherwise false.
+ */
 export const isBookmarked = (tutorialId) => {
   const bookmarks = getBookmarks();
   return bookmarks.includes(tutorialId);
