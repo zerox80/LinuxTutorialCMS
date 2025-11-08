@@ -70,6 +70,21 @@ const isBinaryBody = (body) => {
   return false
 }
 
+const CSRF_COOKIE_NAME = 'ltcms_csrf'
+const CSRF_HEADER_NAME = 'x-csrf-token'
+
+const getCsrfToken = () => {
+  if (typeof document === 'undefined' || !document.cookie) {
+    return null
+  }
+
+  return document.cookie
+    .split(';')
+    .map((cookie) => cookie.trim())
+    .find((cookie) => cookie.startsWith(`${CSRF_COOKIE_NAME}=`))
+    ?.split('=')[1] ?? null
+}
+
 /**
  * Manages all communication with the backend API.
  * Provides methods for authentication, tutorials, site content, and more.
@@ -220,6 +235,14 @@ class ApiClient {
     }
     if (isJsonBody) {
       config.body = JSON.stringify(bodyCandidate)
+    }
+
+    const requiresCsrf = !['GET', 'HEAD', 'OPTIONS'].includes(method)
+    if (requiresCsrf && !headers.has(CSRF_HEADER_NAME)) {
+      const csrfToken = getCsrfToken()
+      if (csrfToken) {
+        headers.set(CSRF_HEADER_NAME, csrfToken)
+      }
     }
 
     try {

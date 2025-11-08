@@ -161,20 +161,20 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+    <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto dark:bg-slate-900">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-800">
         <div>
-          <h3 className="text-xl font-semibold text-gray-900">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-slate-100">
             {mode === 'edit' ? 'Seite bearbeiten' : 'Neue Seite erstellen'}
           </h3>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-slate-400">
             Slug und JSON-Konfiguration beeinflussen die Darstellung der Seite.
           </p>
         </div>
         <button
           type="button"
           onClick={onCancel}
-          className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+          className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800"
         >
           <X className="w-5 h-5" />
         </button>
@@ -182,7 +182,7 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
 
       <form onSubmit={handleSubmit} className="space-y-6 px-6 py-6">
         {error && (
-          <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300">
             <AlertCircle className="w-4 h-4 mt-0.5" />
             <div>
               <p className="font-medium">Speichern fehlgeschlagen</p>
@@ -192,67 +192,67 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
         )}
 
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
             Titel
             <input
               type="text"
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               required
             />
           </label>
 
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
             Slug
             <input
               type="text"
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               value={slug}
               onChange={(event) => setSlug(event.target.value)}
               onBlur={() => setSlug(formSanitizedSlug)}
               required
             />
             {slugHasInvalidCharacters && (
-              <p className="mt-1 text-xs text-red-600">
+              <p className="mt-1 text-xs text-red-600 dark:text-red-400">
                 Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt.
               </p>
             )}
             {slugDiffersAfterSanitize && !slugHasInvalidCharacters && (
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
                 Gespeicherter Slug:{' '}
-                <code className="rounded bg-gray-100 px-1 py-0.5 text-[11px]">{formSanitizedSlug}</code>
+                <code className="rounded bg-gray-100 px-1 py-0.5 text-[11px] dark:bg-slate-800 dark:text-slate-200">{formSanitizedSlug}</code>
               </p>
             )}
           </label>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
             Navigationstitel
             <input
               type="text"
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               value={navLabel}
               onChange={(event) => setNavLabel(event.target.value)}
             />
           </label>
 
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
             Reihenfolge (Navigation)
             <input
               type="number"
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               value={orderIndex}
               onChange={(event) => setOrderIndex(event.target.value)}
             />
           </label>
         </div>
 
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
           Beschreibung
           <textarea
-            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
             rows={3}
             value={description}
             onChange={(event) => setDescription(event.target.value)}
@@ -260,11 +260,11 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
           />
         </label>
 
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
           Hero-Titel
           <input
             type="text"
-            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
             value={heroTitle}
             onChange={(event) => {
               const { value } = event.target
@@ -288,25 +288,25 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
             }}
             placeholder="Titel im oberen Bereich der Seite"
           />
-          <span className="mt-1 block text-xs text-gray-500">
+          <span className="mt-1 block text-xs text-gray-500 dark:text-slate-400">
             Wird beim Speichern automatisch in das Hero JSON übernommen.
           </span>
         </label>
 
         <div className="flex flex-wrap items-center gap-4">
-          <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+          <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-slate-200">
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-900"
               checked={showInNav}
               onChange={(event) => setShowInNav(event.target.checked)}
             />
             In Navigation anzeigen
           </label>
-          <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+          <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-slate-200">
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-900"
               checked={isPublished}
               onChange={(event) => setIsPublished(event.target.checked)}
             />
@@ -315,10 +315,10 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
             Hero JSON
             <textarea
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-mono focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-mono focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               rows={8}
               value={hero}
               onChange={(event) => {
@@ -336,15 +336,15 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
               }}
             />
           </label>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
             Layout JSON
             <textarea
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-mono focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-mono focus:border-primary-500 focus:outline-none focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               rows={8}
               value={layout}
               onChange={(event) => setLayout(event.target.value)}
             />
-            <span className="mt-1 block text-xs text-gray-500">
+            <span className="mt-1 block text-xs text-gray-500 dark:text-slate-400">
               Verwendet u.a. <code>aboutSection.title</code>, <code>postsSection.title</code>,{' '}
               <code>postsSection.emptyTitle</code>, <code>postsSection.emptyMessage</code>.
             </span>
@@ -355,7 +355,7 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
           <button
             type="button"
             onClick={onCancel}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             Abbrechen
           </button>
@@ -455,20 +455,20 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+    <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto dark:bg-slate-900">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-800">
         <div>
-          <h3 className="text-xl font-semibold text-gray-900">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-slate-100">
             {mode === 'edit' ? 'Beitrag bearbeiten' : 'Neuen Beitrag erstellen'}
           </h3>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-slate-400">
             Inhalte werden als Markdown gespeichert und auf der Seite gerendert.
           </p>
         </div>
         <button
           type="button"
           onClick={onCancel}
-          className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+          className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800"
         >
           <X className="w-5 h-5" />
         </button>
@@ -476,7 +476,7 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
 
       <form onSubmit={handleSubmit} className="space-y-6 px-6 py-6">
         {error && (
-          <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300">
             <AlertCircle className="w-4 h-4 mt-0.5" />
             <div>
               <p className="font-medium">Speichern fehlgeschlagen</p>
@@ -486,57 +486,57 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
         )}
 
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
             Titel
             <input
               type="text"
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               required
             />
           </label>
 
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
             Slug
             <input
               type="text"
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               value={slug}
               onChange={(event) => setSlug(event.target.value)}
               onBlur={() => setSlug(sanitizedPostSlug)}
               required
             />
             {postSlugInvalid && (
-              <p className="mt-1 text-xs text-red-600">
+              <p className="mt-1 text-xs text-red-600 dark:text-red-400">
                 Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt.
               </p>
             )}
             {postSlugDiffers && !postSlugInvalid && (
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
                 Gespeicherter Slug:{' '}
-                <code className="rounded bg-gray-100 px-1 py-0.5 text-[11px]">{sanitizedPostSlug}</code>
+                <code className="rounded bg-gray-100 px-1 py-0.5 text-[11px] dark:bg-slate-800 dark:text-slate-200">{sanitizedPostSlug}</code>
               </p>
             )}
           </label>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
             Reihenfolge
             <input
               type="number"
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               value={orderIndex}
               onChange={(event) => setOrderIndex(event.target.value)}
             />
           </label>
 
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
             Veröffentlichungsdatum (optional)
             <input
               type="datetime-local"
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               value={publishedAt || ''}
               onChange={(event) => setPublishedAt(event.target.value)}
               disabled={!isPublished}
@@ -544,10 +544,10 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
           </label>
         </div>
 
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
           Auszug
           <textarea
-            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
             rows={3}
             value={excerpt}
             onChange={(event) => setExcerpt(event.target.value)}
@@ -555,10 +555,10 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
           />
         </label>
 
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
           Inhalt (Markdown)
           <textarea
-            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-mono focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-mono focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
             rows={12}
             value={content}
             onChange={(event) => setContent(event.target.value)}
@@ -566,10 +566,10 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
           />
         </label>
 
-        <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+        <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-slate-200">
           <input
             type="checkbox"
-            className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+            className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-900"
             checked={isPublished}
             onChange={(event) => setIsPublished(event.target.checked)}
           />
@@ -580,7 +580,7 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
           <button
             type="button"
             onClick={onCancel}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             Abbrechen
           </button>
@@ -632,18 +632,18 @@ const PostsPanel = ({ page, posts, onCreate, onEdit, onDelete, loading, error, o
   )
 
   return (
-    <div className="bg-white shadow-lg border border-gray-200 rounded-2xl p-6 space-y-6">
+    <div className="bg-white shadow-lg border border-gray-200 rounded-2xl p-6 space-y-6 dark:bg-slate-900 dark:border-slate-800">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-xl font-semibold text-gray-900">Beiträge für „{page.title}“</h3>
-          <p className="text-sm text-gray-600">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-slate-100">Beiträge für „{page.title}“</h3>
+          <p className="text-sm text-gray-600 dark:text-slate-300">
             {publishedCount} von {posts.length} Beiträgen veröffentlicht.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={onRefresh}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             disabled={loading}
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -670,9 +670,9 @@ const PostsPanel = ({ page, posts, onCreate, onEdit, onDelete, loading, error, o
       )}
 
       {loading && posts.length === 0 ? (
-        <div className="py-12 text-center text-gray-500">Beiträge werden geladen…</div>
+        <div className="py-12 text-center text-gray-500 dark:text-slate-400">Beiträge werden geladen…</div>
       ) : posts.length === 0 ? (
-        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-8 text-center text-gray-600">
+        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-8 text-center text-gray-600 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
           Noch keine Beiträge für diese Seite vorhanden.
         </div>
       ) : (
@@ -680,11 +680,11 @@ const PostsPanel = ({ page, posts, onCreate, onEdit, onDelete, loading, error, o
           {posts.map((post) => (
             <article
               key={post.id}
-              className="rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow duration-200"
+              className="rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow duration-200 dark:border-slate-800 dark:bg-slate-900"
             >
               <div className="px-5 py-5 space-y-4">
                 <header className="space-y-2">
-                  <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-slate-400">
                     {post.is_published ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-green-700 text-xs font-medium">
                         <Eye className="h-3.5 w-3.5" /> Veröffentlicht
@@ -704,22 +704,22 @@ const PostsPanel = ({ page, posts, onCreate, onEdit, onDelete, loading, error, o
                       <Layers className="h-4 w-4" /> Ordnung: {post.order_index ?? 0}
                     </span>
                   </div>
-                  <h4 className="text-lg font-semibold text-gray-900">{post.title}</h4>
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{post.title}</h4>
                   {post.excerpt && (
-                    <p className="text-sm text-gray-600 line-clamp-2">{post.excerpt}</p>
+                    <p className="text-sm text-gray-600 line-clamp-2 dark:text-slate-300">{post.excerpt}</p>
                   )}
                 </header>
 
-                <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-gray-100">
+                <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-gray-100 dark:border-slate-800">
                   <button
                     onClick={() => onEdit(post)}
-                    className="inline-flex items-center gap-2 rounded-lg border border-primary-100 px-3 py-1.5 text-sm text-primary-700 hover:bg-primary-50"
+                    className="inline-flex items-center gap-2 rounded-lg border border-primary-100 px-3 py-1.5 text-sm text-primary-700 hover:bg-primary-50 dark:border-primary-900/50 dark:text-primary-200 dark:hover:bg-primary-900/40"
                   >
                     <Edit className="h-4 w-4" /> Bearbeiten
                   </button>
                   <button
                     onClick={() => onDelete(post)}
-                    className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50"
+                    className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50 dark:border-red-900/40 dark:text-red-200 dark:hover:bg-red-900/30"
                   >
                     <Trash2 className="h-4 w-4" /> Löschen
                   </button>
@@ -1147,7 +1147,9 @@ const PageManager = () => {
                 <div
                   key={page.id}
                   className={`rounded-2xl border ${
-                    isSelected ? 'border-primary-300 bg-primary-50/60 shadow-lg' : 'border-gray-200 bg-white shadow-sm'
+                    isSelected
+                      ? 'border-primary-300 bg-primary-50/60 shadow-lg dark:border-primary-700 dark:bg-primary-900/40'
+                      : 'border-gray-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900'
                   } transition-shadow duration-200`}
                 >
                   <div className="px-5 py-5 space-y-4">
@@ -1167,15 +1169,15 @@ const PageManager = () => {
                           <Navigation className="h-3.5 w-3.5" /> Navigation
                         </span>
                       )}
-                      <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-gray-600">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-gray-600 dark:bg-slate-800 dark:text-slate-300">
                         <FileText className="h-3.5 w-3.5" /> /pages/{page.slug}
                       </span>
                     </div>
 
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{page.title}</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{page.title}</h3>
                       {page.description && (
-                        <p className="mt-1 text-sm text-gray-600 line-clamp-2">{page.description}</p>
+                        <p className="mt-1 text-sm text-gray-600 line-clamp-2 dark:text-slate-300">{page.description}</p>
                       )}
                     </div>
 
@@ -1184,21 +1186,21 @@ const PageManager = () => {
                         onClick={() => setSelectedPageId(page.id)}
                         className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm ${
                           isSelected
-                            ? 'border-primary-200 bg-primary-100 text-primary-800'
-                            : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                            ? 'border-primary-200 bg-primary-100 text-primary-800 dark:border-primary-600 dark:bg-primary-900/50 dark:text-primary-100'
+                            : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'
                         }`}
                       >
                         <Layers className="h-4 w-4" /> Beiträge ansehen
                       </button>
                       <button
                         onClick={() => handleEditPage(page)}
-                        className="inline-flex items-center gap-2 rounded-lg border border-primary-100 px-3 py-1.5 text-sm text-primary-700 hover:bg-primary-50"
+                        className="inline-flex items-center gap-2 rounded-lg border border-primary-100 px-3 py-1.5 text-sm text-primary-700 hover:bg-primary-50 dark:border-primary-900/50 dark:text-primary-200 dark:hover:bg-primary-900/40"
                       >
                         <Edit className="h-4 w-4" /> Bearbeiten
                       </button>
                       <button
                         onClick={() => handleDeletePage(page)}
-                        className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50"
+                        className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50 dark:border-red-900/40 dark:text-red-200 dark:hover:bg-red-900/30"
                       >
                         <Trash2 className="h-4 w-4" /> Löschen
                       </button>

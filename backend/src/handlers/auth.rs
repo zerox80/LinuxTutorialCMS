@@ -1,4 +1,4 @@
-use crate::{auth, db::DbPool, models::*};
+use crate::{auth, csrf, db::DbPool, models::*};
 use axum::{
     extract::State,
     http::{HeaderMap, StatusCode},
@@ -37,6 +37,20 @@ fn hash_login_identifier(username: &str) -> String {
 
 fn parse_rfc3339_opt(value: &Option<String>) -> Option<DateTime<Utc>> {
     value.as_ref().and_then(|timestamp| chrono::DateTime::parse_from_rfc3339(timestamp).ok()).map(|dt| dt.with_timezone(&Utc))
+}
+
+fn dummy_bcrypt_hash() -> &'static str {
+    static DUMMY_HASH: OnceLock<String> = OnceLock::new();
+
+    DUMMY_HASH.get_or_init(|| {
+        match bcrypt::hash("dummy", bcrypt::DEFAULT_COST) {
+            Ok(hash) => hash,
+            Err(err) => {
+                tracing::error!("Failed to generate dummy hash: {}", err);
+                "$2b$12$eImiTXuWVxfM37uY4JANjQPzMzXZjQDzqzQpMv0xoGrTplPPNaE3W".to_string()
+            }
+        }
+    })
 }
 
 // Input validation
@@ -158,17 +172,8 @@ pub async fn login(
     // Timing attack prevention: Always verify password even if user doesn't exist
     // Use a dummy hash that matches DEFAULT_COST to ensure consistent timing
     // This hash was generated with bcrypt::DEFAULT_COST for the password "dummy"
-    let dummy_hash = match bcrypt::hash("dummy", bcrypt::DEFAULT_COST) {
-        Ok(hash) => hash,
-        Err(err) => {
-            tracing::error!("Failed to generate dummy hash: {}", err);
-            // Fallback to cost-12 dummy hash to avoid panicking
-            "$2b$12$eImiTXuWVxfM37uY4JANjQPzMzXZjQDzqzQpMv0xoGrTplPPNaE3W".to_string()
-        }
-    };
-
-    let hash_to_verify_owned = user.as_ref().map(|u| u.password_hash.clone()).unwrap_or(dummy_hash);
-    let hash_to_verify = hash_to_verify_owned.as_str();
+    let hash_to_verify_owned = user.as_ref().map(|u| u.password_hash.clone());
+    let hash_to_verify = hash_to_verify_owned.as_deref().unwrap_or(dummy_bcrypt_hash());
     
     // Always perform verification regardless of whether user exists
     let verification_result = bcrypt::verify(&payload.password, hash_to_verify);
@@ -254,6 +259,18 @@ pub async fn login(
     let mut headers = HeaderMap::new();
     auth::append_auth_cookie(&mut headers, auth::build_auth_cookie(&token));
 
+    if let Ok(csrf_token) = csrf::issue_csrf_token(&user_record.username) {
+        csrf::append_csrf_cookie(&mut headers, &csrf_token);
+    } else {
+        tracing::error!("Failed to issue CSRF token for user {}", user_record.username);
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse {
+                error: "Failed to create token".to_string(),
+            }),
+        ));
+    }
+
     Ok((
         headers,
         Json(LoginResponse {
@@ -291,8 +308,12 @@ pub async fn me(
 /// # Returns
 ///
 /// An HTTP `204 No Content` response with a `Set-Cookie` header to clear the auth cookie.
-pub async fn logout() -> (StatusCode, HeaderMap) {
+pub async fn logout(
+    claims: auth::Claims,
+) -> (StatusCode, HeaderMap) {
     let mut headers = HeaderMap::new();
     auth::append_auth_cookie(&mut headers, auth::build_cookie_removal());
+    csrf::append_csrf_removal(&mut headers);
+    tracing::info!(user = %claims.sub, "User logged out");
     (StatusCode::NO_CONTENT, headers)
 }

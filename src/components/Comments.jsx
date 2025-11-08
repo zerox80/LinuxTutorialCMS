@@ -16,7 +16,8 @@ const Comments = ({ tutorialId }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const isAdmin = Boolean(user && user.role === 'admin');
 
   useEffect(() => {
     loadComments();
@@ -34,7 +35,7 @@ const Comments = ({ tutorialId }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!newComment.trim() || !isAuthenticated) return;
+    if (!newComment.trim() || !isAuthenticated || !isAdmin) return;
 
     setIsLoading(true);
     try {
@@ -49,6 +50,7 @@ const Comments = ({ tutorialId }) => {
   };
 
   const handleDelete = async (commentId) => {
+    if (!isAdmin) return;
     if (!confirm('Kommentar wirklich löschen?')) return;
 
     try {
@@ -67,7 +69,7 @@ const Comments = ({ tutorialId }) => {
       </h2>
 
       {/* Comment Form */}
-      {isAuthenticated && (
+      {isAdmin && (
         <form onSubmit={handleSubmit} className="mb-8">
           <textarea
             value={newComment}
@@ -101,6 +103,14 @@ const Comments = ({ tutorialId }) => {
         </div>
       )}
 
+      {isAuthenticated && !isAdmin && (
+        <div className="mb-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl text-center">
+          <p className="text-gray-600 dark:text-gray-400">
+            Nur Administratoren können Kommentare hinzufügen oder löschen.
+          </p>
+        </div>
+      )}
+
       {/* Comments List */}
       <div className="space-y-4">
         {comments.length === 0 ? (
@@ -122,7 +132,7 @@ const Comments = ({ tutorialId }) => {
                     {new Date(comment.created_at).toLocaleDateString('de-DE')}
                   </span>
                 </div>
-                {isAuthenticated && (
+                {isAdmin && (
                   <button
                     onClick={() => handleDelete(comment.id)}
                     className="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"

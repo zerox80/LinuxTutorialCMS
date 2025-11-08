@@ -1,4 +1,5 @@
 mod auth;
+mod csrf;
 mod db;
 mod handlers;
 mod models;
@@ -265,6 +266,10 @@ async fn main() {
     auth::init_jwt_secret().expect("Failed to initialize JWT secret");
     tracing::info!("JWT secret initialized successfully");
 
+    // Initialize CSRF secret
+    csrf::init_csrf_secret().expect("Failed to initialize CSRF secret");
+    tracing::info!("CSRF secret initialized successfully");
+
     // Initialize database
     let pool = db::create_pool().await.expect("Failed to create database pool");
 
@@ -322,7 +327,12 @@ async fn main() {
     // Login route with rate limiting
     let login_router = Router::new()
         .route("/api/auth/login", post(handlers::auth::login))
-        .route("/api/auth/logout", post(handlers::auth::logout))
+        .route(
+            "/api/auth/logout",
+            post(handlers::auth::logout)
+                .layer(middleware::from_extractor::<csrf::CsrfGuard>())
+                .layer(middleware::from_extractor::<auth::Claims>()),
+        )
         .layer(RequestBodyLimitLayer::new(LOGIN_BODY_LIMIT))
         .layer(GovernorLayer::new(rate_limit_config));
 
@@ -381,6 +391,7 @@ async fn main() {
             "/api/comments/{id}",
             delete(handlers::comments::delete_comment),
         )
+        .route_layer(middleware::from_extractor::<csrf::CsrfGuard>())
         .route_layer(middleware::from_extractor::<auth::Claims>())
         .layer(RequestBodyLimitLayer::new(ADMIN_BODY_LIMIT))
         .layer(GovernorLayer::new(admin_rate_limit_config.clone()));
