@@ -87,7 +87,7 @@ const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
             </ol>
           ),
           li: ({ node, children, ...props }) => (
-            <li className="leading-7 text-gray-700 dark:text-slate-200 marker:text-primary-600 dark:marker:text-primary-300" {...props}>
+            <li className="leading-7 text-gray-700 dark:text-slate-200 marker:text-primary-600 dark:marker:text-primary-300 break-words" {...props}>
               {children}
             </li>
           ),
@@ -145,7 +145,7 @@ const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
               <code
                 className={mergeClassNames(
                   className,
-                  'rounded-md bg-gray-100 dark:bg-slate-800/90 py-0.5 font-mono text-sm text-primary-700 dark:text-primary-300'
+                  'rounded-md bg-gray-100 dark:bg-slate-800/90 py-0.5 px-1.5 font-mono text-sm text-primary-700 dark:text-primary-300 whitespace-nowrap'
                 )}
                 {...props}
               >

@@ -210,7 +210,8 @@ pub fn build_cookie_removal() -> Cookie<'static> {
 /// Axum extractor for `Claims`.
 ///
 /// This allows handlers to easily require authentication by including `Claims` in their arguments.
-/// It extracts the token from the `Authorization` header or the auth cookie.
+/// It first checks if claims are already in request extensions (from auth_middleware),
+/// otherwise extracts the token from the `Authorization` header or the auth cookie.
 impl<S> FromRequestParts<S> for Claims
 where
     S: Send + Sync,
@@ -218,6 +219,12 @@ where
     type Rejection = (StatusCode, String);
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        // First check if claims are already in extensions (from auth_middleware)
+        if let Some(claims) = parts.extensions.get::<Claims>() {
+            return Ok(claims.clone());
+        }
+
+        // Otherwise, extract and verify token
         let token = extract_token(&parts.headers).ok_or_else(|| {
             (
                 StatusCode::UNAUTHORIZED,
@@ -349,4 +356,37 @@ fn parse_bearer_token(value: &str) -> Option<String> {
         return Some(token.trim().to_string());
     }
     None
+}
+
+/// Middleware that extracts JWT claims and inserts them into request extensions.
+///
+/// This allows other extractors (like CsrfGuard) to access the authenticated user's claims
+/// without re-parsing the JWT.
+///
+/// # Arguments
+///
+/// * `request` - The incoming request.
+/// * `next` - The next middleware/handler in the chain.
+///
+/// # Returns
+///
+/// The response, or a 401 error if authentication fails.
+pub async fn auth_middleware(
+    mut request: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> Result<axum::response::Response, (StatusCode, String)> {
+    let token = extract_token(request.headers()).ok_or_else(|| {
+        (
+            StatusCode::UNAUTHORIZED,
+            "Missing authentication token".to_string(),
+        )
+    })?;
+
+    let claims = verify_jwt(&token)
+        .map_err(|e| (StatusCode::UNAUTHORIZED, format!("Invalid token: {}", e)))?;
+
+    // Insert claims into request extensions so other extractors can access them
+    request.extensions_mut().insert(claims);
+
+    Ok(next.run(request).await)
 }

@@ -367,7 +367,7 @@ async fn main() {
             delete(handlers::comments::delete_comment),
         )
         .route_layer(middleware::from_extractor::<csrf::CsrfGuard>())
-        .route_layer(middleware::from_extractor::<auth::Claims>())
+        .route_layer(middleware::from_fn(auth::auth_middleware))
         .layer(RequestBodyLimitLayer::new(ADMIN_BODY_LIMIT))
         .layer(GovernorLayer::new(admin_rate_limit_config.clone()));
 
