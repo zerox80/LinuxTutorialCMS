@@ -361,74 +361,215 @@ impl TryFrom<Tutorial> for TutorialResponse {
     }
 }
 
+/// Error response model for standardized API error responses.
+///
+/// This struct provides a consistent format for all error responses returned by the API.
+/// It ensures clients receive structured error information that can be properly handled.
+///
+/// # Design Notes
+/// - Single `error` field for simplicity and consistency
+/// - Used throughout all handlers for error responses
+/// - Includes human-readable error messages for debugging
+/// - Compatible with JSON serialization
+///
+/// # Usage Example
+/// ```json
+/// {
+///   "error": "Tutorial not found: 123e4567-e89b-12d3-a456-426614174000"
+/// }
+/// ```
 #[derive(Debug, Serialize)]
 pub struct ErrorResponse {
-
-    /// Error message.
+    /// Human-readable error message describing what went wrong
     pub error: String,
 }
 
-/// Site content model representing a piece of content on the site.
+/// Site content model representing configurable content sections across the website.
+///
+/// This struct stores site-wide content that can be dynamically managed through the CMS.
+/// Examples include hero sections, footer content, navigation menus, and other reusable
+/// content blocks that appear throughout the site.
+///
+/// # Design Notes
+/// - `section` acts as a unique identifier for each content area
+/// - `content_json` stores flexible JSON data for complex content structures
+/// - Supports nested objects, arrays, and various content types
+/// - Updated timestamp enables caching and change detection
+///
+/// # Common Sections
+/// - "hero": Homepage hero section with title, subtitle, and CTAs
+/// - "footer": Footer content with links, copyright, and contact info
+/// - "navigation": Site navigation structure and menu items
+/// - "seo": Global SEO metadata and OpenGraph settings
+///
+/// # Fields
+/// - `section`: Unique identifier for the content section (e.g., "hero", "footer")
+/// - `content_json`: JSON string containing the flexible content structure
+/// - `updated_at`: ISO 8601 timestamp of last modification
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct SiteContent {
-
-    /// Section of the site where the content belongs.
+    /// Unique identifier for the content section (e.g., "hero", "footer", "navigation")
     pub section: String,
 
-    /// JSON content.
+    /// JSON string containing flexible content structure and data
     pub content_json: String,
 
-    /// Timestamp when the content was last updated.
+    /// ISO 8601 timestamp when the content was last updated
     pub updated_at: String,
 }
 
+/// Site content response model for API consumption.
+///
+/// This struct represents site content data returned to clients. It differs from the
+/// database model by having the content as a parsed JSON Value instead of a string.
+///
+/// # Design Notes
+/// - Content is deserialized from JSON string to Value for easier client consumption
+/// - Clients receive structured data they can directly use without additional parsing
+/// - Maintains the same structure as the database model for consistency
 #[derive(Debug, Serialize)]
 pub struct SiteContentResponse {
-
+    /// Unique identifier for the content section
     pub section: String,
 
+    /// Parsed JSON content as a serde_json::Value for direct client usage
     pub content: Value,
 
+    /// ISO 8601 timestamp when the content was last updated
     pub updated_at: String,
 }
 
+/// Site content list response for multiple content sections.
+///
+/// This struct wraps multiple site content items in a consistent API response format.
+/// Used when clients need to retrieve multiple content sections at once.
+///
+/// # Usage Example
+/// ```json
+/// {
+///   "items": [
+///     {
+///       "section": "hero",
+///       "content": { "title": "Welcome", "subtitle": "..." },
+///       "updated_at": "2024-01-15T10:30:00Z"
+///     },
+///     {
+///       "section": "footer",
+///       "content": { "copyright": "2024", "links": [...] },
+///       "updated_at": "2024-01-10T15:45:00Z"
+///     }
+///   ]
+/// }
+/// ```
 #[derive(Debug, Serialize)]
 pub struct SiteContentListResponse {
-
+    /// Array of site content items with parsed JSON data
     pub items: Vec<SiteContentResponse>,
 }
 
+/// Request payload for updating site content sections.
+///
+/// This struct represents the JSON payload sent to update existing site content.
+/// It allows for complete replacement of content sections with new JSON data.
+///
+/// # Design Notes
+/// - The entire content section is replaced, not merged
+/// - Content must be valid JSON that matches the expected structure
+/// - Used by PUT /api/content/{section} endpoint
+/// - Validation occurs at the handler level
+///
+/// # Usage Example
+/// ```json
+/// {
+///   "content": {
+///     "title": "Updated Hero Title",
+///     "subtitle": "New subtitle text",
+///     "callToAction": {
+///       "text": "Get Started",
+///       "url": "/tutorials"
+///     }
+///   }
+/// }
+/// ```
 #[derive(Debug, Deserialize)]
 pub struct UpdateSiteContentRequest {
-
+    /// JSON content that will completely replace the existing section content
     pub content: Value,
 }
 
+/// Site page model representing dynamic pages managed through the CMS.
+///
+/// This struct represents complete pages that can be created and managed through the
+/// content management system. Each page has customizable content, navigation settings,
+/// and flexible layout configuration through JSON structures.
+///
+/// # Design Notes
+/// - `slug` serves as the URL path and must be unique
+/// - `hero_json` and `layout_json` store flexible JSON for dynamic content
+/// - Navigation can be controlled through `show_in_nav` and `nav_label`
+/// - Publishing workflow with `is_published` flag
+/// - Ordering support for navigation menus
+///
+/// # Page Structure
+/// Pages consist of:
+/// 1. **Metadata**: ID, slug, title, description for SEO and identification
+/// 2. **Navigation**: Settings for appearance in site navigation
+/// 3. **Content**: Hero section and main layout stored as JSON
+/// 4. **Publishing**: Draft/published state with timestamps
+///
+/// # JSON Content Structure
+/// - `hero_json`: Contains hero section configuration (title, subtitle, background, CTAs)
+/// - `layout_json`: Contains main content layout (sections, components, styling)
+///
+/// # Fields
+/// - `id`: Unique identifier (UUID v4)
+/// - `slug`: URL-friendly path (e.g., "about", "contact", "blog")
+/// - `title`: Page title for browser tab and SEO
+/// - `description`: Meta description for search engines
+/// - `nav_label`: Optional custom navigation label (defaults to title)
+/// - `show_in_nav`: Whether page appears in navigation menus
+/// - `order_index`: Position in navigation (lower numbers appear first)
+/// - `is_published`: Whether page is publicly accessible
+/// - `hero_json`: JSON string containing hero section configuration
+/// - `layout_json`: JSON string containing main layout configuration
+/// - `created_at`: Page creation timestamp (ISO 8601)
+/// - `updated_at`: Last modification timestamp (ISO 8601)
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 pub struct SitePage {
-
+    /// Unique identifier for the page (UUID v4)
     pub id: String,
 
+    /// URL-friendly slug for page access (e.g., "about", "contact")
     pub slug: String,
 
+    /// Page title displayed in browser tab and headers
     pub title: String,
 
+    /// Meta description for SEO and search engine previews
     pub description: String,
 
+    /// Optional custom label for navigation menus (defaults to title)
     pub nav_label: Option<String>,
 
+    /// Whether this page should appear in site navigation
     pub show_in_nav: bool,
 
+    /// Position in navigation menus (lower numbers appear first)
     pub order_index: i64,
 
+    /// Whether page is publicly accessible (true) or draft (false)
     pub is_published: bool,
 
+    /// JSON string containing hero section configuration and content
     pub hero_json: String,
 
+    /// JSON string containing main layout configuration and content
     pub layout_json: String,
 
+    /// Page creation timestamp in ISO 8601 format
     pub created_at: String,
 
+    /// Last modification timestamp in ISO 8601 format
     pub updated_at: String,
 }
 

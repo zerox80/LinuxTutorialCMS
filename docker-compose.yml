@@ -1,102 +1,190 @@
+# Docker Compose Configuration for Linux Tutorial CMS
+#
+# This file defines the complete containerized deployment of the Linux Tutorial CMS.
+# It orchestrates three main services: Rust backend, React frontend, and Nginx reverse proxy.
+#
+# Architecture Overview:
+# 1. Backend (Rust + SQLite) - API server with authentication and content management
+# 2. Frontend (React + Vite) - Single-page application built for production
+# 3. Nginx (Alpine) - Reverse proxy for SSL termination and static content serving
+#
+# Network Flow:
+# User → Nginx (port 8489) → Frontend (port 80) or Backend (port 8080)
+#
+# Security Features:
+# - Internal Docker network for service communication
+# - Health checks for service monitoring
+# - Resource limits to prevent resource exhaustion
+# - Volume persistence for data and logs
+# - Proper secret management through environment variables
+#
+# Usage:
+# docker-compose up -d                    # Start all services
+# docker-compose logs -f                  # View all logs
+# docker-compose down                     # Stop and remove containers
+# docker-compose exec backend bash        # Access backend shell
+# docker-compose exec nginx nginx -s reload  # Reload Nginx configuration
+
+version: '3.8'
+
 services:
-  # Rust Backend
+  ##############################################################################
+  # Rust Backend Service
+  ##############################################################################
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: linux-tutorial-backend
     restart: unless-stopped
+
+    # Resource limits for stability and resource management
     deploy:
       resources:
         limits:
-          cpus: "1.0"
-          memory: 512M
+          cpus: "1.0"        # Maximum CPU cores
+          memory: 512M       # Maximum memory usage
         reservations:
-          cpus: "0.25"
-          memory: 256M
+          cpus: "0.25"       # Guaranteed CPU cores
+          memory: 256M       # Guaranteed memory
+
+    # Application configuration
     environment:
+      # Database configuration
       - DATABASE_URL=sqlite:/data/database.db
+
+      # Security secrets (REQUIRED - must be set in host environment)
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in environment}
       - CSRF_SECRET=${CSRF_SECRET:?CSRF_SECRET must be set in environment}
-      - RUST_LOG=${RUST_LOG:-info}
-      - PORT=8489
+      - LOGIN_ATTEMPT_SALT=${LOGIN_ATTEMPT_SALT:?LOGIN_ATTEMPT_SALT must be set in environment}
+
+      # Application settings
+      - RUST_LOG=${RUST_LOG:-info}                    # Log level (info, debug, warn, error)
+      - PORT=8489                                     # Internal port (within container)
       - FRONTEND_ORIGINS=${FRONTEND_ORIGINS:-http://localhost:8489}
+
+      # Administrator account (REQUIRED - must be set in host environment)
       - ADMIN_USERNAME=${ADMIN_USERNAME:?ADMIN_USERNAME must be set in environment}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set in environment}
-      - LOGIN_ATTEMPT_SALT=${LOGIN_ATTEMPT_SALT:?LOGIN_ATTEMPT_SALT must be set in environment}
-      - AUTH_COOKIE_SECURE=${AUTH_COOKIE_SECURE:-true}
+
+      # Security settings
+      - AUTH_COOKIE_SECURE=${AUTH_COOKIE_SECURE:-true}  # HTTPS-only cookies in production
+
+    # Data persistence
     volumes:
-      - backend-data:/data
+      - backend-data:/data    # Persistent database and uploaded files
+
+    # Network configuration
     networks:
       - app-network
+
+    # Health monitoring
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8489/api/health"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
+      interval: 30s          # Check every 30 seconds
+      timeout: 3s            # Timeout after 3 seconds
+      retries: 3             # Allow 3 consecutive failures
+      start_period: 10s      # Grace period on startup
 
-  # React Frontend
+  ##############################################################################
+  # React Frontend Service
+  ##############################################################################
   frontend:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: linux-tutorial-frontend
     restart: unless-stopped
+
+    # Resource limits (lightweight - serves static content only)
     deploy:
       resources:
         limits:
-          cpus: "0.5"
-          memory: 256M
+          cpus: "0.5"        # Maximum CPU cores
+          memory: 256M       # Maximum memory usage
         reservations:
-          cpus: "0.1"
-          memory: 128M
+          cpus: "0.1"        # Guaranteed CPU cores
+          memory: 128M       # Guaranteed memory
+
+    # Network configuration
     networks:
       - app-network
+
+    # Service dependencies
     depends_on:
       backend:
-        condition: service_healthy
+        condition: service_healthy  # Wait for backend to be healthy
 
-  # nginx Reverse Proxy (innerhalb Docker)
-  # NOTE: Backend uses internal port 8489, nginx exposes external port 80 (mapped to host 8489)
-  # To change the external port, modify "8489:80" below (e.g., "8080:80" for port 8080)
+  ##############################################################################
+  # Nginx Reverse Proxy Service
+  ##############################################################################
   nginx:
     image: nginx:alpine
     container_name: linux-tutorial-nginx
     restart: unless-stopped
+
+    # Port mapping: Host:Container
+    # To change external port, modify "8489:80" (e.g., "8080:80" for port 8080)
     ports:
-      - "8489:80"  # HostPort:ContainerPort
+      - "8489:80"  # External port 8489 maps to container port 80
+
+    # Configuration and logging
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - nginx-logs:/var/log/nginx
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro  # Nginx config (read-only)
+      - nginx-logs:/var/log/nginx                              # Access and error logs
+
+    # Network configuration
     networks:
       - app-network
+
+    # Service dependencies
     depends_on:
       backend:
-        condition: service_healthy
+        condition: service_healthy   # Wait for backend to be healthy
       frontend:
-        condition: service_started
+        condition: service_started   # Wait for frontend to start
+
+    # Resource limits (lightweight - reverse proxy only)
     deploy:
       resources:
         limits:
-          cpus: "0.5"
-          memory: 128M
+          cpus: "0.5"        # Maximum CPU cores
+          memory: 128M       # Maximum memory usage
         reservations:
-          cpus: "0.05"
-          memory: 64M
+          cpus: "0.05"       # Guaranteed CPU cores
+          memory: 64M        # Guaranteed memory
+
+    # Health monitoring
     healthcheck:
       test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost/api/health || exit 1"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 5s
+      interval: 30s          # Check every 30 seconds
+      timeout: 3s            # Timeout after 3 seconds
+      retries: 3             # Allow 3 consecutive failures
+      start_period: 5s       # Grace period on startup
 
+##############################################################################
+# Network Configuration
+##############################################################################
 networks:
   app-network:
     driver: bridge
+    # Bridge network allows containers to communicate using service names
+    # Backend accessible as: http://backend:8489
+    # Frontend accessible as: http://frontend:80
 
+##############################################################################
+# Volume Configuration
+##############################################################################
 volumes:
+  # Persistent data storage for backend
   backend-data:
     driver: local
+    # Stores SQLite database and any uploaded files
+    # Survives container restarts and recreation
+
+  # Nginx log storage
   nginx-logs:
     driver: local
+    # Stores access logs and error logs from Nginx
+    # Useful for monitoring and debugging
+    # Survives container restarts and recreation

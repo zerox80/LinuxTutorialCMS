@@ -1,5 +1,26 @@
 
 
+/**
+ * Authentication Handlers Module
+ *
+ * This module provides HTTP request handlers for user authentication operations.
+ * It handles login, logout, user profile management, and security features
+ * including rate limiting, brute force protection, and session management.
+ *
+ * Security Features:
+ * - Brute force protection with rate limiting and account blocking
+ * - Secure password hashing with bcrypt
+ * - Timing attack prevention for username enumeration
+ * - CSRF token generation for authenticated sessions
+ * - Login attempt tracking with salted hashing
+ *
+ * Rate Limiting:
+ * - Configurable failed login attempt thresholds
+ * - Temporary account blocking after excessive failures
+ * - Progressive blocking based on attempt count
+ * - Secure storage of attempt data with SHA256 hashing
+ */
+
 use crate::{auth, csrf, db::DbPool, models::*};
 use axum::{
     extract::State,
@@ -11,14 +32,46 @@ use sha2::{Digest, Sha256};
 use sqlx::{self, FromRow};
 use std::{env, sync::OnceLock, time::Duration};
 
+/// Database model for tracking login attempt statistics and account blocking.
+///
+/// This struct represents the login_attempts table record for a specific user.
+/// It tracks failed login attempts and temporary account blocks for security.
+///
+/// # Fields
+/// - `fail_count`: Number of consecutive failed login attempts
+/// - `blocked_until`: ISO 8601 timestamp when the account block expires (if blocked)
 #[derive(Debug, FromRow, Clone)]
 struct LoginAttempt {
-
+    /// Number of consecutive failed login attempts for this user
     fail_count: i64,
 
+    /// ISO 8601 timestamp when temporary block expires (None if not blocked)
     blocked_until: Option<String>,
 }
 
+/// Creates a secure hash for login attempt tracking to prevent username enumeration.
+///
+/// This function generates a SHA256 hash of the username combined with a secret salt.
+/// The hash is used as the primary key in the login_attempts table instead of the
+/// raw username to prevent attackers from discovering valid usernames through timing attacks.
+///
+/// # Security Features
+/// - Uses secret salt to prevent rainbow table attacks
+/// - Normalizes username to lowercase for consistent hashing
+/// - Prevents username enumeration through database analysis
+/// - SHA256 provides sufficient security for this use case
+///
+/// # Environment Variables
+/// - `LOGIN_ATTEMPT_SALT`: Required secret salt for hashing (must be high entropy)
+///
+/// # Arguments
+/// * `username` - The username to hash (will be trimmed and lowercased)
+///
+/// # Returns
+/// Hexadecimal SHA256 hash of salt + normalized username
+///
+/// # Panics
+/// Panics if LOGIN_ATTEMPT_SALT environment variable is not set
 fn hash_login_identifier(username: &str) -> String {
     static SALT: OnceLock<String> = OnceLock::new();
 

@@ -20,6 +20,7 @@
     "admin-panel"
   ],
   "type": "module",
+
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -41,6 +42,7 @@
     "docs:verify": "npm run docs:check && npm run docs:coverage",
     "docs:watch": "documentation serve src/ --watch --port 4000"
   },
+
   "dependencies": {
     "dompurify": "^3.2.2",
     "highlight.js": "^11.10.0",
@@ -63,6 +65,7 @@
     "remark-parse": "^11.0.0",
     "unist-util-visit": "^5.0.0"
   },
+
   "devDependencies": {
     "@playwright/test": "^1.49.1",
     "@tailwindcss/postcss": "^4.0.0",
