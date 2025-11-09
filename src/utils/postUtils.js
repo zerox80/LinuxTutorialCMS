@@ -19,16 +19,16 @@ const MOJIBAKE_REPLACEMENTS = [
   ['Ã¥', 'å'], // å - Latin small letter a with ring above
   ['Ã', 'Ø'], // Ø - Latin capital letter O with stroke
   ['Ã¸', 'ø'], // ø - Latin small letter o with stroke
-  ['â', '–'], // – - En dash
-  ['â', '—'], // — - Em dash
-  ['â', '„'], // „ - Double low-9 quotation mark
-  ['â', '"'], // " - Left double quotation mark
-  ['â', '"'], // " - Right double quotation mark
-  ['â', '''], // ' - Left single quotation mark
-  ['â', '''], // ' - Right single quotation mark
-  ['â¦', '…'], // … - Horizontal ellipsis
-  ['â¢', '•'], // • - Bullet
-  ['Â ', ' '], // Regular space (non-breaking space fix)
+  ['–', '–'], // – - En dash
+  ['—', '—'], // — - Em dash
+  ['„', '„'], // „ - Double low-9 quotation mark
+  ['"', '"'], // " - Left double quotation mark
+  ['"', '"'], // " - Right double quotation mark
+  ["'", "'"], // ' - Left single quotation mark
+  ["'", "'"], // ' - Right single quotation mark
+  ['…', '…'], // … - Horizontal ellipsis
+  ['•', '•'], // • - Bullet
+  [' ', ' '], // Regular space (non-breaking space fix)
   ['Â', ''], // Remove stray Â characters
   ['�', ''], // Remove replacement characters
 ]
