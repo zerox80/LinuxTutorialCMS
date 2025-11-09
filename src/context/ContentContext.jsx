@@ -950,7 +950,7 @@ ContentProvider.propTypes = {
  *
  *   return (
  *     <div>
- *       {/* Content editing form */}
+ *       // Content editing form here
  *       <button onClick={handleSave} disabled={isSaving}>
  *         {isSaving ? 'Saving...' : 'Save'}
  *       </button>

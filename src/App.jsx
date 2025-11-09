@@ -71,26 +71,26 @@ import AdminDashboard from './pages/AdminDashboard' // Admin control panel
 function App() {
   return (
     <ErrorBoundary>
-      {/* Global error boundary to catch rendering errors throughout the app */}
+      // Global error boundary to catch rendering errors throughout the app
       <HelmetProvider>
-        {/* Manages document head tags, meta information, and SEO */}
+        // Manages document head tags, meta information, and SEO
         <ThemeProvider>
-          {/* Provides theme switching (light/dark mode) functionality */}
+          // Provides theme switching (light/dark mode) functionality
           <Router>
-            {/* React Router for client-side navigation and route management */}
+            // React Router for client-side navigation and route management
             <AuthProvider>
-              {/* Handles user authentication, login/logout, and protected routes */}
+              // Handles user authentication, login/logout, and protected routes
               <ContentProvider>
-                {/* Manages CMS content, site metadata, and dynamic pages */}
+                // Manages CMS content, site metadata, and dynamic pages
                 <TutorialProvider>
-                  {/* Provides tutorial-specific state and CRUD operations */}
+                  // Provides tutorial-specific state and CRUD operations
                   <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 transition-colors">
                     <GlobalSiteMeta />
 
                     <Routes>
-                      {/* Public Routes */}
+                      // Public Routes
 
-                      {/* Home page - main landing page with hero and tutorial sections */}
+                      // Home page - main landing page with hero and tutorial sections
                       <Route
                         path="/"
                         element={
@@ -102,7 +102,7 @@ function App() {
                         }
                       />
 
-                      {/* Grundlagen page - Linux basics and fundamentals */}
+                      // Grundlagen page - Linux basics and fundamentals
                       <Route
                         path="/grundlagen"
                         element={
@@ -114,7 +114,7 @@ function App() {
                         }
                       />
 
-                      {/* Tutorial detail page - individual tutorial view with content */}
+                      // Tutorial detail page - individual tutorial view with content
                       <Route
                         path="/tutorials/:id"
                         element={
@@ -126,7 +126,7 @@ function App() {
                         }
                       />
 
-                      {/* Post detail page - individual blog post/article view */}
+                      // Post detail page - individual blog post/article view
                       <Route
                         path="/pages/:pageSlug/posts/:postSlug"
                         element={
@@ -138,7 +138,7 @@ function App() {
                         }
                       />
 
-                      {/* Dynamic page - CMS-driven pages with customizable content */}
+                      // Dynamic page - CMS-driven pages with customizable content
                       <Route
                         path="/pages/:slug"
                         element={
@@ -150,12 +150,12 @@ function App() {
                         }
                       />
 
-                      {/* Login page - user authentication */}
+                      // Login page - user authentication
                       <Route path="/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
 
-                      {/* Protected Routes */}
+                      // Protected Routes
 
-                      {/* Admin dashboard - requires authentication, manages content */}
+                      // Admin dashboard - requires authentication, manages content
                       <Route
                         path="/admin"
                         element={
@@ -167,7 +167,7 @@ function App() {
                         }
                       />
 
-                      {/* Fallback Route - catches all unmatched paths */}
+                      // Fallback Route - catches all unmatched paths
                       <Route
                         path="*"
                         element={
