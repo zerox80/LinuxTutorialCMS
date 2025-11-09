@@ -204,8 +204,6 @@ pub async fn get_site_content(
     Ok(Json(map_record(record)?))
 }
 
--
-
 pub async fn update_site_content(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,

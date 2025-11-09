@@ -232,7 +232,7 @@ pub async fn get_site_page_by_slug(
 pub async fn create_site_page(
     pool: &DbPool,
     page: crate::models::CreateSitePageRequest,
-) -> Result<crate::models::SitePage>, sqlx::Error> {
+) -> Result<crate::models::SitePage, sqlx::Error> {
 
     validate_slug(&page.slug)?;
 
