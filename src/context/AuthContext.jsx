@@ -1,15 +1,56 @@
 import { createContext, useContext, useState, useEffect } from "react"
+import PropTypes from "prop-types"
 import { api } from "../api/client"
 
 const AuthContext = createContext(null)
 
 /**
- * Provides authentication state and functions to its children components.
- * Manages user authentication status, user data, login, and logout operations.
+ * Authentication context provider for managing user authentication state and operations.
  *
- * @param {object} props - The component props.
- * @param {React.ReactNode} props.children - The child components that need access to the auth context.
- * @returns {JSX.Element} The AuthContext provider.
+ * This context provider offers comprehensive authentication functionality including:
+ * - Automatic authentication verification on app initialization
+ * - Secure login/logout operations with token management
+ * - User session persistence and state management
+ * - Loading and error state handling
+ * - Automatic cleanup and memory leak prevention
+ * - Token-based authentication with proper storage
+ *
+ * The provider integrates with the API client to handle all authentication
+ * requests and maintains state across the entire application.
+ *
+ * @example
+ * ```jsx
+ * // Wrap your application with the AuthProvider
+ * function App() {
+ *   return (
+ *     <AuthProvider>
+ *       <Router>
+ *         <Routes>
+ *           <Route path="/admin" element={
+ *             <ProtectedRoute>
+ *               <AdminDashboard />
+ *             </ProtectedRoute>
+ *           } />
+ *         </Routes>
+ *       </Router>
+ *     </AuthProvider>
+ *   );
+ * }
+ *
+ * // Use authentication in components
+ * function LoginComponent() {
+ *   const { login, loading, error } = useAuth();
+ *   // ... component logic
+ * }
+ * ```
+ *
+ * @component
+ * @param {object} props - Component props.
+ * @param {React.ReactNode} props.children - Child components that need access to auth state.
+ * @returns {JSX.Element} AuthContext provider wrapping children with authentication functionality.
+ *
+ * @since 1.0.0
+ * @version 1.0.0
  */
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -110,11 +151,59 @@ export const AuthProvider = ({ children }) => {
   )
 }
 
+AuthProvider.propTypes = {
+  /** React node(s) that will have access to the authentication context */
+  children: PropTypes.node.isRequired,
+}
+
 /**
- * Custom hook to access the authentication context.
+ * Custom hook to access the authentication context throughout the application.
  *
- * @returns {object} The authentication context value, including `isAuthenticated`, `user`, `login`, `logout`, `loading`, and `error`.
- * @throws {Error} If used outside of an `AuthProvider`.
+ * This hook provides easy access to all authentication functionality including:
+ * - Current authentication status
+ * - User information and profile data
+ * - Login and logout operations
+ * - Loading and error states
+ *
+ * Must be used within a component wrapped by AuthProvider.
+ *
+ * @example
+ * ```jsx
+ * // Check authentication status
+ * function ProtectedComponent() {
+ *   const { isAuthenticated, user, loading } = useAuth();
+ *
+ *   if (loading) return <Spinner />;
+ *   if (!isAuthenticated) return <LoginPrompt />;
+ *
+ *   return <div>Welcome, {user.username}!</div>;
+ * }
+ *
+ * // Handle login
+ * function LoginForm() {
+ *   const { login, error, loading } = useAuth();
+ *
+ *   const handleSubmit = async (credentials) => {
+ *     const result = await login(credentials.username, credentials.password);
+ *     if (!result.success) {
+ *       // Handle login error
+ *     }
+ *   };
+ * }
+ * ```
+ *
+ * @returns {object} Authentication context value containing:
+ *                  - isAuthenticated {boolean}: Current authentication status
+ *                  - user {object|null}: Current user data or null if not authenticated
+ *                  - login {Function}: Login function accepting (username, password)
+ *                  - logout {Function}: Logout function to end current session
+ *                  - loading {boolean}: Loading state for async operations
+ *                  - error {string|null}: Error message or null if no error
+ *
+ * @throws {Error} If used outside of an AuthProvider wrapper component.
+ *
+ * @since 1.0.0
+ * @version 1.0.0
  */
 export const useAuth = () => {
   const context = useContext(AuthContext)

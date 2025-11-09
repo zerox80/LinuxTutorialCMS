@@ -1,9 +1,36 @@
 import { Component } from 'react'
+import PropTypes from 'prop-types'
 import { AlertCircle, RefreshCw } from 'lucide-react'
 
 /**
- * A React component that catches JavaScript errors anywhere in its child component tree,
- * logs those errors, and displays a fallback UI instead of the component tree that crashed.
+ * React Error Boundary component that catches JavaScript errors in its child component tree.
+ *
+ * This class component provides error recovery for the entire application by:
+ * - Intercepting JavaScript errors thrown by any descendant component
+ * - Logging detailed error information for debugging
+ * - Displaying a user-friendly fallback UI instead of the crashed component tree
+ * - Providing recovery options to reset the application state
+ * - Gracefully handling navigation back to safety
+ *
+ * The ErrorBoundary should wrap the entire application or major sections
+ * to prevent complete application crashes and provide better user experience.
+ *
+ * @example
+ * ```jsx
+ * // Wrap the entire application
+ * <ErrorBoundary>
+ *   <App />
+ * </ErrorBoundary>
+ *
+ * // Wrap specific sections
+ * <ErrorBoundary>
+ *   <ComplexComponent />
+ * </ErrorBoundary>
+ * ```
+ *
+ * @extends React.Component
+ * @since 1.0.0
+ * @version 1.0.0
  */
 class ErrorBoundary extends Component {
   /**
@@ -99,6 +126,15 @@ class ErrorBoundary extends Component {
 
     return this.props.children
   }
+}
+
+ErrorBoundary.propTypes = {
+  /** React node(s) to be wrapped by the error boundary */
+  children: PropTypes.node.isRequired,
+}
+
+ErrorBoundary.defaultProps = {
+  children: null,
 }
 
 export default ErrorBoundary

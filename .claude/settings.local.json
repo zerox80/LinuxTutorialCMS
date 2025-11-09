@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

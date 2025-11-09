@@ -36,10 +36,46 @@ const resolveContactFallbackIcon = (contact) => {
 }
 
 /**
- * Renders the site-wide footer.
- * The footer displays branding, quick links, contact information, and a copyright notice.
- * Content is dynamically sourced from the `ContentContext`.
- * @returns {JSX.Element} The rendered footer component.
+ * Site-wide footer component with dynamic content management and secure navigation.
+ *
+ * This comprehensive footer component provides:
+ * - Dynamic branding with configurable icons and descriptions
+ * - Smart navigation links supporting multiple target types (routes, sections, external)
+ * - Secure contact links with automatic icon resolution and URL validation
+ * - Responsive layout that adapts to mobile and desktop screens
+ * - Internationalization-ready structure with German labels
+ * - Integration with ContentContext for CMS-managed content
+ * - Security features including URL sanitization and safe external linking
+ *
+ * The footer automatically resolves navigation targets, validates external URLs,
+ * and provides fallback content when CMS data is not available.
+ *
+ * @example
+ * ```jsx
+ * // Basic usage - content automatically loaded from CMS
+ * function App() {
+ *   return (
+ *     <div>
+ *       <main>Your content here</main>
+ *       <Footer />
+ *     </div>
+ *   );
+ * }
+ *
+ * // Footer will display content from the CMS 'footer' section including:
+ * // - Brand information (title, description, icon)
+ * // - Quick navigation links
+ * // - Contact information with automatic icons
+ * // - Copyright and signature text
+ * ```
+ *
+ * @component
+ * @returns {JSX.Element} A fully rendered footer with branding, navigation,
+ *                          contact links, and copyright information. Features
+ *                          responsive design and security measures.
+ *
+ * @since 1.0.0
+ * @version 1.0.0
  */
 const Footer = () => {
   const { getSection, navigation } = useContent()

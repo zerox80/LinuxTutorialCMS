@@ -25,6 +25,7 @@ fn allowed_sections() -> &'static HashSet<&'static str> {
             "header",
             "footer",
             "grundlagen_page",
+            "site_meta",
         ]
         .into_iter()
         .collect()

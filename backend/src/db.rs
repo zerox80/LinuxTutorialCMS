@@ -1142,7 +1142,9 @@ fn default_site_content() -> Vec<(&'static str, serde_json::Value)> {
             "tutorial_section",
             json!({
                 "title": "Tutorial Inhalte",
-                "description": "Umfassende Lernmodule für alle Erfahrungsstufen - vom Anfänger bis zum Profi",
+                "description": "Umfassende Lernmodule für alle Erfahrungsstufen – vom Anfänger bis zum Profi",
+                "heading": "Bereit anzufangen?",
+                "ctaDescription": "Wähle ein Thema aus und starte deine Linux-Lernreise noch heute!",
                 "ctaPrimary": {
                     "label": "Tutorial starten",
                     "target": { "type": "section", "value": "home" }
@@ -1151,8 +1153,15 @@ fn default_site_content() -> Vec<(&'static str, serde_json::Value)> {
                     "label": "Mehr erfahren",
                     "target": { "type": "section", "value": "home" }
                 },
-                "ctaDescription": "Wähle ein Thema aus und starte deine Linux-Lernreise noch heute!"
-            }),
+                "tutorialCardButton": "Zum Tutorial"
+            })
+        ),
+        (
+            "site_meta",
+            json!({
+                "title": "Linux Tutorial - Lerne Linux Schritt für Schritt",
+                "description": "Lerne Linux von Grund auf - Interaktiv, modern und praxisnah."
+            })
         ),
         (
             "header",

@@ -1,14 +1,49 @@
 import { Navigate } from 'react-router-dom'
+import PropTypes from 'prop-types'
 import { useAuth } from '../context/AuthContext'
 
 /**
- * A component that protects a route from unauthenticated access.
- * If the user is not authenticated, they are redirected to the login page.
- * It also displays a loading indicator while the authentication status is being determined.
+ * Authentication guard component that protects routes from unauthenticated access.
  *
- * @param {object} props - The component props.
- * @param {React.ReactNode} props.children - The child components to render if the user is authenticated.
- * @returns {JSX.Element | null} The child components or a redirect.
+ * This component serves as a security wrapper for authenticated routes by:
+ * - Verifying user authentication status using the AuthContext
+ * - Redirecting unauthenticated users to the login page
+ * - Displaying a loading state during authentication verification
+ * - Preventing access to sensitive application areas
+ *
+ * This is essential for protecting admin routes, user dashboards, and any
+ * pages that require authentication before access.
+ *
+ * @example
+ * ```jsx
+ * // Protect admin routes
+ * <ProtectedRoute>
+ *   <AdminDashboard />
+ * </ProtectedRoute>
+ *
+ * // Protect user-specific routes
+ * <ProtectedRoute>
+ *   <UserProfile />
+ * </ProtectedRoute>
+ *
+ * // In router configuration
+ * <Route
+ *   path="/admin/*"
+ *   element={
+ *     <ProtectedRoute>
+ *       <AdminRoutes />
+ *     </ProtectedRoute>
+ *   }
+ * />
+ * ```
+ *
+ * @component
+ * @param {object} props - Component props.
+ * @param {React.ReactNode} props.children - The child components/routes to render if authenticated.
+ * @returns {JSX.Element | null} Loading indicator during auth check, redirect if unauthenticated, or children if authenticated.
+ *
+ * @since 1.0.0
+ * @version 1.0.0
  */
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
@@ -29,6 +64,11 @@ const ProtectedRoute = ({ children }) => {
   }
 
   return children
+}
+
+ProtectedRoute.propTypes = {
+  /** React node(s) to render when user is authenticated */
+  children: PropTypes.node.isRequired,
 }
 
 export default ProtectedRoute

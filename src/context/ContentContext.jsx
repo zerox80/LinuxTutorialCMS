@@ -189,11 +189,61 @@ export const CONTENT_SECTIONS = Object.keys(DEFAULT_CONTENT)
  * @returns {JSX.Element} The ContentContext provider.
  */
 /**
- * Supplies site copy, navigation metadata, and mutation helpers to all descendants.
+ * Content management context provider for handling all site content and navigation data.
  *
+ * This comprehensive context provider manages:
+ * - Static site content (hero sections, headers, footers, metadata)
+ * - Dynamic navigation generation from CMS pages
+ * - Published pages management with caching
+ * - Real-time content updates and synchronization
+ * - Page caching for improved performance
+ * - Loading and error state management
+ * - Content section updates with optimistic UI
+ *
+ * The provider integrates with the backend API to provide a complete
+ * content management system for the Linux Tutorial CMS.
+ *
+ * @example
+ * ```jsx
+ * // Wrap your application with the ContentProvider
+ * function App() {
+ *   return (
+ *     <AuthProvider>
+ *       <ContentProvider>
+ *         <TutorialProvider>
+ *           <Router>
+ *             <AppRoutes />
+ *           </Router>
+ *         </TutorialProvider>
+ *       </ContentProvider>
+ *     </AuthProvider>
+ *   );
+ * }
+ *
+ * // Use content in components
+ * function Header() {
+ *   const { content, navigation } = useContent();
+ *   return (
+ *     <header>
+ *       <nav>
+ *         {navigation.items.map(item => (
+ *           <Link key={item.id} to={item.path}>
+ *             {item.label}
+ *           </Link>
+ *         ))}
+ *       </nav>
+ *     </header>
+ *   );
+ * }
+ * ```
+ *
+ * @component
  * @param {object} props - Component props.
  * @param {React.ReactNode} props.children - React nodes that consume the content context.
  * @returns {JSX.Element} Provider element that shares content state and helpers.
+ *
+ * @since 1.0.0
+ * @version 1.0.0
  */
 export const ContentProvider = ({ children }) => {
   const [content, setContent] = useState(DEFAULT_CONTENT)
@@ -473,10 +523,76 @@ ContentProvider.propTypes = {
 }
 
 /**
- * Custom hook to access the content context.
+ * Custom hook for accessing content management functionality throughout the application.
  *
- * @returns {object} Content state, navigation helpers, and mutation utilities.
- * @throws {Error} Thrown when called outside of a `ContentProvider`.
+ * This hook provides comprehensive access to:
+ * - Site content sections (hero, header, footer, metadata)
+ * - Dynamic navigation management and data
+ * - Published pages with caching system
+ * - Content mutation operations
+ * - Loading and error states
+ *
+ * @example
+ * ```jsx
+ * // Access content sections
+ * function HeroSection() {
+ *   const { content, getSection, loading } = useContent();
+ *   const heroContent = getSection('hero');
+ *
+ *   if (loading) return <Spinner />;
+ *   return (
+ *     <section>
+ *       <h1>{heroContent.title.line1}</h1>
+ *       <h2>{heroContent.title.line2}</h2>
+ *       <p>{heroContent.subtitle}</p>
+ *     </section>
+ *   );
+ * }
+ *
+ * // Access navigation data
+ * function Navigation() {
+ *   const { navigation } = useContent();
+ *   return (
+ *     <nav>
+ *       {navigation.items.map(item => (
+ *         <Link key={item.id} to={item.path}>
+ *           {item.label}
+ *         </Link>
+ *       ))}
+ *     </nav>
+ *   );
+ * }
+ *
+ * // Manage pages
+ * function PageList() {
+ *   const { pages } = useContent();
+ *   return (
+ *     <ul>
+ *       {pages.publishedSlugs.map(slug => (
+ *         <li key={slug}>{slug}</li>
+ *       ))}
+ *     </ul>
+ *   );
+ * }
+ * ```
+ *
+ * @returns {object} Content context value containing:
+ *                  - content {object}: All site content sections
+ *                  - loading {boolean}: Content loading state
+ *                  - error {Error|null}: Content loading error
+ *                  - refreshContent {Function}: Function to reload content
+ *                  - getSection {Function}: Function to get specific section content
+ *                  - getDefaultSection {Function}: Function to get default section content
+ *                  - getSiteMeta {Function}: Function to get site metadata
+ *                  - updateSection {Function}: Function to update a content section
+ *                  - savingSections {object}: Currently saving sections state
+ *                  - navigation {object}: Navigation data and helpers
+ *                  - pages {object}: Pages management with caching
+ *
+ * @throws {Error} If used outside of a ContentProvider wrapper component.
+ *
+ * @since 1.0.0
+ * @version 1.0.0
  */
 export const useContent = () => {
   const ctx = useContext(ContentContext)

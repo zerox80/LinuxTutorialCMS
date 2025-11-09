@@ -490,9 +490,42 @@ SectionPreview.propTypes = {
 }
 
 /**
- * CMS workspace for editing hero, header, footer, and grundlagen sections with live previews.
+ * Comprehensive CMS workspace for editing all site content sections with live previews.
  *
- * @returns {JSX.Element} Editor layout that lets admins select a section, tweak JSON, and save changes.
+ * This component provides a user-friendly interface for administrators to manage
+ * various sections of the website including hero content, navigation, footer,
+ * tutorials, and site metadata. It features:
+ *
+ * - Section selection grid for choosing content areas
+ * - JSON editor with syntax validation and schema hints
+ * - Live preview panels for supported sections
+ * - Structured form inputs for complex content types
+ * - Real-time change tracking and validation
+ * - Auto-save functionality with loading states
+ * - Error handling and user feedback
+ *
+ * Supported sections include:
+ * - hero: Landing page hero section with title, subtitle, and features
+ * - tutorial_section: Tutorial listing configuration
+ * - header: Navigation and header content
+ * - footer: Footer links and information
+ * - grundlagen_page: Linux basics page content
+ * - site_meta: Global site title and SEO metadata
+ *
+ * @component
+ * @example
+ * ```jsx
+ * // Usage in admin dashboard
+ * <SiteContentEditor />
+ * ```
+ *
+ * @returns {JSX.Element} A comprehensive editor interface with section selection,
+ *                          JSON editing, live preview, and save functionality.
+ *                          The layout is responsive and includes proper error
+ *                          handling and loading states.
+ *
+ * @since 1.0.0
+ * @version 1.0.0
  */
 const SiteContentEditor = () => {
   const {

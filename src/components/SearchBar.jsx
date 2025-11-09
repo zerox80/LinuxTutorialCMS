@@ -5,12 +5,46 @@ import PropTypes from 'prop-types';
 import { api } from '../api/client';
 
 /**
- * A modal search bar component for searching tutorials.
- * It features a live search input, topic filtering, and displays a list of results.
+ * Modal search interface for discovering tutorials with live search and topic filtering.
  *
- * @param {object} props - The component props.
- * @param {Function} [props.onClose] - A callback function to close the search bar modal.
- * @returns {JSX.Element} The rendered search bar component.
+ * This component provides a comprehensive search experience featuring:
+ * - Real-time tutorial search with debounced API calls
+ * - Dynamic topic-based filtering from available tutorial categories
+ * - Responsive modal overlay with keyboard navigation support
+ * - Loading states and empty state handling
+ * - Auto-focus management for better UX
+ * - Result navigation to tutorial detail pages
+ *
+ * The search bar integrates with the backend API to provide fast, relevant
+ * search results across all available tutorials and their metadata.
+ *
+ * @example
+ * ```jsx
+ * // Basic usage
+ * <SearchBar onClose={() => setShowSearch(false)} />
+ *
+ * // As part of a header component
+ * function Header() {
+ *   const [showSearch, setShowSearch] = useState(false);
+ *
+ *   return (
+ *     <>
+ *       <button onClick={() => setShowSearch(true)}>
+ *         Search
+ *       </button>
+ *       {showSearch && <SearchBar onClose={() => setShowSearch(false)} />}
+ *     </>
+ *   );
+ * }
+ * ```
+ *
+ * @component
+ * @param {object} props - Component props.
+ * @param {Function} [props.onClose] - Callback function to close the search modal.
+ * @returns {JSX.Element} A full-screen modal with search input, topic filters, and results display.
+ *
+ * @since 1.0.0
+ * @version 1.0.0
  */
 const SearchBar = ({ onClose }) => {
   const [query, setQuery] = useState('');

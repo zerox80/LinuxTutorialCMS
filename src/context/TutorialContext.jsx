@@ -1,16 +1,71 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import PropTypes from 'prop-types'
 import { api } from '../api/client'
 import { getIconComponent as getIconComponentFromMap } from '../utils/iconMap'
 
 const TutorialContext = createContext(null)
 
 /**
- * Provides tutorial data and management functions to its children components.
- * It handles fetching, creating, updating, and deleting tutorials.
+ * Tutorial management context provider for handling all tutorial-related operations.
  *
- * @param {object} props - The component props.
- * @param {React.ReactNode} props.children - The child components that need access to the tutorial context.
- * @returns {JSX.Element} The TutorialContext provider.
+ * This comprehensive context provider manages:
+ * - Tutorial data fetching with automatic retry logic
+ * - Full CRUD operations (Create, Read, Update, Delete)
+ * - Local state synchronization with API changes
+ * - Error handling and loading states
+ * - Icon component mapping for UI components
+ * - Optimistic updates for better user experience
+ * - Data validation and sanitization
+ *
+ * The provider implements robust error handling with retry mechanisms
+ * for server errors and provides comprehensive data management for
+ * the Linux Tutorial platform's educational content.
+ *
+ * @example
+ * ```jsx
+ * // Wrap your application with the TutorialProvider
+ * function App() {
+ *   return (
+ *     <AuthProvider>
+ *       <ContentProvider>
+ *         <TutorialProvider>
+ *           <Router>
+ *             <AppRoutes />
+ *           </Router>
+ *         </TutorialProvider>
+ *       </ContentProvider>
+ *     </AuthProvider>
+ *   );
+ * }
+ *
+ * // Use tutorials in components
+ * function TutorialList() {
+ *   const { tutorials, loading, error, getIconComponent } = useTutorials();
+ *
+ *   if (loading) return <Spinner />;
+ *   if (error) return <ErrorMessage error={error} />;
+ *
+ *   return (
+ *     <div>
+ *       {tutorials.map(tutorial => (
+ *         <TutorialCard
+ *           key={tutorial.id}
+ *           tutorial={tutorial}
+ *           Icon={getIconComponent(tutorial.icon)}
+ *         />
+ *       ))}
+ *     </div>
+ *   );
+ * }
+ * ```
+ *
+ * @component
+ * @param {object} props - Component props.
+ * @param {React.ReactNode} props.children - Child components that need access to tutorial data and operations.
+ * @returns {JSX.Element} TutorialContext provider with comprehensive tutorial management capabilities.
+ *
+ * @since 1.0.0
+ * @version 1.0.0
  */
 export const TutorialProvider = ({ children }) => {
   const [tutorials, setTutorials] = useState([])
@@ -233,11 +288,85 @@ export const TutorialProvider = ({ children }) => {
   )
 }
 
+TutorialProvider.propTypes = {
+  /** React node(s) that will have access to the tutorial context */
+  children: PropTypes.node.isRequired,
+}
+
 /**
- * Custom hook to access the tutorial context.
+ * Custom hook for accessing tutorial management functionality throughout the application.
  *
- * @returns {object} The tutorial context value with tutorials, loading state, errors, and CRUD helpers.
- * @throws {Error} Thrown when the hook is used outside of a `TutorialProvider`.
+ * This hook provides comprehensive access to:
+ * - Tutorial data array and loading states
+ * - Full CRUD operations for tutorials
+ * - Icon component mapping utilities
+ * - Error handling and state management
+ * - Data refresh capabilities
+ *
+ * @example
+ * ```jsx
+ * // Tutorial list component
+ * function TutorialList() {
+ *   const { tutorials, loading, error } = useTutorials();
+ *
+ *   if (loading) return <Spinner />;
+ *   if (error) return <ErrorMessage error={error} />;
+ *
+ *   return (
+ *     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+ *       {tutorials.map(tutorial => (
+ *         <TutorialCard key={tutorial.id} tutorial={tutorial} />
+ *       ))}
+ *     </div>
+ *   );
+ * }
+ *
+ * // Tutorial creation component
+ * function CreateTutorial() {
+ *   const { addTutorial, refreshTutorials } = useTutorials();
+ *
+ *   const handleSubmit = async (tutorialData) => {
+ *     try {
+ *       await addTutorial(tutorialData);
+ *       await refreshTutorials(); // Ensure fresh data
+ *     } catch (error) {
+ *       // Handle error
+ *     }
+ *   };
+ * }
+ *
+ * // Tutorial detail component
+ * function TutorialDetail({ tutorialId }) {
+ *   const { getTutorial, getIconComponent, updateTutorial } = useTutorials();
+ *   const tutorial = getTutorial(tutorialId);
+ *   const IconComponent = getIconComponent(tutorial?.icon);
+ *
+ *   return (
+ *     <div>
+ *       <div className="flex items-center gap-2">
+ *         <IconComponent className="w-6 h-6" />
+ *         <h1>{tutorial.title}</h1>
+ *       </div>
+ *     </div>
+ *   );
+ * }
+ * ```
+ *
+ * @returns {object} Tutorial context value containing:
+ *                  - tutorials {Array}: Array of tutorial objects
+ *                  - loading {boolean}: Loading state for tutorial operations
+ *                  - error {Error|null}: Error state for tutorial operations
+ *                  - addTutorial {Function}: Function to create a new tutorial
+ *                  - updateTutorial {Function}: Function to update an existing tutorial
+ *                  - deleteTutorial {Function}: Function to delete a tutorial
+ *                  - getTutorial {Function}: Function to get tutorial by ID
+ *                  - getIconComponent {Function}: Function to get icon component by name
+ *                  - refreshTutorials {Function}: Function to reload tutorial data
+ *
+ * @throws {Error} If used outside of a TutorialProvider wrapper component.
+ *
+ * @since 1.0.0
+ * @version 1.0.0
  */
 export const useTutorials = () => {
   const context = useContext(TutorialContext)

@@ -28,10 +28,39 @@ import SiteContentEditor from '../components/SiteContentEditor' // Static site c
 import PageManager from '../components/PageManager'         // Dynamic page and post management
 
 /**
- * Renders the admin dashboard, which provides a user interface for managing tutorials,
- * site content, and dynamic pages. It includes a tabbed interface to switch between
- * different management sections.
- * @returns {JSX.Element} The rendered admin dashboard page.
+ * Comprehensive admin dashboard interface for managing all aspects of the CMS.
+ *
+ * This component provides a full-featured administrative interface with:
+ * - Tutorial management: Create, edit, delete tutorials with rich content support
+ * - Content management: Edit static site content through a visual editor
+ * - Page management: Manage dynamic pages and blog posts
+ * - User authentication: Secure admin area with proper access controls
+ * - Modal forms: Elegant forms for tutorial creation and editing
+ * - Error handling: Comprehensive error states and user feedback
+ * - Loading states: Proper loading indicators for all async operations
+ * - Keyboard navigation: Full keyboard accessibility support (ESC, tab navigation)
+ * - Responsive design: Works seamlessly on desktop and mobile devices
+ *
+ * The dashboard uses a tabbed interface to organize different administrative
+ * functions and integrates with all major context providers for state management.
+ *
+ * @example
+ * ```jsx
+ * // Protected route wrapper for admin access
+ * <Route path="/admin/*" element={
+ *   <ProtectedRoute>
+ *     <AdminDashboard />
+ *   </ProtectedRoute>
+ * } />
+ * ```
+ *
+ * @component
+ * @returns {JSX.Element} A complete admin dashboard with tabbed interface,
+ *                          modal forms, error handling, and full CRUD operations
+ *                          for tutorials, content, and pages management.
+ *
+ * @since 1.0.0
+ * @version 1.0.0
  */
 const AdminDashboard = () => {
   // === STATE MANAGEMENT ===

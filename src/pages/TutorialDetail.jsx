@@ -6,10 +6,32 @@ import { api } from '../api/client'
 import MarkdownRenderer from '../components/MarkdownRenderer'
 
 /**
- * Renders the detailed view of a single tutorial.
- * It fetches the tutorial content based on the ID from the URL,
- * displays it using a Markdown renderer, and handles loading and error states.
- * @returns {JSX.Element} The rendered tutorial detail page.
+ * Tutorial detail page component for displaying individual tutorial content.
+ *
+ * This page component provides a comprehensive tutorial viewing experience by:
+ * - Fetching tutorial data based on URL parameters
+ * - Managing loading states and error handling gracefully
+ * - Displaying rich markdown content with proper styling
+ * - Showing tutorial metadata including title, description, and topics
+ * - Implementing navigation controls for better UX
+ * - Integrating with the global tutorial context for caching
+ * - Supporting abortable API requests to prevent memory leaks
+ *
+ * The component is designed to be accessible, responsive, and provides
+ * fallbacks for missing data to ensure a smooth user experience.
+ *
+ * @example
+ * ```jsx
+ * // This component is typically used in React Router
+ * <Route path="/tutorials/:id" element={<TutorialDetail />} />
+ * ```
+ *
+ * @component
+ * @returns {JSX.Element} A full tutorial detail page with header, content, and navigation.
+ *                          Includes loading states, error handling, and responsive design.
+ *
+ * @since 1.0.0
+ * @version 1.0.0
  */
 const TutorialDetail = () => {
   const { id } = useParams()

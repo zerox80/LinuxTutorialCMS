@@ -13,6 +13,7 @@ import ErrorBoundary from './components/ErrorBoundary' // Error handling wrapper
 import Header from './components/Header' // Site navigation header
 import Footer from './components/Footer' // Site footer
 import ProtectedRoute from './components/ProtectedRoute' // Route protection for authenticated users
+import GlobalSiteMeta from './components/GlobalSiteMeta'
 
 // Page component imports
 import Home from './pages/Home' // Landing/home page
@@ -52,6 +53,7 @@ function App() {
                 <TutorialProvider>
                   {/* Main application container with responsive gradient background */}
                   <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 transition-colors">
+                    <GlobalSiteMeta />
                     <Routes>
                       {/* Public Routes with Header & Footer */}
                       {/* Home page route - landing page with full layout */}

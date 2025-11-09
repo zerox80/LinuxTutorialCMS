@@ -16,10 +16,39 @@ import {
 } from '../utils/postUtils'
 
 /**
- * Renders a dynamic page based on the slug provided in the URL.
- * It fetches the page content and its associated posts from the `ContentContext`,
- * handling loading and error states.
- * @returns {JSX.Element} The rendered dynamic page.
+ * Dynamic page component for rendering CMS-driven pages with associated posts.
+ *
+ * This component provides a flexible page rendering system that:
+ * - Fetches page content based on URL slugs from the ContentContext
+ * - Displays dynamic hero sections with customizable gradients and content
+ * - Renders associated blog posts/articles in a clean, organized layout
+ * - Implements comprehensive error handling and loading states
+ * - Supports caching for improved performance
+ * - Provides responsive design with proper accessibility
+ * - Handles SEO metadata and structured data
+ *
+ * The component is designed to work with a headless CMS where page content
+ * and layout can be managed dynamically through the admin interface.
+ *
+ * @example
+ * ```jsx
+ * // Used in React Router for dynamic page routes
+ * <Route path="/pages/:slug" element={<DynamicPage />} />
+ *
+ * // Example URLs that this component handles:
+ * // /pages/linux-basics - Linux basics page with tutorials
+ * // /pages/news - News page with blog posts
+ * // /pages/about - About page with company information
+ * ```
+ *
+ * @component
+ * @returns {JSX.Element} A fully rendered dynamic page with hero section,
+ *                          about content, and posts listing. Includes
+ *                          proper error states, loading indicators, and
+ *                          responsive design.
+ *
+ * @since 1.0.0
+ * @version 1.0.0
  */
 const DynamicPage = () => {
   // === ROUTING AND CONTEXT ===
