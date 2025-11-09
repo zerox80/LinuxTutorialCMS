@@ -6,12 +6,6 @@ import { AlertCircle } from 'lucide-react'
 import { useContent } from '../context/ContentContext'
 import { navigateContentTarget } from '../utils/contentNavigation'
 
-/**
- * A section that displays a collection of tutorial cards.
- * It fetches tutorial data from the `TutorialContext`, handles loading and error states,
- * and includes a call-to-action block.
- * @returns {JSX.Element} The rendered tutorial section.
- */
 const TutorialSection = () => {
   const { tutorials, getIconComponent, loading, error } = useTutorials()
   const navigate = useNavigate()
@@ -20,7 +14,6 @@ const TutorialSection = () => {
 
   const sectionContent = getSection('tutorial_section') ?? {}
 
-  // Memoize normalized tutorials to avoid recalculating on every render
   const normalizedTutorials = useMemo(() => {
     return tutorials.map((tutorial) => ({
       ...tutorial,
@@ -68,7 +61,7 @@ const TutorialSection = () => {
         </div>
       )}
 
-      {/* Call to Action */}
+      {}
       <div className="mt-16 bg-gradient-to-r from-primary-600 to-primary-800 rounded-2xl p-8 md:p-12 text-white text-center shadow-xl">
         <h3 className="text-3xl font-bold mb-4">{sectionContent.heading || 'Bereit anzufangen?'}</h3>
         <p className="text-xl text-primary-100 mb-6">

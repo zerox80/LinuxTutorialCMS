@@ -1,3 +1,5 @@
+
+
 use std::{env, fs, path::Path};
 
 use anyhow::{anyhow, Context, Result};
@@ -9,59 +11,90 @@ use linux_tutorial_backend::db;
 
 #[derive(Debug, Deserialize)]
 struct SiteContentImport {
+
     section: String,
+
     content: Value,
+
     #[serde(default)]
     updated_at: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 struct SitePageImport {
+
     id: String,
+
     slug: String,
+
     title: String,
+
     description: String,
+
     nav_label: Option<String>,
+
     show_in_nav: bool,
+
     order_index: i64,
+
     is_published: bool,
+
     hero: Value,
+
     layout: Value,
+
     #[serde(default)]
     created_at: Option<String>,
+
     #[serde(default)]
     updated_at: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 struct SitePostImport {
+
     id: String,
+
     page_id: String,
+
     title: String,
+
     slug: String,
+
     excerpt: String,
+
     content_markdown: String,
+
     is_published: bool,
+
     published_at: Option<String>,
+
     order_index: i64,
+
     #[serde(default)]
     created_at: Option<String>,
+
     #[serde(default)]
     updated_at: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 struct ImportBundle {
+
     site_content: Vec<SiteContentImport>,
+
     pages: Vec<SitePageImport>,
+
     posts: Vec<SitePostImport>,
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
+
     dotenv::dotenv().ok();
 
     let args: Vec<String> = env::args().collect();
+
     let input_path = args
         .get(1)
         .map(String::as_str)
@@ -105,7 +138,9 @@ async fn import_site_content(
     tx: &mut Transaction<'_, Sqlite>,
     items: &[SiteContentImport],
 ) -> Result<()> {
+
     for item in items {
+
         let serialized = serde_json::to_string(&item.content)
             .context("Failed to serialize site_content entry")?;
 
@@ -128,7 +163,9 @@ async fn import_site_pages(
     tx: &mut Transaction<'_, Sqlite>,
     items: &[SitePageImport],
 ) -> Result<()> {
+
     for item in items {
+
         let hero_serialized =
             serde_json::to_string(&item.hero).context("Failed to serialize page hero JSON")?;
         let layout_serialized =
@@ -144,6 +181,7 @@ async fn import_site_pages(
         .bind(&item.title)
         .bind(&item.description)
         .bind(&item.nav_label)
+
         .bind(if item.show_in_nav { 1 } else { 0 })
         .bind(item.order_index)
         .bind(if item.is_published { 1 } else { 0 })
@@ -163,7 +201,9 @@ async fn import_site_posts(
     tx: &mut Transaction<'_, Sqlite>,
     items: &[SitePostImport],
 ) -> Result<()> {
+
     for item in items {
+
         sqlx::query(
             "INSERT INTO site_posts (id, page_id, title, slug, excerpt, content_markdown, is_published, published_at, order_index, created_at, updated_at) \
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP), COALESCE(?, CURRENT_TIMESTAMP)) \
@@ -175,6 +215,7 @@ async fn import_site_posts(
         .bind(&item.slug)
         .bind(&item.excerpt)
         .bind(&item.content_markdown)
+
         .bind(if item.is_published { 1 } else { 0 })
         .bind(&item.published_at)
         .bind(item.order_index)

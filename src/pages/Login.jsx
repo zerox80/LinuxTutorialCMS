@@ -3,12 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Terminal, Lock, User, AlertCircle } from 'lucide-react'
 
-/**
- * Renders a login form for administrative access.
- * It handles user input, form submission, displays error messages,
- * and implements a cooldown mechanism to prevent brute-force attacks.
- * @returns {JSX.Element} The rendered login page.
- */
 const Login = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -37,17 +31,11 @@ const Login = () => {
     }
   }, [cooldownUntil])
 
-  /**
-   * Handles login form submission with validation and cooldown enforcement.
-   * Validates username and password, enforces rate limiting, and navigates on success.
-   *
-   * @param {Event} e - The form submit event.
-   * @returns {Promise<void>}
-   */
+  
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    // Check cooldown
+
     const now = Date.now()
     if (cooldownUntil && now < cooldownUntil) {
       const remainingSeconds = Math.ceil((cooldownUntil - now) / 1000)
@@ -89,13 +77,13 @@ const Login = () => {
         setLoginAttempts(newAttempts)
         setError(result.error)
         
-        // Progressive cooldown after 3 failed attempts
+
         if (newAttempts >= 5) {
-          const cooldown = now + 60000 // 60 seconds
+          const cooldown = now + 60000
           setCooldownUntil(cooldown)
           setError('Zu viele fehlgeschlagene Versuche. Bitte warte 60 Sekunden.')
         } else if (newAttempts >= 3) {
-          const cooldown = now + 10000 // 10 seconds
+          const cooldown = now + 10000
           setCooldownUntil(cooldown)
           setError('Zu viele fehlgeschlagene Versuche. Bitte warte 10 Sekunden.')
         }
@@ -108,7 +96,7 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
-        {/* Logo */}
+        {}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl mb-4">
             <Terminal className="w-8 h-8 text-white" />
@@ -117,7 +105,7 @@ const Login = () => {
           <p className="text-primary-100">Admin Login</p>
         </div>
 
-        {/* Login Card */}
+        {}
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Anmelden</h2>
 
@@ -129,7 +117,7 @@ const Login = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Username */}
+            {}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Benutzername
@@ -149,7 +137,7 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Password */}
+            {}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Passwort
@@ -169,7 +157,7 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Submit Button */}
+            {}
             <button
               type="submit"
               disabled={isSubmitting || (cooldownUntil && Date.now() < cooldownUntil)}
@@ -181,7 +169,7 @@ const Login = () => {
 
         </div>
 
-        {/* Back to Home */}
+        {}
         <div className="text-center mt-6">
           <button
             onClick={() => navigate('/')}

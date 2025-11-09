@@ -2,26 +2,8 @@ import { ChevronRight, Sparkles } from 'lucide-react'
 import PropTypes from 'prop-types'
 import { scrollToSection } from '../utils/scrollToSection'
 
-/**
- * A card component to display a summary of a tutorial.
- * It includes an icon, title, description, a list of topics, and a call-to-action button.
- *
- * @param {object} props - The component props.
- * @param {React.ElementType} props.icon - The icon component for the card.
- * @param {string} props.title - The title of the tutorial.
- * @param {string} props.description - A brief description of the tutorial.
- * @param {Array<string>} props.topics - A list of topics covered in the tutorial.
- * @param {string} props.color - The color theme for the card (e.g., 'from-blue-500 to-cyan-500').
- * @param {Function} [props.onSelect] - A callback function to execute when the card is selected.
- * @param {string} [props.buttonLabel] - The label for the call-to-action button.
- * @returns {JSX.Element} The rendered tutorial card.
- */
 const TutorialCard = ({ icon: Icon, title, description, topics, color, onSelect, buttonLabel }) => {
-  /**
-   * Handles card selection by invoking the onSelect callback or scrolling to the tutorials section.
-   *
-   * @returns {void}
-   */
+  
   const handleSelect = () => {
     if (typeof onSelect === 'function') {
       onSelect()
@@ -33,15 +15,15 @@ const TutorialCard = ({ icon: Icon, title, description, topics, color, onSelect,
 
   return (
     <div className="tutorial-card group cursor-pointer hover:-translate-y-2 animate-fade-in">
-      {/* Gradient Glow on Hover */}
+      {}
       <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity duration-700 -z-10 blur-2xl`}></div>
       
-      {/* Shimmer Effect */}
+      {}
       <div className="absolute inset-0 rounded-2xl overflow-hidden">
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 shimmer"></div>
       </div>
 
-      {/* Icon Header with 3D Effect */}
+      {}
       <div className="relative mb-6">
         <div className={`w-16 h-16 bg-gradient-to-br ${color} rounded-2xl flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-500`}>
           <Icon className="w-8 h-8 text-white" />
@@ -51,11 +33,11 @@ const TutorialCard = ({ icon: Icon, title, description, topics, color, onSelect,
         </div>
       </div>
 
-      {/* Content */}
+      {}
       <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-primary-700 transition-colors duration-300">{title}</h3>
       <p className="text-gray-600 mb-6 leading-relaxed line-clamp-2">{description}</p>
 
-      {/* Topics List with better spacing */}
+      {}
       <div className="space-y-3 mb-8">
         {topics.map((topic, index) => (
           <div 
@@ -70,7 +52,7 @@ const TutorialCard = ({ icon: Icon, title, description, topics, color, onSelect,
         ))}
       </div>
 
-      {/* Action Button with gradient and hover effect */}
+      {}
       <button 
         type="button"
         onClick={handleSelect}
@@ -80,7 +62,7 @@ const TutorialCard = ({ icon: Icon, title, description, topics, color, onSelect,
           {buttonLabel || 'Zum Tutorial'}
           <ChevronRight className="w-5 h-5 group-hover/button:translate-x-1 transition-transform duration-300" />
         </span>
-        {/* Shine effect */}
+        {}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/button:translate-x-full transition-transform duration-1000"></div>
       </button>
     </div>

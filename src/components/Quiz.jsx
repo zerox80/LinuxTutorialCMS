@@ -2,30 +2,13 @@ import { useState } from 'react';
 import { Check, X, RotateCcw } from 'lucide-react';
 import PropTypes from 'prop-types';
 
-/**
- * Renders an interactive quiz component.
- * It displays questions one by one, records user answers, and shows the results at the end.
- *
- * @param {object} props - The component props.
- * @param {Array<object>} props.questions - An array of question objects.
- * @param {string} props.questions[].question - The question text.
- * @param {Array<string>} props.questions[].answers - An array of possible answers.
- * @param {number} props.questions[].correctAnswer - The index of the correct answer.
- * @returns {JSX.Element} The rendered quiz component.
- */
 const Quiz = ({ questions }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [showResults, setShowResults] = useState(false);
   const [score, setScore] = useState(0);
 
-  /**
-   * Records the user's answer for a specific question.
-   *
-   * @param {number} questionIndex - The index of the question being answered.
-   * @param {number} answerIndex - The index of the selected answer.
-   * @returns {void}
-   */
+  
   const handleAnswer = (questionIndex, answerIndex) => {
     setSelectedAnswers(prev => ({
       ...prev,
@@ -33,12 +16,7 @@ const Quiz = ({ questions }) => {
     }));
   };
 
-  /**
-   * Evaluates the quiz by comparing selected answers with correct answers.
-   * Updates the score and displays the results.
-   *
-   * @returns {void}
-   */
+  
   const handleSubmit = () => {
     let correctCount = 0;
     questions.forEach((q, idx) => {
@@ -50,11 +28,7 @@ const Quiz = ({ questions }) => {
     setShowResults(true);
   };
 
-  /**
-   * Resets the quiz to its initial state, clearing all answers and results.
-   *
-   * @returns {void}
-   */
+  
   const handleReset = () => {
     setCurrentQuestion(0);
     setSelectedAnswers({});
@@ -108,7 +82,7 @@ const Quiz = ({ questions }) => {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg">
-      {/* Progress Bar */}
+      {}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -126,12 +100,12 @@ const Quiz = ({ questions }) => {
         </div>
       </div>
 
-      {/* Question */}
+      {}
       <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">
         {question.question}
       </h3>
 
-      {/* Answers */}
+      {}
       <div className="space-y-3 mb-6">
         {question.answers.map((answer, idx) => (
           <button
@@ -148,7 +122,7 @@ const Quiz = ({ questions }) => {
         ))}
       </div>
 
-      {/* Navigation */}
+      {}
       <div className="flex justify-between items-center">
         <button
           onClick={() => setCurrentQuestion(prev => Math.max(0, prev - 1))}

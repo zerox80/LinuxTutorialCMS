@@ -1,3 +1,5 @@
+
+
 use axum::{
     extract::FromRequestParts,
     http::{
@@ -23,17 +25,14 @@ type HmacSha256 = Hmac<Sha256>;
 const CSRF_SECRET_ENV: &str = "CSRF_SECRET";
 const CSRF_COOKIE_NAME: &str = "ltcms_csrf";
 const CSRF_HEADER_NAME: &str = "x-csrf-token";
-const CSRF_TOKEN_TTL_SECONDS: i64 = 6 * 60 * 60; // 6 hours
+const CSRF_TOKEN_TTL_SECONDS: i64 = 6 * 60 * 60;
 const CSRF_MIN_SECRET_LENGTH: usize = 32;
 const CSRF_VERSION: &str = "v1";
 
 static CSRF_SECRET: OnceLock<Vec<u8>> = OnceLock::new();
 
-/// Initializes the CSRF secret from the `CSRF_SECRET` environment variable.
-///
-/// This must be called at application startup. It validates that the secret
-/// meets minimum length and complexity requirements.
 pub fn init_csrf_secret() -> Result<(), String> {
+
     let secret = env::var(CSRF_SECRET_ENV)
         .map_err(|_| format!("{CSRF_SECRET_ENV} environment variable not set"))?;
     let trimmed = secret.trim();
@@ -58,7 +57,6 @@ pub fn init_csrf_secret() -> Result<(), String> {
     Ok(())
 }
 
-/// Retrieves the initialized CSRF secret. Panics if not initialized.
 fn get_secret() -> &'static [u8] {
     CSRF_SECRET
         .get()
@@ -66,18 +64,8 @@ fn get_secret() -> &'static [u8] {
         .as_slice()
 }
 
-/// Issues a new CSRF token for a given username.
-///
-/// The token embeds the username, expiry, and a nonce, signed with HMAC-SHA256.
-///
-/// # Arguments
-///
-/// * `username` - Authenticated username the token should be bound to.
-///
-/// # Returns
-///
-/// A base64-encoded token string or an error if generation fails.
 pub fn issue_csrf_token(username: &str) -> Result<String, String> {
+
     if username.is_empty() {
         return Err("Username required for CSRF token".to_string());
     }
@@ -88,7 +76,11 @@ pub fn issue_csrf_token(username: &str) -> Result<String, String> {
         .timestamp();
 
     let nonce = Uuid::new_v4().to_string();
+    
+
     let username_b64 = Base64UrlUnpadded::encode_string(username.as_bytes());
+    
+
     let payload = format!("{username_b64}|{expiry}|{nonce}");
     let versioned_payload = format!("{CSRF_VERSION}|{payload}");
 
@@ -100,10 +92,8 @@ pub fn issue_csrf_token(username: &str) -> Result<String, String> {
     Ok(format!("{versioned_payload}|{signature}"))
 }
 
-/// Validates a CSRF token against an expected username.
-///
-/// Checks the token's signature, expiry, and that it belongs to the authenticated user.
 fn validate_csrf_token(token: &str, expected_username: &str) -> Result<(), String> {
+
     let mut parts = token.split('|');
 
     let version = parts
@@ -152,6 +142,8 @@ fn validate_csrf_token(token: &str, expected_username: &str) -> Result<(), Strin
     }
 
     let versioned_payload = format!("{version}|{username_b64}|{expiry}|{nonce}");
+    
+
     let mut mac = HmacSha256::new_from_slice(get_secret())
         .map_err(|_| "Failed to initialize CSRF HMAC".to_string())?;
     mac.update(versioned_payload.as_bytes());
@@ -169,24 +161,16 @@ fn validate_csrf_token(token: &str, expected_username: &str) -> Result<(), Strin
     Ok(())
 }
 
-/// Performs a constant-time comparison of two byte slices.
 fn subtle_equals(a: &[u8], b: &[u8]) -> bool {
     use subtle::ConstantTimeEq;
     a.ct_eq(b).into()
 }
 
-/// Appends a `Set-Cookie` header for the CSRF token to a `HeaderMap`.
-///
-/// # Arguments
-///
-/// * `headers` - Outgoing response headers to mutate.
-/// * `token` - Freshly issued CSRF token string.
-///
-/// # Returns
-///
-/// Nothing. Any serialization error is logged.
 pub fn append_csrf_cookie(headers: &mut HeaderMap, token: &str) {
+
     let cookie = build_csrf_cookie(token);
+    
+
     if let Ok(value) = HeaderValue::from_str(&cookie.to_string()) {
         headers.append(SET_COOKIE, value);
     } else {
@@ -194,17 +178,11 @@ pub fn append_csrf_cookie(headers: &mut HeaderMap, token: &str) {
     }
 }
 
-/// Appends a `Set-Cookie` header to clear the CSRF cookie.
-///
-/// # Arguments
-///
-/// * `headers` - Outgoing response headers to mutate.
-///
-/// # Returns
-///
-/// Nothing. Any serialization error is logged.
 pub fn append_csrf_removal(headers: &mut HeaderMap) {
+
     let cookie = build_csrf_removal();
+    
+
     if let Ok(value) = HeaderValue::from_str(&cookie.to_string()) {
         headers.append(SET_COOKIE, value);
     } else {
@@ -212,8 +190,8 @@ pub fn append_csrf_removal(headers: &mut HeaderMap) {
     }
 }
 
-/// Builds the CSRF cookie with appropriate security flags.
 fn build_csrf_cookie(token: &str) -> Cookie<'static> {
+
     let mut builder = Cookie::build((CSRF_COOKIE_NAME, token.to_owned()))
         .path("/")
         .same_site(SameSite::Strict)
@@ -227,8 +205,8 @@ fn build_csrf_cookie(token: &str) -> Cookie<'static> {
     builder.build()
 }
 
-/// Builds a cookie that instructs the client to remove the CSRF cookie.
 fn build_csrf_removal() -> Cookie<'static> {
+
     let mut builder = Cookie::build((CSRF_COOKIE_NAME, ""))
         .path("/")
         .same_site(SameSite::Strict)
@@ -243,19 +221,17 @@ fn build_csrf_removal() -> Cookie<'static> {
     builder.build()
 }
 
-/// An Axum extractor that enforces CSRF protection for state-changing requests.
-///
-/// This guard checks for a valid CSRF token in both the cookie and header,
-/// ensuring they match and are valid for the authenticated user.
 pub struct CsrfGuard;
 
 impl<S> FromRequestParts<S> for CsrfGuard
 where
     S: Send + Sync,
 {
+
     type Rejection = (StatusCode, Json<ErrorResponse>);
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+
         if matches!(
             parts.method,
             Method::GET | Method::HEAD | Method::OPTIONS | Method::TRACE
@@ -311,20 +287,10 @@ where
     }
 }
 
-/// Returns the name of the CSRF cookie.
-///
-/// # Returns
-///
-/// Static string slice with the cookie name.
 pub fn csrf_cookie_name() -> &'static str {
     CSRF_COOKIE_NAME
 }
 
-/// Returns the name of the CSRF header.
-///
-/// # Returns
-///
-/// Static string slice with the header name.
 pub fn csrf_header_name() -> &'static str {
     CSRF_HEADER_NAME
 }

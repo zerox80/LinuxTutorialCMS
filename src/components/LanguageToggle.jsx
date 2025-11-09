@@ -1,20 +1,10 @@
 import { Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-/**
- * A component that allows the user to toggle between supported languages (e.g., 'de' and 'en').
- * It displays the current language and updates the application's language setting on click.
- * @returns {JSX.Element} The rendered language toggle button.
- */
 const LanguageToggle = () => {
   const { i18n } = useTranslation();
 
-  /**
-   * Toggles between German ('de') and English ('en') languages.
-   * Updates the i18n language setting and persists the selection to localStorage.
-   *
-   * @returns {void}
-   */
+  
   const toggleLanguage = () => {
     const newLang = i18n.language === 'de' ? 'en' : 'de';
     i18n.changeLanguage(newLang);

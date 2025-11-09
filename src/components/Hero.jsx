@@ -5,12 +5,6 @@ import { getIconComponent } from '../utils/iconMap'
 import { scrollToSection } from '../utils/scrollToSection'
 import { sanitizeExternalUrl } from '../utils/urlValidation'
 
-/**
- * Renders the hero section of the homepage.
- * This component displays a prominent headline, subtitle, call-to-action buttons,
- * and a set of feature highlights. Content is dynamically sourced from the `ContentContext`.
- * @returns {JSX.Element} The rendered hero section.
- */
 const Hero = () => {
   const navigate = useNavigate()
   const location = useLocation()
@@ -20,15 +14,7 @@ const Hero = () => {
   const HeroIcon = getIconComponent(heroContent.icon, 'Terminal')
   const features = Array.isArray(heroContent.features) ? heroContent.features : []
 
-  /**
-   * Handles navigation when a hero CTA button is clicked.
-   * Supports section scrolling, route navigation, and external links.
-   *
-   * @param {object} target - The navigation target object.
-   * @param {string} target.type - The type of navigation (section, route, external, href).
-   * @param {string} target.value - The target value (section ID, route path, or URL).
-   * @returns {void}
-   */
+  
   const handleTarget = (target) => {
     if (!target || !target.type) {
       return
@@ -82,7 +68,7 @@ const Hero = () => {
 
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-indigo-900">
-      {/* Animated Background Pattern */}
+      {}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-0 -left-4 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl animate-float"></div>
@@ -90,19 +76,19 @@ const Hero = () => {
           <div className="absolute -bottom-8 left-20 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl animate-float-delayed-4s"></div>
         </div>
         
-        {/* Grid Pattern */}
+        {}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTR6TTAgMTRjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTR6bTAgNDBjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-10"></div>
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 z-10">
         <div className="text-center">
-          {/* Badge */}
+          {}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white mb-8 animate-slide-down">
             <Sparkles className="w-4 h-4" />
             <span className="text-sm font-medium">{heroContent.badgeText}</span>
           </div>
 
-          {/* Icon mit Animation */}
+          {}
           <div className="inline-flex items-center justify-center w-24 h-24 mb-8 relative group animate-scale-in">
             <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-white/10 rounded-3xl rotate-6 group-hover:rotate-12 transition-transform duration-500"></div>
             <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-white/5 rounded-3xl -rotate-6 group-hover:-rotate-12 transition-transform duration-500"></div>
@@ -111,7 +97,7 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* Hauptüberschrift */}
+          {}
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 animate-slide-up">
             <span className="text-white drop-shadow-2xl">
               {heroContent?.title?.line1}
@@ -122,7 +108,7 @@ const Hero = () => {
             </span>
           </h1>
 
-          {/* Beschreibung */}
+          {}
           <p className="text-xl sm:text-2xl text-blue-50 mb-12 max-w-3xl mx-auto leading-relaxed animate-slide-up-delayed-1">
             {heroContent?.subtitle}
             {heroContent?.subline && (
@@ -130,7 +116,7 @@ const Hero = () => {
             )}
           </p>
 
-          {/* CTA Buttons */}
+          {}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16 animate-slide-up-delayed-2">
             <button 
               onClick={() => handleTarget(heroContent?.primaryCta?.target)}
@@ -156,7 +142,7 @@ const Hero = () => {
             </button>
           </div>
 
-          {/* Feature Cards */}
+          {}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-5xl mx-auto animate-slide-up-delayed-3">
             {features.map((feature, i) => {
               const FeatureIcon = getIconComponent(feature.icon, 'Terminal')
@@ -166,7 +152,7 @@ const Hero = () => {
                   key={i}
                   className="group relative bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 hover:bg-white/20 hover:border-white/40 transition-all duration-500 hover:scale-105 hover:-translate-y-2 cursor-pointer"
                 >
-                  {/* Glow Effect */}
+                  {}
                   <div className={`absolute inset-0 bg-gradient-to-br ${feature.color || 'from-blue-500 to-cyan-500'} opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity duration-500 blur-xl`}></div>
                   
                   <div className="relative">
@@ -181,7 +167,7 @@ const Hero = () => {
             })}
           </div>
 
-          {/* Scroll Indicator */}
+          {}
           <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
             <div className="w-6 h-10 rounded-full border-2 border-white/30 flex items-start justify-center p-2">
               <div className="w-1 h-3 bg-white rounded-full"></div>

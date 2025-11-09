@@ -6,17 +6,6 @@ import { navigateContentTarget } from '../utils/contentNavigation'
 import { getIconComponent } from '../utils/iconMap'
 import { sanitizeExternalUrl } from '../utils/urlValidation'
 
-/**
- * Resolves the icon name for a contact link based on its label or href.
- * Falls back to common patterns for email and GitHub links.
- *
- * @param {object} contact - The contact link object.
- * @param {string} [contact.icon] - Explicitly defined icon name.
- * @param {string} [contact.label] - Display label for the contact link.
- * @param {string} [contact.href] - The URL of the contact link.
- * @param {string} [contact.url] - Alternative property for the URL.
- * @returns {string} The icon name to use for this contact link.
- */
 const resolveContactFallbackIcon = (contact) => {
   const label = (contact?.label || '').toLowerCase()
   const rawHref = contact?.href || contact?.url || ''
@@ -35,48 +24,6 @@ const resolveContactFallbackIcon = (contact) => {
   return 'Terminal'
 }
 
-/**
- * Site-wide footer component with dynamic content management and secure navigation.
- *
- * This comprehensive footer component provides:
- * - Dynamic branding with configurable icons and descriptions
- * - Smart navigation links supporting multiple target types (routes, sections, external)
- * - Secure contact links with automatic icon resolution and URL validation
- * - Responsive layout that adapts to mobile and desktop screens
- * - Internationalization-ready structure with German labels
- * - Integration with ContentContext for CMS-managed content
- * - Security features including URL sanitization and safe external linking
- *
- * The footer automatically resolves navigation targets, validates external URLs,
- * and provides fallback content when CMS data is not available.
- *
- * @example
- * ```jsx
- * // Basic usage - content automatically loaded from CMS
- * function App() {
- *   return (
- *     <div>
- *       <main>Your content here</main>
- *       <Footer />
- *     </div>
- *   );
- * }
- *
- * // Footer will display content from the CMS 'footer' section including:
- * // - Brand information (title, description, icon)
- * // - Quick navigation links
- * // - Contact information with automatic icons
- * // - Copyright and signature text
- * ```
- *
- * @component
- * @returns {JSX.Element} A fully rendered footer with branding, navigation,
- *                          contact links, and copyright information. Features
- *                          responsive design and security measures.
- *
- * @since 1.0.0
- * @version 1.0.0
- */
 const Footer = () => {
   const { getSection, navigation } = useContent()
   const footerContent = getSection('footer') ?? {}
@@ -169,17 +116,7 @@ const Footer = () => {
     return navigationQuickLinks
   }, [navigationQuickLinks])
 
-  /**
-   * Handles navigation when a quick link is clicked.
-   * Supports navigation targets, external links, and internal routes.
-   *
-   * @param {object} link - The link object containing navigation information.
-   * @param {object} [link.target] - Navigation target object with type and value.
-   * @param {string} [link.href] - External or direct URL.
-   * @param {string} [link.url] - Alternative property for URL.
-   * @param {string} [link.path] - Internal route path.
-   * @returns {void}
-   */
+  
   const handleQuickLink = (link) => {
     if (!link) return
 
@@ -218,7 +155,7 @@ const Footer = () => {
     <footer className="bg-gray-900 text-gray-300 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-          {/* Brand */}
+          {}
           <div>
             <div className="flex items-center space-x-3 mb-4">
               <div className="bg-gradient-to-r from-primary-600 to-primary-800 p-2 rounded-lg">
@@ -234,7 +171,7 @@ const Footer = () => {
             </p>
           </div>
 
-          {/* Quick Links */}
+          {}
           <div>
             <h4 className="text-white font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2">
@@ -255,7 +192,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Contact */}
+          {}
           <div>
             <h4 className="text-white font-semibold mb-4">Kontakt</h4>
             <div className="space-y-3">
@@ -299,7 +236,7 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Bottom Bar */}
+        {}
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 text-sm mb-4 md:mb-0">
             {(footerContent?.bottom?.copyright || '© {year} Linux Tutorial. Alle Rechte vorbehalten.').replace(

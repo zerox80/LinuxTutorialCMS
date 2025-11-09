@@ -15,12 +15,6 @@ const FALLBACK_NAV_ITEMS = [
   { id: 'grundlagen', label: 'Grundlagen', type: 'route', path: '/grundlagen' },
 ]
 
-/**
- * Renders the site-wide header.
- * Includes branding, navigation links, a theme toggle, a search button, and a call-to-action button.
- * The header is responsive and provides a mobile-friendly navigation menu.
- * @returns {JSX.Element} The rendered header component.
- */
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -35,15 +29,7 @@ const Header = () => {
   const ctaContent = headerContent?.cta ?? {}
   const CTAIcon = getIconComponent(ctaContent.icon, 'Lock')
 
-  /**
-   * Resolves the section ID from a navigation item.
-   *
-   * @param {object} item - The navigation item.
-   * @param {object} [item.target] - Target object with type and value.
-   * @param {string} [item.value] - Direct value property.
-   * @param {string} [item.id] - Direct id property.
-   * @returns {string|null} The resolved section ID, or null if not found.
-   */
+  
   const resolveSectionId = (item) => {
     if (!item) return null
     if (item.target?.type === 'section') return item.target.value
@@ -62,17 +48,7 @@ const Header = () => {
     return FALLBACK_NAV_ITEMS
   }, [navigation?.items, contentNavItems])
 
-  /**
-   * Handles navigation when a navigation item is clicked.
-   * Supports targets, external URLs, routes, and section scrolling.
-   *
-   * @param {object} item - The navigation item.
-   * @param {object} [item.target] - Navigation target object.
-   * @param {string} [item.href] - External or direct URL.
-   * @param {string} [item.type] - Type of navigation (route, section).
-   * @param {string} [item.path] - Route path for navigation.
-   * @returns {void}
-   */
+  
   const handleNavigation = (item) => {
     if (!item) return
 
@@ -121,12 +97,7 @@ const Header = () => {
     }
   }
 
-  /**
-   * Handles click on the call-to-action button.
-   * Navigates to admin page if authenticated, otherwise to login page.
-   *
-   * @returns {void}
-   */
+  
   const handleCtaClick = () => {
     if (ctaContent.target) {
       navigateContentTarget(ctaContent.target, { navigate, location })
@@ -140,7 +111,7 @@ const Header = () => {
     <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl shadow-soft sticky top-0 z-50 border-b border-gray-100/50 dark:border-gray-800/50">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          {/* Logo */}
+          {}
           <div className="flex items-center space-x-3 group">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-800 p-2.5 rounded-xl blur opacity-50 group-hover:opacity-75 transition-opacity duration-300"></div>
@@ -153,7 +124,7 @@ const Header = () => {
             </span>
           </div>
 
-          {/* Desktop Navigation */}
+          {}
           <div className="hidden md:flex items-center space-x-8">
             {computedNavItems.map((item, index) => (
               <button
@@ -182,7 +153,7 @@ const Header = () => {
             </button>
           </div>
 
-          {/* Mobile menu button */}
+          {}
           <div className="md:hidden flex items-center space-x-2">
             <button
               onClick={() => setSearchOpen(true)}
@@ -201,7 +172,7 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation */}
+        {}
         {mobileMenuOpen && (
           <div className="md:hidden pb-4 space-y-2">
             {computedNavItems.map((item, index) => (
@@ -230,7 +201,7 @@ const Header = () => {
         )}
       </nav>
       
-      {/* Search Modal */}
+      {}
       {searchOpen && <SearchBar onClose={() => setSearchOpen(false)} />}
     </header>
   )

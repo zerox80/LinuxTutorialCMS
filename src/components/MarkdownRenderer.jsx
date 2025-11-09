@@ -9,12 +9,6 @@ import 'katex/dist/katex.min.css'
 import CodeBlock from './CodeBlock'
 import remarkMergeInlineParagraphs from '../utils/remarkMergeInlineParagraphs'
 
-/**
- * Merges multiple class names into a single string, filtering out falsy values.
- *
- * @param {...string} classes - Variable number of class name strings.
- * @returns {string} The merged class names as a single string.
- */
 const mergeClassNames = (...classes) => classes.filter(Boolean).join(' ')
 
 const headingClasses = {
@@ -26,74 +20,6 @@ const headingClasses = {
   6: 'text-sm font-semibold text-gray-700 dark:text-slate-400 mt-4 first:mt-0 uppercase tracking-wider',
 }
 
-/**
- * Renders Markdown content with comprehensive styling, plugin support, and security features.
- * 
- * This component provides a production-ready Markdown renderer with extensive customization options,
- * supporting GitHub Flavored Markdown, mathematical formulas (KaTeX), syntax highlighting,
- * and responsive design patterns.
- * 
- * ## Features
- * - **GitHub Flavored Markdown**: Tables, task lists, strikethrough, and more
- * - **Mathematical Formulas**: KaTeX integration for LaTeX math expressions
- * - **Syntax Highlighting**: Highlight.js for code block syntax highlighting
- * - **Responsive Typography**: Adaptive text sizing for mobile and desktop
- * - **Theme Support**: Automatic dark/light mode adaptation
- * - **Security**: Sanitized rendering to prevent XSS attacks
- * - **Accessibility**: Proper heading hierarchy and semantic HTML
- * - **Performance**: Optimized rendering with memoization
- * 
- * ## Security Considerations
- * - All content is sanitized through ReactMarkdown's built-in security
- * - Custom components follow safe rendering practices
- * - External links automatically get security attributes
- * - Image handling includes lazy loading and alt text requirements
- * 
- * ## Performance Notes
- * - Remark plugins are conditionally loaded based on `withBreaks` prop
- * - Component uses optimized CSS classes with minimal runtime overhead
- * - Large documents are efficiently handled through virtual scrolling when needed
- * 
- * @param {object} props - Component properties
- * @param {string} props.content - Markdown content to render. Supports GFM, math, tables, and code blocks
- * @param {string} [props.className=''] - Additional CSS classes for the container element
- * @param {boolean} [props.withBreaks=false] - Enable soft line breaks as paragraphs (useful for user-generated content)
- * @param {number} [props.maxContentLength=100000] - Maximum content length for security (prevents DoS attacks)
- * @param {boolean} [props.enableMath=true] - Enable KaTeX mathematical formula rendering
- * @param {boolean} [props.enableSyntaxHighlighting=true] - Enable code syntax highlighting
- * 
- * @returns {JSX.Element} Rendered Markdown content with Tailwind CSS styling and semantic HTML
- * 
- * @throws {Error} When content exceeds `maxContentLength` characters
- * @throws {ParseError} When Markdown contains malformed syntax that cannot be safely rendered
- * 
- * @example
- * ```jsx
- * // Basic usage
- * <MarkdownRenderer content="# Hello World\n\nThis is **bold** text." />
- * 
- * // With line breaks and custom styling
- * <MarkdownRenderer 
- *   content="Line 1\nLine 2\nLine 3"
- *   withBreaks={true}
- *   className="custom-markdown"
- *   maxContentLength={50000}
- * />
- * 
- * // Mathematical content
- * <MarkdownRenderer 
- *   content="The formula $E = mc^2$ is famous."
- *   enableMath={true}
- * />
- * ```
- * 
- * @see {@link https://github.com/remarkjs/react-markdown} ReactMarkdown documentation
- * @see {@link https://katex.org/} KaTeX mathematical rendering
- * @see {@link https://highlightjs.org/} Syntax highlighting
- * 
- * @since 1.0.0
- * @version 2.1.0
- */
 const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
   const remarkPlugins = withBreaks
     ? [remarkMath, remarkGfm, remarkMergeInlineParagraphs, remarkBreaks]

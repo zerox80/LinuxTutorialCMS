@@ -1,39 +1,4 @@
-//! # Site Pages Handler Module
-//!
-//! This module provides HTTP handlers for managing dynamic site pages and their associated posts.
-//! It supports a flexible, hierarchical content structure where pages can contain multiple
-//! posts, similar to a blog or a documentation site.
-//!
-//! ## Features
-//! - **CRUD Operations**: Full support for creating, reading, updating, and deleting pages.
-//! - **Hierarchical Content**: Pages can own multiple posts.
-//! - **Public and Admin Access**: Separate endpoints for public viewing and admin management.
-//! - **Publishing Workflow**: Pages and posts can be individually published or unpublished.
-//! - **Navigation Management**: Endpoints to fetch data for dynamic site navigation.
-//! - **Slug-based Routing**: Pages and posts are accessed via human-readable slugs.
-//! - **Rich Content**: Supports JSON for hero sections/layouts and Markdown for post content.
-//!
-//! ## API Endpoints
-//!
-//! ### Admin Endpoints (require authentication)
-//! - `GET /api/pages`: List all site pages.
-//! - `POST /api/pages`: Create a new site page.
-//! - `GET /api/pages/{id}`: Get a single page by its ID.
-//! - `PUT /api/gpi/pages/{id}`: Update a page.
-//! - `DELETE /api/pages/{id}`: Delete a page and its associated posts.
-//!
-//! ### Public Endpoints
-//! - `GET /api/public/pages/{slug}`: Get a published page and its posts by slug.
-//! - `GET /api/public/pages/{slug}/posts/{post_slug}`: Get a single published post.
-//! - `GET /api/public/navigation`: Get the list of pages for site navigation.
-//! - `GET /api/public/published-pages`: Get a list of all published page slugs (for sitemaps).
-//!
-//! ## Data Validation
-//! This handler performs comprehensive validation on all incoming data, including:
-//! - **Slugs**: Must be URL-safe, lowercase, and unique per parent.
-//! - **Text Fields**: Title, description, etc., are checked for length and sanitized.
-//! - **JSON Payloads**: `hero` and `layout` JSON fields are validated for size.
-//! - **Authorization**: All write operations are restricted to admin users.
+
 
 use crate::{
     auth, db,
@@ -56,15 +21,6 @@ const MAX_DESCRIPTION_LEN: usize = 1000;
 const MAX_NAV_LABEL_LEN: usize = 100;
 const MAX_JSON_BYTES: usize = 200_000;
 
-/// A helper function to ensure the authenticated user is an administrator.
-///
-/// # Arguments
-///
-/// * `claims` - The JWT claims of the authenticated user.
-///
-/// # Returns
-///
-/// `Ok(())` if the user is an admin, or a `403 Forbidden` error otherwise.
 fn ensure_admin(claims: &auth::Claims) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
     if claims.role != "admin" {
         Err((
@@ -78,20 +34,6 @@ fn ensure_admin(claims: &auth::Claims) -> Result<(), (StatusCode, Json<ErrorResp
     }
 }
 
-/// Maps a `sqlx::Error` to a corresponding HTTP error response.
-///
-/// This utility centralizes error handling for database operations, converting
-/// different kinds of `sqlx` errors into appropriate HTTP status codes and
-/// user-friendly error messages.
-///
-/// # Arguments
-///
-/// * `err` - The `sqlx::Error` to map.
-/// * `context` - A string describing the operation that failed (e.g., "Site page").
-///
-/// # Returns
-///
-/// A tuple containing the `StatusCode` and a JSON `ErrorResponse`.
 fn map_sqlx_error(err: sqlx::Error, context: &str) -> (StatusCode, Json<ErrorResponse>) {
     match err {
         sqlx::Error::RowNotFound => (
@@ -137,7 +79,6 @@ fn map_sqlx_error(err: sqlx::Error, context: &str) -> (StatusCode, Json<ErrorRes
     }
 }
 
-/// Validates the size of a JSON payload to prevent oversized data storage.
 fn validate_json_size(value: &Value, field: &str) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
     match serde_json::to_string(value) {
         Ok(serialized) if serialized.len() <= MAX_JSON_BYTES => Ok(()),
@@ -156,7 +97,6 @@ fn validate_json_size(value: &Value, field: &str) -> Result<(), (StatusCode, Jso
     }
 }
 
-/// Sanitizes and validates a `CreateSitePageRequest` payload.
 fn sanitize_create_payload(
     mut payload: CreateSitePageRequest,
 ) -> Result<CreateSitePageRequest, (StatusCode, Json<ErrorResponse>)> {
@@ -227,7 +167,6 @@ fn sanitize_create_payload(
     Ok(payload)
 }
 
-/// Sanitizes and validates an `UpdateSitePageRequest` payload.
 fn sanitize_update_payload(
     mut payload: UpdateSitePageRequest,
 ) -> Result<UpdateSitePageRequest, (StatusCode, Json<ErrorResponse>)> {
@@ -311,7 +250,6 @@ fn sanitize_update_payload(
     Ok(payload)
 }
 
-/// Maps a `db::SitePage` model to a `SitePageResponse` for API clients.
 fn map_page(
     page: crate::models::SitePage,
 ) -> Result<SitePageResponse, (StatusCode, Json<ErrorResponse>)> {
@@ -380,7 +318,6 @@ fn map_page(
     })
 }
 
-/// Maps a `db::SitePost` model to a `SitePostResponse`.
 fn map_post(post: crate::models::SitePost) -> SitePostResponse {
     SitePostResponse {
         id: post.id,
@@ -397,20 +334,6 @@ fn map_post(post: crate::models::SitePost) -> SitePostResponse {
     }
 }
 
-/// Lists all site pages for administrative purposes. (Admin only)
-///
-/// This endpoint retrieves a complete list of all site pages, including both
-/// published and unpublished ones. It is intended for use in an admin dashboard.
-///
-/// # HTTP Endpoint
-/// `GET /api/pages`
-///
-/// # Authentication
-/// Requires admin privileges.
-///
-/// # Returns
-///
-/// A JSON response containing a list of all site pages.
 pub async fn list_site_pages(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -429,17 +352,6 @@ pub async fn list_site_pages(
     Ok(Json(SitePageListResponse { items }))
 }
 
-/// Retrieves a single site page by its ID for administrative purposes. (Admin only)
-///
-/// # HTTP Endpoint
-/// `GET /api/pages/{id}`
-///
-/// # Authentication
-/// Requires admin privileges.
-///
-/// # Returns
-///
-/// A JSON response describing the requested page.
 pub async fn get_site_page(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -462,20 +374,6 @@ pub async fn get_site_page(
     Ok(Json(map_page(record)?))
 }
 
-/// Creates a new site page. (Admin only)
-///
-/// # HTTP Endpoint
-/// `POST /api/pages`
-///
-/// # Authentication
-/// Requires admin privileges.
-///
-/// # Request Body
-/// A `CreateSitePageRequest` JSON object.
-///
-/// # Returns
-///
-/// A JSON representation of the newly created page.
 pub async fn create_site_page(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -492,23 +390,6 @@ pub async fn create_site_page(
     Ok(Json(map_page(record)?))
 }
 
-/// Updates an existing site page. (Admin only)
-///
-/// This endpoint supports partial updates. Fields not included in the request body
-/// will retain their current values.
-///
-/// # HTTP Endpoint
-/// `PUT /api/pages/{id}`
-///
-/// # Authentication
-/// Requires admin privileges.
-///
-/// # Request Body
-/// An `UpdateSitePageRequest` JSON object.
-///
-/// # Returns
-///
-/// A JSON representation of the updated page.
 pub async fn update_site_page(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -526,19 +407,6 @@ pub async fn update_site_page(
     Ok(Json(map_page(record)?))
 }
 
-/// Deletes a site page by its ID. (Admin only)
-///
-/// Deleting a page will also cascade-delete all of its associated posts.
-///
-/// # HTTP Endpoint
-/// `DELETE /api/pages/{id}`
-///
-/// # Authentication
-/// Requires admin privileges.
-///
-/// # Returns
-///
-/// A `204 No Content` status on successful deletion.
 pub async fn delete_site_page(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -553,17 +421,6 @@ pub async fn delete_site_page(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// Retrieves a published page and all its published posts by the page's slug.
-///
-/// This is a public endpoint for displaying a page and its content to website visitors.
-/// It will return a `404 Not Found` error if the page is not marked as published.
-///
-/// # HTTP Endpoint
-/// `GET /api/public/pages/{slug}`
-///
-/// # Returns
-///
-/// A JSON response containing the page details and a list of its published posts.
 pub async fn get_published_page_by_slug(
     State(pool): State<db::DbPool>,
     Path(slug): Path<String>,
@@ -614,17 +471,6 @@ pub async fn get_published_page_by_slug(
     }))
 }
 
-/// Retrieves the navigation menu structure for the website.
-///
-/// This public endpoint returns a list of pages that are marked as `show_in_nav` and `is_published`.
-/// The list is ordered by the `order_index` field, allowing for customizable navigation menus.
-///
-/// # HTTP Endpoint
-/// `GET /api/public/navigation`
-///
-/// # Returns
-///
-/// A JSON response containing the list of navigation items.
 pub async fn get_navigation(
     State(pool): State<db::DbPool>,
 ) -> Result<Json<NavigationResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -649,17 +495,6 @@ pub async fn get_navigation(
     Ok(Json(NavigationResponse { items }))
 }
 
-/// Retrieves a single published post by its parent page slug and its own slug.
-///
-/// This public endpoint is used to display a single post. It ensures that both the
-/// parent page and the post itself are published before returning the content.
-///
-/// # HTTP Endpoint
-/// `GET /api/public/pages/{page_slug}/posts/{post_slug}`
-///
-/// # Returns
-///
-/// A JSON response combining the parent page's metadata with the full post details.
 pub async fn get_published_post_by_slug(
     State(pool): State<db::DbPool>,
     Path((page_slug, post_slug)): Path<(String, String)>,
@@ -715,17 +550,6 @@ pub async fn get_published_post_by_slug(
     }))
 }
 
-/// Lists the slugs of all published pages.
-///
-/// This public endpoint is primarily intended for programmatic use, such as generating
-/// a sitemap for search engines.
-///
-/// # HTTP Endpoint
-/// `GET /api/public/published-pages`
-///
-/// # Returns
-///
-/// A JSON array of strings, where each string is the slug of a published page.
 pub async fn list_published_page_slugs(
     State(pool): State<db::DbPool>,
 ) -> Result<Json<Vec<String>>, (StatusCode, Json<ErrorResponse>)> {

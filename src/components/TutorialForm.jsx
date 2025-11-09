@@ -3,15 +3,6 @@ import PropTypes from 'prop-types'
 import { useTutorials } from '../context/TutorialContext'
 import { X, Save, Plus, Trash2, AlertCircle } from 'lucide-react'
 
-/**
- * A form for creating and editing tutorials.
- * It includes fields for title, description, icon, color, topics, and Markdown content.
- *
- * @param {object} props - The component props.
- * @param {object} [props.tutorial] - The tutorial object to be edited. If not provided, the form is in 'create' mode.
- * @param {Function} props.onClose - A callback function to close the form.
- * @returns {JSX.Element} The rendered tutorial form.
- */
 const TutorialForm = ({ tutorial, onClose }) => {
   const { addTutorial, updateTutorial } = useTutorials()
   const [formData, setFormData] = useState({
@@ -72,20 +63,13 @@ const TutorialForm = ({ tutorial, onClose }) => {
     { value: 'from-red-500 to-pink-500', label: 'Rot' },
   ]
 
-  /**
-   * Handles form submission to create or update a tutorial.
-   * Validates the form data and handles errors.
-   *
-   * @param {Event} e - The form submit event.
-   * @returns {Promise<void>}
-   */
+  
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (submitting) {
       return
     }
 
-    // Filter out empty topics and trim them
     const cleanedData = {
       title: formData.title.trim(),
       description: formData.description.trim(),
@@ -125,7 +109,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
     } catch (error) {
       console.error('Tutorial save error:', error)
       
-      // Bessere Fehlermeldungen basierend auf dem Fehlertyp
+
       let errorMessage = 'Fehler beim Speichern: '
       
       if (error.status === 502) {
@@ -148,34 +132,19 @@ const TutorialForm = ({ tutorial, onClose }) => {
     }
   }
 
-  /**
-   * Updates a specific topic in the topics array.
-   *
-   * @param {number} index - The index of the topic to update.
-   * @param {string} value - The new value for the topic.
-   * @returns {void}
-   */
+  
   const handleTopicChange = (index, value) => {
     const newTopics = [...formData.topics]
     newTopics[index] = value
     setFormData({ ...formData, topics: newTopics })
   }
 
-  /**
-   * Adds a new empty topic field to the topics array.
-   *
-   * @returns {void}
-   */
+  
   const addTopic = () => {
     setFormData({ ...formData, topics: [...formData.topics, ''] })
   }
 
-  /**
-   * Removes a topic from the topics array by index.
-   *
-   * @param {number} index - The index of the topic to remove.
-   * @returns {void}
-   */
+  
   const removeTopic = (index) => {
     const newTopics = formData.topics.filter((_, i) => i !== index)
     setFormData({ ...formData, topics: newTopics })
@@ -183,7 +152,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
 
   return (
     <div className="p-8 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100">
-      {/* Header */}
+      {}
       <div className="flex justify-between items-center mb-6">
         <h2 id="modal-title" className="text-2xl font-bold text-gray-800 dark:text-slate-100">
           {tutorial ? 'Tutorial bearbeiten' : 'Neues Tutorial erstellen'}
@@ -196,7 +165,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
         </button>
       </div>
 
-      {/* Form */}
+      {}
       <form onSubmit={handleSubmit} className="space-y-6">
         {formError && (
           <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300" role="alert">
@@ -205,7 +174,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
           </div>
         )}
 
-        {/* Title */}
+        {}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
             Titel *
@@ -222,7 +191,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
           <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">{formData.title.length}/200 Zeichen</p>
         </div>
 
-        {/* Description */}
+        {}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
             Beschreibung *
@@ -239,7 +208,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
           <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">{formData.description.length}/1000 Zeichen</p>
         </div>
 
-        {/* Icon & Color */}
+        {}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
@@ -276,7 +245,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
           </div>
         </div>
 
-        {/* Topics */}
+        {}
         <div>
           <div className="flex justify-between items-center mb-2">
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300">
@@ -316,7 +285,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
           </div>
         </div>
 
-        {/* Content */}
+        {}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
             Inhalt (Markdown unterstützt)
@@ -332,7 +301,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
           <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">{formData.content.length}/100000 Zeichen</p>
         </div>
 
-        {/* Actions */}
+        {}
         <div className="flex space-x-4 pt-4 border-t border-gray-200 dark:border-slate-800">
           <button
             type="submit"

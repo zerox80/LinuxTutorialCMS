@@ -1,25 +1,4 @@
-//! # Site Posts Handler Module
-//!
-//! This module provides HTTP handlers for managing posts that belong to a `SitePage`.
-//! It enables full CRUD (Create, Read, Update, Delete) functionality for posts,
-//! ensuring that all operations are authorized and that the data is valid.
-//!
-//! ## Features
-//! - **Admin-Only CRUD**: All operations are restricted to authenticated administrators.
-//! - **Parent Page Association**: Posts are always associated with a parent `SitePage`.
-//! - **Data Validation**: Enforces constraints on title, slug, excerpt, and content length.
-//! - **Sanitization**: Input data like slugs and titles are trimmed and normalized.
-//! - **Publishing Workflow**: Supports `is_published` and `published_at` fields for drafts.
-//!
-//! ## API Endpoints
-//!
-//! All endpoints are nested under a parent page ID and require admin authentication.
-//!
-//! - `GET /api/pages/{page_id}/posts`: List all posts for a given page.
-//! - `POST /api/pages/{page_id}/posts`: Create a new post for a given page.
-//! - `GET /api/posts/{id}`: Get a single post by its ID.
-//! - `PUT /api/posts/{id}`: Update a post.
-//! - `DELETE /api/posts/{id}`: Delete a post.
+
 
 use crate::{
     auth, db,
@@ -35,13 +14,11 @@ use axum::{
 };
 use sqlx;
 
-// Constants for field length validation.
 const MAX_TITLE_LEN: usize = 200;
 const MAX_SLUG_LEN: usize = 100;
 const MAX_EXCERPT_LEN: usize = 500;
 const MAX_CONTENT_LEN: usize = 100_000;
 
-/// A helper function to ensure the authenticated user is an administrator.
 fn ensure_admin(claims: &auth::Claims) -> Result<(), (StatusCode, Json<ErrorResponse>)> {
     if claims.role != "admin" {
         Err((
@@ -55,7 +32,6 @@ fn ensure_admin(claims: &auth::Claims) -> Result<(), (StatusCode, Json<ErrorResp
     }
 }
 
-/// Maps a `sqlx::Error` to a corresponding HTTP error response.
 fn map_sqlx_error(err: sqlx::Error, context: &str) -> (StatusCode, Json<ErrorResponse>) {
     match err {
         sqlx::Error::RowNotFound => (
@@ -101,7 +77,6 @@ fn map_sqlx_error(err: sqlx::Error, context: &str) -> (StatusCode, Json<ErrorRes
     }
 }
 
-/// Maps a `db::SitePost` model to a `SitePostResponse` for API clients.
 fn map_post(record: crate::models::SitePost) -> SitePostResponse {
     SitePostResponse {
         id: record.id,
@@ -118,12 +93,10 @@ fn map_post(record: crate::models::SitePost) -> SitePostResponse {
     }
 }
 
-/// Sanitizes a slug by trimming whitespace and converting it to lowercase.
 fn sanitize_slug(slug: &str) -> String {
     slug.trim().to_lowercase()
 }
 
-/// Validates the fields of a post against predefined constraints.
 fn validate_post_fields(
     title: &str,
     slug: &str,
@@ -189,20 +162,6 @@ fn validate_post_fields(
     Ok(())
 }
 
-/// Lists all posts for a specific page. (Admin only)
-///
-/// This endpoint retrieves all posts (both published and unpublished) associated with a
-/// given parent page. It is intended for use in an administrative interface.
-///
-/// # HTTP Endpoint
-/// `GET /api/pages/{page_id}/posts`
-///
-/// # Authentication
-/// Requires admin privileges.
-///
-/// # Returns
-///
-/// A JSON response containing the list of posts.
 pub async fn list_posts_for_page(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -210,7 +169,6 @@ pub async fn list_posts_for_page(
 ) -> Result<Json<SitePostListResponse>, (StatusCode, Json<ErrorResponse>)> {
     ensure_admin(&claims)?;
 
-    // Ensure page exists to provide a clear 404 if the parent is not found.
     db::get_site_page_by_id(&pool, &page_id)
         .await
         .map_err(|err| map_sqlx_error(err, "Site page"))?
@@ -235,17 +193,6 @@ pub async fn list_posts_for_page(
     Ok(Json(SitePostListResponse { items }))
 }
 
-/// Retrieves a single post by its ID. (Admin only)
-///
-/// # HTTP Endpoint
-/// `GET /api/posts/{id}`
-///
-/// # Authentication
-/// Requires admin privileges.
-///
-/// # Returns
-///
-/// A JSON response describing the requested post.
 pub async fn get_post(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -268,20 +215,6 @@ pub async fn get_post(
     Ok(Json(map_post(post)))
 }
 
-/// Creates a new post for a specific page. (Admin only)
-///
-/// # HTTP Endpoint
-/// `POST /api/pages/{page_id}/posts`
-///
-/// # Authentication
-/// Requires admin privileges.
-///
-/// # Request Body
-/// A `CreateSitePostRequest` JSON object.
-///
-/// # Returns
-///
-/// A JSON representation of the newly created post.
 pub async fn create_post(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -300,7 +233,6 @@ pub async fn create_post(
         &payload.content_markdown,
     )?;
 
-    // Verify that the parent page exists before creating the post.
     db::get_site_page_by_id(&pool, &page_id)
         .await
         .map_err(|err| map_sqlx_error(err, "Site page"))?
@@ -332,23 +264,6 @@ pub async fn create_post(
     Ok(Json(map_post(record)))
 }
 
-/// Updates an existing post. (Admin only)
-///
-/// This endpoint supports partial updates. Fields not included in the request body
-/// will retain their current values.
-///
-/// # HTTP Endpoint
-/// `PUT /api/posts/{id}`
-///
-/// # Authentication
-/// Requires admin privileges.
-///
-/// # Request Body
-/// An `UpdateSitePostRequest` JSON object.
-///
-/// # Returns
-///
-/// A JSON representation of the updated post.
 pub async fn update_post(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,
@@ -357,7 +272,6 @@ pub async fn update_post(
 ) -> Result<Json<SitePostResponse>, (StatusCode, Json<ErrorResponse>)> {
     ensure_admin(&claims)?;
 
-    // Perform validation on the fields that are present in the payload.
     if let Some(ref slug) = payload.slug {
         let sanitized = sanitize_slug(slug);
         if sanitized.is_empty() {
@@ -411,7 +325,6 @@ pub async fn update_post(
         }
     }
 
-    // Sanitize the slug if it was provided.
     let mut payload = payload;
     if let Some(slug) = payload.slug.as_mut() {
         *slug = sanitize_slug(slug);
@@ -424,17 +337,6 @@ pub async fn update_post(
     Ok(Json(map_post(record)))
 }
 
-/// Deletes a post by its ID. (Admin only)
-///
-/// # HTTP Endpoint
-/// `DELETE /api/posts/{id}`
-///
-/// # Authentication
-/// Requires admin privileges.
-///
-/// # Returns
-///
-/// A `204 No Content` status on successful deletion.
 pub async fn delete_post(
     claims: auth::Claims,
     State(pool): State<db::DbPool>,

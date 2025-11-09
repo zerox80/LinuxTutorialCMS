@@ -4,48 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { api } from '../api/client';
 
-/**
- * Modal search interface for discovering tutorials with live search and topic filtering.
- *
- * This component provides a comprehensive search experience featuring:
- * - Real-time tutorial search with debounced API calls
- * - Dynamic topic-based filtering from available tutorial categories
- * - Responsive modal overlay with keyboard navigation support
- * - Loading states and empty state handling
- * - Auto-focus management for better UX
- * - Result navigation to tutorial detail pages
- *
- * The search bar integrates with the backend API to provide fast, relevant
- * search results across all available tutorials and their metadata.
- *
- * @example
- * ```jsx
- * // Basic usage
- * <SearchBar onClose={() => setShowSearch(false)} />
- *
- * // As part of a header component
- * function Header() {
- *   const [showSearch, setShowSearch] = useState(false);
- *
- *   return (
- *     <>
- *       <button onClick={() => setShowSearch(true)}>
- *         Search
- *       </button>
- *       {showSearch && <SearchBar onClose={() => setShowSearch(false)} />}
- *     </>
- *   );
- * }
- * ```
- *
- * @component
- * @param {object} props - Component props.
- * @param {Function} [props.onClose] - Callback function to close the search modal.
- * @returns {JSX.Element} A full-screen modal with search input, topic filters, and results display.
- *
- * @since 1.0.0
- * @version 1.0.0
- */
 const SearchBar = ({ onClose }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
@@ -58,7 +16,7 @@ const SearchBar = ({ onClose }) => {
   useEffect(() => {
     inputRef.current?.focus();
     
-    // Fetch available topics
+
     api.request('/search/topics', { cacheBust: false })
       .then((data) => setTopics(Array.isArray(data) ? data : []))
       .catch((err) => {
@@ -96,24 +54,13 @@ const SearchBar = ({ onClose }) => {
     return () => clearTimeout(timeoutId);
   }, [query, selectedTopic]);
 
-  /**
-   * Handles navigation to a tutorial detail page when a result is clicked.
-   *
-   * @param {string} id - The ID of the tutorial to navigate to.
-   * @returns {void}
-   */
+  
   const handleResultClick = (id) => {
     navigate(`/tutorials/${id}`);
     if (onClose) onClose();
   };
 
-  /**
-   * Handles keyboard events in the search input.
-   * Closes the modal when the Escape key is pressed.
-   *
-   * @param {KeyboardEvent} e - The keyboard event.
-   * @returns {void}
-   */
+  
   const handleKeyDown = (e) => {
     if (e.key === 'Escape') {
       if (onClose) onClose();
@@ -123,7 +70,7 @@ const SearchBar = ({ onClose }) => {
   return (
     <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-start justify-center pt-20 px-4">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
-        {/* Search Input */}
+        {}
         <div className="p-4 border-b dark:border-gray-700">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -146,7 +93,7 @@ const SearchBar = ({ onClose }) => {
             )}
           </div>
           
-          {/* Topic Filter */}
+          {}
           {topics.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
               <button
@@ -177,7 +124,7 @@ const SearchBar = ({ onClose }) => {
           )}
         </div>
 
-        {/* Results */}
+        {}
         <div className="flex-1 overflow-y-auto p-4">
           {isLoading && (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">

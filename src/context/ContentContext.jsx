@@ -12,11 +12,6 @@ import { api } from '../api/client'
 
 const ContentContext = createContext(null)
 
-/**
- * Canonical fallback copy for every editable CMS section when no custom content exists.
- *
- * @type {Record<string, unknown>}
- */
 export const DEFAULT_CONTENT = {
   hero: {
     badgeText: 'Professionelles Linux Training',
@@ -172,79 +167,8 @@ export const DEFAULT_CONTENT = {
   },
 }
 
-
-/**
- * Ordered list of editable section keys referenced throughout the CMS UI.
- *
- * @type {string[]}
- */
 export const CONTENT_SECTIONS = Object.keys(DEFAULT_CONTENT)
 
-/**
- * Provides dynamic site content, navigation, and page data to its children components.
- * It manages fetching, caching, and updating content from the API.
- *
- * @param {object} props - The component props.
- * @param {React.ReactNode} props.children - The child components that need access to the content context.
- * @returns {JSX.Element} The ContentContext provider.
- */
-/**
- * Content management context provider for handling all site content and navigation data.
- *
- * This comprehensive context provider manages:
- * - Static site content (hero sections, headers, footers, metadata)
- * - Dynamic navigation generation from CMS pages
- * - Published pages management with caching
- * - Real-time content updates and synchronization
- * - Page caching for improved performance
- * - Loading and error state management
- * - Content section updates with optimistic UI
- *
- * The provider integrates with the backend API to provide a complete
- * content management system for the Linux Tutorial CMS.
- *
- * @example
- * ```jsx
- * // Wrap your application with the ContentProvider
- * function App() {
- *   return (
- *     <AuthProvider>
- *       <ContentProvider>
- *         <TutorialProvider>
- *           <Router>
- *             <AppRoutes />
- *           </Router>
- *         </TutorialProvider>
- *       </ContentProvider>
- *     </AuthProvider>
- *   );
- * }
- *
- * // Use content in components
- * function Header() {
- *   const { content, navigation } = useContent();
- *   return (
- *     <header>
- *       <nav>
- *         {navigation.items.map(item => (
- *           <Link key={item.id} to={item.path}>
- *             {item.label}
- *           </Link>
- *         ))}
- *       </nav>
- *     </header>
- *   );
- * }
- * ```
- *
- * @component
- * @param {object} props - Component props.
- * @param {React.ReactNode} props.children - React nodes that consume the content context.
- * @returns {JSX.Element} Provider element that shares content state and helpers.
- *
- * @since 1.0.0
- * @version 1.0.0
- */
 export const ContentProvider = ({ children }) => {
   const [content, setContent] = useState(DEFAULT_CONTENT)
   const [loading, setLoading] = useState(true)
@@ -259,11 +183,7 @@ export const ContentProvider = ({ children }) => {
   const [pageCache, setPageCache] = useState({})
   const pageCacheRef = useRef({})
 
-  /**
-   * Loads site content from the API and merges it with default content.
-   *
-   * @returns {Promise<void>}
-   */
+  
   const loadContent = useCallback(async () => {
     try {
       setLoading(true)
@@ -288,11 +208,7 @@ export const ContentProvider = ({ children }) => {
     }
   }, [])
 
-  /**
-   * Loads dynamic navigation items from the API.
-   *
-   * @returns {Promise<void>}
-   */
+  
   const loadNavigation = useCallback(async () => {
     try {
       setNavLoading(true)
@@ -308,11 +224,7 @@ export const ContentProvider = ({ children }) => {
     }
   }, [])
 
-  /**
-   * Loads the list of published page slugs from the API.
-   *
-   * @returns {Promise<void>}
-   */
+  
   const loadPublishedPages = useCallback(async () => {
     try {
       setPublishedPagesLoading(true)
@@ -328,15 +240,7 @@ export const ContentProvider = ({ children }) => {
     }
   }, [])
 
-  /**
-   * Fetches a published page by slug, with optional caching.
-   *
-   * @param {string} slug - The page slug to fetch.
-   * @param {object} [options] - Fetch options.
-   * @param {boolean} [options.force=false] - Whether to force a fresh fetch, bypassing cache.
-   * @param {AbortSignal} [options.signal] - Optional abort signal for cancellation.
-   * @returns {Promise<object>} The page data including page metadata and posts.
-   */
+  
   const fetchPublishedPage = useCallback(
     async (slug, { force = false, signal } = {}) => {
       if (!slug || typeof slug !== 'string') {
@@ -368,12 +272,7 @@ export const ContentProvider = ({ children }) => {
     [],
   )
 
-  /**
-   * Invalidates the cache for a specific page or all pages.
-   *
-   * @param {string} [slug] - The slug of the page to invalidate. If omitted, clears all cache.
-   * @returns {void}
-   */
+  
   const invalidatePageCache = useCallback((slug) => {
     if (slug && typeof slug === 'string') {
       const normalizedSlug = slug.trim().toLowerCase()
@@ -406,13 +305,7 @@ export const ContentProvider = ({ children }) => {
     loadPublishedPages()
   }, [loadNavigation, loadPublishedPages])
 
-  /**
-   * Updates a specific content section via the API.
-   *
-   * @param {string} section - The section identifier to update.
-   * @param {object} newContent - The new content for the section.
-   * @returns {Promise<object>} The API response containing the updated content.
-   */
+  
   const updateSection = useCallback(async (section, newContent) => {
     if (!section) {
       throw new Error('Section is required')
@@ -522,78 +415,6 @@ ContentProvider.propTypes = {
   children: PropTypes.node,
 }
 
-/**
- * Custom hook for accessing content management functionality throughout the application.
- *
- * This hook provides comprehensive access to:
- * - Site content sections (hero, header, footer, metadata)
- * - Dynamic navigation management and data
- * - Published pages with caching system
- * - Content mutation operations
- * - Loading and error states
- *
- * @example
- * ```jsx
- * // Access content sections
- * function HeroSection() {
- *   const { content, getSection, loading } = useContent();
- *   const heroContent = getSection('hero');
- *
- *   if (loading) return <Spinner />;
- *   return (
- *     <section>
- *       <h1>{heroContent.title.line1}</h1>
- *       <h2>{heroContent.title.line2}</h2>
- *       <p>{heroContent.subtitle}</p>
- *     </section>
- *   );
- * }
- *
- * // Access navigation data
- * function Navigation() {
- *   const { navigation } = useContent();
- *   return (
- *     <nav>
- *       {navigation.items.map(item => (
- *         <Link key={item.id} to={item.path}>
- *           {item.label}
- *         </Link>
- *       ))}
- *     </nav>
- *   );
- * }
- *
- * // Manage pages
- * function PageList() {
- *   const { pages } = useContent();
- *   return (
- *     <ul>
- *       {pages.publishedSlugs.map(slug => (
- *         <li key={slug}>{slug}</li>
- *       ))}
- *     </ul>
- *   );
- * }
- * ```
- *
- * @returns {object} Content context value containing:
- *                  - content {object}: All site content sections
- *                  - loading {boolean}: Content loading state
- *                  - error {Error|null}: Content loading error
- *                  - refreshContent {Function}: Function to reload content
- *                  - getSection {Function}: Function to get specific section content
- *                  - getDefaultSection {Function}: Function to get default section content
- *                  - getSiteMeta {Function}: Function to get site metadata
- *                  - updateSection {Function}: Function to update a content section
- *                  - savingSections {object}: Currently saving sections state
- *                  - navigation {object}: Navigation data and helpers
- *                  - pages {object}: Pages management with caching
- *
- * @throws {Error} If used outside of a ContentProvider wrapper component.
- *
- * @since 1.0.0
- * @version 1.0.0
- */
 export const useContent = () => {
   const ctx = useContext(ContentContext)
   if (!ctx) {

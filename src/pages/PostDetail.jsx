@@ -5,36 +5,6 @@ import MarkdownRenderer from '../components/MarkdownRenderer'
 import { useContent } from '../context/ContentContext'
 import { formatDate, normalizeSlug } from '../utils/postUtils'
 
-/**
- * Blog post detail page component for displaying individual blog posts and articles.
- *
- * This page component provides a comprehensive blog post viewing experience by:
- * - Fetching post content based on URL slugs (page and post)
- * - Displaying rich markdown content with proper typography
- * - Showing post metadata including title, excerpt, and publication date
- * - Implementing breadcrumb navigation back to the parent page
- * - Handling loading states and error conditions gracefully
- * - Supporting abortable API requests for performance
- * - Normalizing slugs for consistent URL handling
- *
- * The component integrates with the ContentContext to fetch dynamic page
- * content and provides a clean, responsive reading experience.
- *
- * @example
- * ```jsx
- * // Used in React Router with dynamic slugs
- * <Route path="/pages/:pageSlug/posts/:postSlug" element={<PostDetail />} />
- *
- * // Example URL: /pages/linux-basics/posts/command-line-intro
- * ```
- *
- * @component
- * @returns {JSX.Element} A blog post detail page with header, content, and navigation.
- *                          Features responsive design and proper error handling.
- *
- * @since 1.0.0
- * @version 1.0.0
- */
 const PostDetail = () => {
   const { pageSlug = '', postSlug = '' } = useParams()
   const navigate = useNavigate()

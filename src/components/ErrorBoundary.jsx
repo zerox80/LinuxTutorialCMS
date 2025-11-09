@@ -2,64 +2,19 @@ import { Component } from 'react'
 import PropTypes from 'prop-types'
 import { AlertCircle, RefreshCw } from 'lucide-react'
 
-/**
- * React Error Boundary component that catches JavaScript errors in its child component tree.
- *
- * This class component provides error recovery for the entire application by:
- * - Intercepting JavaScript errors thrown by any descendant component
- * - Logging detailed error information for debugging
- * - Displaying a user-friendly fallback UI instead of the crashed component tree
- * - Providing recovery options to reset the application state
- * - Gracefully handling navigation back to safety
- *
- * The ErrorBoundary should wrap the entire application or major sections
- * to prevent complete application crashes and provide better user experience.
- *
- * @example
- * ```jsx
- * // Wrap the entire application
- * <ErrorBoundary>
- *   <App />
- * </ErrorBoundary>
- *
- * // Wrap specific sections
- * <ErrorBoundary>
- *   <ComplexComponent />
- * </ErrorBoundary>
- * ```
- *
- * @extends React.Component
- * @since 1.0.0
- * @version 1.0.0
- */
 class ErrorBoundary extends Component {
-  /**
-   * Creates the error boundary with initial error state.
-   *
-   * @param {object} props - React component props.
-   */
+  
   constructor(props) {
     super(props)
     this.state = { hasError: false, error: null, errorInfo: null }
   }
 
-  /**
-   * Updates component state when a child throws to trigger the fallback UI.
-   *
-   * @param {Error} error - The error thrown by a descendant.
-   * @returns {{ hasError: boolean }} State patch instructing React to render the fallback.
-   */
+  
   static getDerivedStateFromError(error) {
     return { hasError: true }
   }
 
-  /**
-   * Lifecycle hook for logging and storing details about caught errors.
-   *
-   * @param {Error} error - The runtime error that was intercepted.
-   * @param {React.ErrorInfo} errorInfo - Component stack information for debugging.
-   * @returns {void}
-   */
+  
   componentDidCatch(error, errorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo)
     this.setState({
@@ -68,11 +23,7 @@ class ErrorBoundary extends Component {
     })
   }
 
-  /**
-   * Clears the error state and navigates the user back to the home page.
-   *
-   * @returns {void}
-   */
+  
   handleReset = () => {
     this.setState({ hasError: false, error: null, errorInfo: null })
     if (typeof window !== 'undefined' && window.history) {
@@ -81,11 +32,7 @@ class ErrorBoundary extends Component {
     }
   }
 
-  /**
-   * Renders either the fallback interface or the wrapped children tree.
-   *
-   * @returns {React.ReactNode} The rendered fallback UI or original children.
-   */
+  
   render() {
     if (this.state.hasError) {
       return (
@@ -129,7 +76,7 @@ class ErrorBoundary extends Component {
 }
 
 ErrorBoundary.propTypes = {
-  /** React node(s) to be wrapped by the error boundary */
+  
   children: PropTypes.node.isRequired,
 }
 

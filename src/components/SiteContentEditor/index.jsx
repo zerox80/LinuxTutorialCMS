@@ -17,12 +17,6 @@ const sectionLabels = {
   site_meta: 'Seitentitel & Beschreibung',
 }
 
-/**
- * Creates a deep copy of a content object via JSON serialization.
- *
- * @param {*} value - The value to clone.
- * @returns {object} A deep clone of the value, or an empty object if value is null/undefined.
- */
 const cloneContent = (value) => {
   if (value === undefined || value === null) {
     return {}
@@ -30,15 +24,6 @@ const cloneContent = (value) => {
   return JSON.parse(JSON.stringify(value))
 }
 
-/**
- * Sets a nested value in an object using a path array.
- * Creates intermediate objects as needed.
- *
- * @param {object} obj - The object to modify.
- * @param {Array<string>} path - The path to the nested property.
- * @param {*} value - The value to set.
- * @returns {object} The modified object.
- */
 const setNestedValue = (obj, path, value) => {
   if (!Array.isArray(path) || path.length === 0) {
     return obj
@@ -55,15 +40,6 @@ const setNestedValue = (obj, path, value) => {
   return obj
 }
 
-/**
- * Displays a grid of clickable section cards for selecting a content section to edit.
- *
- * @param {object} props - The component props.
- * @param {Array<string>} props.sections - Available section identifiers.
- * @param {string} [props.selected] - Currently selected section.
- * @param {Function} props.onSelect - Callback when a section is clicked.
- * @returns {JSX.Element} The rendered section picker.
- */
 const SectionPicker = ({ sections, selected, onSelect }) => {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -96,17 +72,6 @@ SectionPicker.propTypes = {
   onSelect: PropTypes.func.isRequired,
 }
 
-/**
- * Toolbar with back, reset, and save buttons for the section editor.
- *
- * @param {object} props - The component props.
- * @param {Function} props.onBack - Callback to go back to section selection.
- * @param {Function} props.onReset - Callback to discard changes.
- * @param {Function} props.onSave - Callback to save changes.
- * @param {boolean} [props.isSaving] - Whether a save operation is in progress.
- * @param {boolean} [props.hasChanges] - Whether there are unsaved changes.
- * @returns {JSX.Element} The rendered toolbar.
- */
 const SectionToolbar = ({ onBack, onReset, onSave, isSaving, hasChanges }) => (
   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
     <button
@@ -147,16 +112,6 @@ SectionToolbar.propTypes = {
   hasChanges: PropTypes.bool,
 }
 
-/**
- * Text area for editing content JSON with schema hints and error display.
- *
- * @param {object} props - The component props.
- * @param {string} props.value - The JSON string value.
- * @param {Function} props.onChange - Callback when the text changes.
- * @param {string} [props.error] - JSON parsing error message.
- * @param {string} [props.schemaHint] - Schema hint to display.
- * @returns {JSX.Element} The rendered JSON editor.
- */
 const ContentJsonEditor = ({ value, onChange, error, schemaHint }) => (
   <div className="space-y-3">
     <label className="block text-sm font-semibold text-gray-700 dark:text-slate-200">JSON-Inhalt</label>
@@ -187,13 +142,6 @@ ContentJsonEditor.propTypes = {
   schemaHint: PropTypes.string,
 }
 
-/**
- * Visual preview of the hero section content.
- *
- * @param {object} props - The component props.
- * @param {object} props.content - The hero content object.
- * @returns {JSX.Element} The rendered hero preview.
- */
 const HeroPreview = ({ content }) => {
   const HeroIcon = getIconComponent(content.icon, 'Terminal')
   const features = Array.isArray(content.features) ? content.features : []
@@ -252,14 +200,6 @@ HeroPreview.propTypes = {
   content: PropTypes.object.isRequired,
 }
 
-/**
- * Form for editing hero section fields with structured inputs.
- *
- * @param {object} props - The component props.
- * @param {object} [props.content] - The hero content object.
- * @param {Function} props.onFieldChange - Callback when a field changes.
- * @returns {JSX.Element} The rendered hero content form.
- */
 const HeroContentForm = ({ content, onFieldChange }) => {
   const heroContent = content || {}
   const title = heroContent.title || {}
@@ -322,13 +262,6 @@ HeroContentForm.propTypes = {
   onFieldChange: PropTypes.func.isRequired,
 }
 
-/**
- * Preview card for global site metadata (title & description).
- *
- * @param {object} props - Component props.
- * @param {object} props.content - Site meta content object.
- * @returns {JSX.Element}
- */
 const SiteMetaPreview = ({ content }) => {
   return (
     <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
@@ -355,14 +288,6 @@ SiteMetaPreview.propTypes = {
   content: PropTypes.object.isRequired,
 }
 
-/**
- * Structured form inputs for editing global site metadata.
- *
- * @param {object} props - Component props.
- * @param {object} [props.content] - Site meta object.
- * @param {Function} props.onFieldChange - Change handler for fields.
- * @returns {JSX.Element}
- */
 const SiteMetaForm = ({ content, onFieldChange }) => {
   const siteMeta = content || {}
 
@@ -409,13 +334,6 @@ SiteMetaForm.propTypes = {
   onFieldChange: PropTypes.func.isRequired,
 }
 
-/**
- * Visual preview of the tutorial section content.
- *
- * @param {object} props - The component props.
- * @param {object} props.content - The tutorial section content object.
- * @returns {JSX.Element} The rendered tutorial section preview.
- */
 const TutorialSectionPreview = ({ content }) => {
   return (
     <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -456,14 +374,6 @@ TutorialSectionPreview.propTypes = {
   content: PropTypes.object.isRequired,
 }
 
-/**
- * Renders the appropriate preview component based on the selected section.
- *
- * @param {object} props - The component props.
- * @param {string} props.section - The section identifier.
- * @param {object} props.content - The content object for the section.
- * @returns {JSX.Element} The rendered section preview.
- */
 const SectionPreview = ({ section, content }) => {
   switch (section) {
     case 'hero':
@@ -489,44 +399,6 @@ SectionPreview.propTypes = {
   content: PropTypes.object.isRequired,
 }
 
-/**
- * Comprehensive CMS workspace for editing all site content sections with live previews.
- *
- * This component provides a user-friendly interface for administrators to manage
- * various sections of the website including hero content, navigation, footer,
- * tutorials, and site metadata. It features:
- *
- * - Section selection grid for choosing content areas
- * - JSON editor with syntax validation and schema hints
- * - Live preview panels for supported sections
- * - Structured form inputs for complex content types
- * - Real-time change tracking and validation
- * - Auto-save functionality with loading states
- * - Error handling and user feedback
- *
- * Supported sections include:
- * - hero: Landing page hero section with title, subtitle, and features
- * - tutorial_section: Tutorial listing configuration
- * - header: Navigation and header content
- * - footer: Footer links and information
- * - grundlagen_page: Linux basics page content
- * - site_meta: Global site title and SEO metadata
- *
- * @component
- * @example
- * ```jsx
- * // Usage in admin dashboard
- * <SiteContentEditor />
- * ```
- *
- * @returns {JSX.Element} A comprehensive editor interface with section selection,
- *                          JSON editing, live preview, and save functionality.
- *                          The layout is responsive and includes proper error
- *                          handling and loading states.
- *
- * @since 1.0.0
- * @version 1.0.0
- */
 const SiteContentEditor = () => {
   const {
     content,

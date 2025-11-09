@@ -25,7 +25,7 @@ describe('ThemeToggle', () => {
     const button = screen.getByRole('button');
     fireEvent.click(button);
     
-    // Check if localStorage was called
+
     expect(localStorage.setItem).toHaveBeenCalled();
   });
 });
