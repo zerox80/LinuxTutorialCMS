@@ -1,21 +1,5 @@
 
 
-/**
- * Linux Tutorial CMS - Main Application Entry Point
- * 
- * This file contains the main server setup and configuration for the Rust backend.
- * It initializes all middleware, routes, security layers, and starts the HTTP server.
- * 
- * Architecture Overview:
- * - AXUM web framework for HTTP handling
- * - SQLite database with SQLx for async operations  
- * - JWT-based authentication with HttpOnly cookies
- * - CSRF protection for state-changing requests
- * - Rate limiting to prevent abuse
- * - Comprehensive security headers
- * - CORS configuration for frontend integration
- */
-
 // Module declarations for organizing the backend codebase
 mod auth;     // Authentication and JWT token management
 mod csrf;     // Cross-Site Request Forgery protection
@@ -63,16 +47,6 @@ const X_FORWARDED_PROTO_HEADER: HeaderName = HeaderName::from_static("x-forwarde
 const X_FORWARDED_HOST_HEADER: HeaderName = HeaderName::from_static("x-forwarded-host");
 const X_REAL_IP_HEADER: HeaderName = HeaderName::from_static("x-real-ip");
 
-/// Parses an environment variable as a boolean value.
-/// Accepts: "1", "true", "yes", "on" for true; "0", "false", "no", "off" for false.
-/// This function provides flexible boolean parsing for environment configuration.
-///
-/// # Arguments
-/// * `key` - Environment variable name to look up
-/// * `default` - Default value to return if variable is not set or invalid
-///
-/// # Returns
-/// Boolean value parsed from environment or default fallback
 fn parse_env_bool(key: &str, default: bool) -> bool {
     env::var(key)
         .ok()
@@ -89,21 +63,6 @@ fn parse_env_bool(key: &str, default: bool) -> bool {
         .unwrap_or(default)
 }
 
-/// Middleware to strip untrusted proxy headers from requests.
-/// This prevents IP spoofing attacks by removing X-Forwarded-* headers
-/// that could be used to fake client IP addresses for rate limiting.
-///
-/// # Security Purpose
-/// - Prevents clients from spoofing their IP address
-/// - Ensures rate limiting uses the real client IP
-/// - Stops proxy header injection attacks
-///
-/// # Arguments
-/// * `request` - Incoming HTTP request
-/// * `next` - Next middleware in the chain
-///
-/// # Returns
-/// HTTP response from next middleware with proxy headers removed
 async fn strip_untrusted_forwarded_headers(mut request: Request, next: Next) -> Response {
     {
         let headers = request.headers_mut();
@@ -119,25 +78,6 @@ async fn strip_untrusted_forwarded_headers(mut request: Request, next: Next) -> 
     next.run(request).await
 }
 
-/// Middleware to add comprehensive security headers to all responses.
-/// This implements defense-in-depth security through HTTP headers.
-///
-/// # Security Headers Added:
-/// - Content-Security-Policy (CSP): Prevents XSS and code injection
-/// - Strict-Transport-Security (HSTS): Forces HTTPS in production
-/// - X-Frame-Options: Prevents clickjacking attacks
-/// - X-Content-Type-Options: Stops MIME-type sniffing
-/// - Referrer-Policy: Controls referrer information leakage
-/// - Permissions-Policy: Disables browser features (camera, mic, geolocation)
-/// - X-XSS-Protection: Legacy XSS protection (set to 0 for modern CSP)
-/// - Cache-Control: Configures caching based on endpoint sensitivity
-///
-/// # Arguments
-/// * `request` - Incoming HTTP request
-/// * `next` - Next middleware in the chain
-///
-/// # Returns
-/// HTTP response with security headers added
 async fn security_headers(request: Request, next: Next) -> Response {
     use axum::http::Method;
 
@@ -230,19 +170,6 @@ const ADMIN_BODY_LIMIT: usize = 8 * 1024 * 1024;  // 8MB for admin content uploa
 // In production, FRONTEND_ORIGINS environment variable must be set
 const DEV_DEFAULT_FRONTEND_ORIGINS: &[&str] = &["http://localhost:5173", "http://localhost:3000"];
 
-/// Parses and validates CORS allowed origins from environment configuration.
-/// This function ensures only valid HTTP(S) origins are accepted for CORS.
-///
-/// # Security Purpose
-/// - Prevents malicious origins from accessing the API
-/// - Validates URL format to prevent header injection
-/// - Ensures only HTTP/HTTPS protocols are allowed
-///
-/// # Arguments
-/// * `origins` - Iterator of origin strings from environment variable
-///
-/// # Returns
-/// Vector of validated HeaderValue origins ready for CORS configuration
 fn parse_allowed_origins<'a, I>(origins: I) -> Vec<HeaderValue>
 where
     I: IntoIterator<Item = &'a str>,
@@ -283,8 +210,6 @@ where
         .collect()
 }
 
-/// Main application entry point.
-/// Initializes database, configures middleware, sets up routes, and starts the server.
 #[tokio::main]
 async fn main() {
 
@@ -531,8 +456,6 @@ async fn main() {
     tracing::info!("Server shutdown complete");
 }
 
-/// Handles graceful shutdown signals (Ctrl+C and SIGTERM).
-/// Waits for shutdown signal and initiates graceful shutdown.
 async fn shutdown_signal() {
 
     let ctrl_c = async {
