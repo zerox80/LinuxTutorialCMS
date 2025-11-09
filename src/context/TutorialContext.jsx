@@ -3,6 +3,45 @@ import PropTypes from 'prop-types'
 import { api } from '../api/client'
 import { getIconComponent as getIconComponentFromMap } from '../utils/iconMap'
 const TutorialContext = createContext(null)
+
+const FALLBACK_TUTORIALS = Object.freeze([
+  {
+    id: 'linux-shell-grundlagen',
+    title: 'Linux Shell Grundlagen',
+    description: 'Starte mit den wichtigsten Terminalbefehlen, Navigationskonzepten und grundlegenden Workflows.',
+    icon: 'Terminal',
+    color: 'from-blue-500 to-cyan-500',
+    topics: ['Shell', 'Bash', 'Navigation'],
+    target: { type: 'route', value: '/grundlagen' },
+    buttonLabel: 'Zum Grundlagenkurs',
+  },
+  {
+    id: 'linux-dateiverwaltung',
+    title: 'Dateiverwaltung & Berechtigungen',
+    description: 'Verstehe Dateisysteme, Berechtigungen und sichere Arbeitsweisen für den Linux-Alltag.',
+    icon: 'FolderTree',
+    color: 'from-emerald-500 to-teal-500',
+    topics: ['Dateisystem', 'Rechte', 'Sicherheit'],
+    target: { type: 'route', value: '/grundlagen' },
+    buttonLabel: 'Mehr über Rechte lernen',
+  },
+  {
+    id: 'linux-netzwerkpraxis',
+    title: 'Netzwerk & Praxis',
+    description: 'Lerne die wichtigsten Netzwerk-Tools kennen und übe praxisnahe Szenarien mit SSH & Co.',
+    icon: 'Network',
+    color: 'from-purple-500 to-indigo-500',
+    topics: ['Netzwerk', 'SSH', 'Praxis'],
+    target: { type: 'route', value: '/grundlagen' },
+    buttonLabel: 'Praxisbeispiele ansehen',
+  },
+])
+
+const cloneFallbackTutorials = () =>
+  FALLBACK_TUTORIALS.map((tutorial) => ({
+    ...tutorial,
+    topics: Array.isArray(tutorial.topics) ? [...tutorial.topics] : [],
+  }))
 export const TutorialProvider = ({ children }) => {
   const [tutorials, setTutorials] = useState([])
   const [loading, setLoading] = useState(true)
@@ -15,8 +54,14 @@ export const TutorialProvider = ({ children }) => {
         try {
           const data = await api.getTutorials({ signal })
           if (!signal?.aborted) {
-            setTutorials(Array.isArray(data) ? data : [])
-            setError(null)
+            const list = Array.isArray(data) ? data : []
+            if (list.length > 0) {
+              setTutorials(list)
+              setError(null)
+            } else {
+              setTutorials(cloneFallbackTutorials())
+              setError(null)
+            }
           }
         } catch (err) {
           if (signal?.aborted) {
@@ -55,8 +100,12 @@ export const TutorialProvider = ({ children }) => {
           }
           console.error('Failed to load tutorials:', err)
           if (!signal?.aborted) {
-            setTutorials([])
-            setError(err)
+            const fallbackError = new Error(
+              'Standard-Linux-Tutorials werden angezeigt, da die echten Inhalte aktuell nicht geladen werden konnten.'
+            )
+            fallbackError.code = 'fallback'
+            setTutorials(cloneFallbackTutorials())
+            setError(fallbackError)
           }
         }
       }
