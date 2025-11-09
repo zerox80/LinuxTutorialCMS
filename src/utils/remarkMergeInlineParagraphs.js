@@ -273,6 +273,18 @@ const shouldChainParagraph = (previousParagraph, currentParagraph) => {
     return false
   }
 
+  const previousPosition = previousParagraph.position
+  const currentPosition = currentParagraph.position
+  if (
+    previousPosition &&
+    currentPosition &&
+    currentPosition.start &&
+    previousPosition.end &&
+    currentPosition.start.line - previousPosition.end.line > 1
+  ) {
+    return false
+  }
+
   if (endsWithInlineCode(previousParagraph)) {
     return false
   }
