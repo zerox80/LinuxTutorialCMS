@@ -15,6 +15,12 @@ const FALLBACK_NAV_ITEMS = [
   { id: 'grundlagen', label: 'Grundlagen', type: 'route', path: '/grundlagen' },
 ]
 
+/**
+ * Main header navigation component with responsive design.
+ * Displays brand, navigation menu, search, theme toggle, and authentication controls.
+ * 
+ * @returns {JSX.Element} Rendered header with navigation and controls
+ */
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -30,6 +36,12 @@ const Header = () => {
   const CTAIcon = getIconComponent(ctaContent.icon, 'Lock')
 
   
+  /**
+   * Resolves the section ID from a navigation item.
+   * 
+   * @param {Object} item - Navigation item object
+   * @returns {string|null} Section ID or null if not found
+   */
   const resolveSectionId = (item) => {
     if (!item) return null
     if (item.target?.type === 'section') return item.target.value
@@ -49,6 +61,12 @@ const Header = () => {
   }, [navigation?.items, contentNavItems])
 
   
+  /**
+   * Handles navigation when a menu item is clicked.
+   * Supports routes, sections, and external URLs.
+   * 
+   * @param {Object} item - Navigation item object
+   */
   const handleNavigation = (item) => {
     if (!item) return
 
@@ -98,6 +116,10 @@ const Header = () => {
   }
 
   
+  /**
+   * Handles click on the call-to-action button.
+   * Navigates to admin dashboard if authenticated, otherwise to login.
+   */
   const handleCtaClick = () => {
     if (ctaContent.target) {
       navigateContentTarget(ctaContent.target, { navigate, location })

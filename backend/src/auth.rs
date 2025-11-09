@@ -1,5 +1,18 @@
 
 
+//! Authentication and Authorization Module
+//!
+//! This module provides comprehensive authentication and authorization functionality for the Linux Tutorial CMS.
+//! It handles JWT (JSON Web Token) creation and validation, secure cookie management, and middleware
+//! for protecting routes that require authentication.
+//!
+//! Key Features:
+//! - JWT-based authentication with configurable secrets
+//! - Secure cookie handling with proper security flags
+//! - Role-based authorization through claims
+//! - Security validation for JWT secrets to prevent weak credentials
+//! - Support for both Bearer token and cookie-based authentication
+
 use axum::{
     extract::FromRequestParts,
     http::{
@@ -17,21 +30,55 @@ use std::env;
 use std::sync::OnceLock;
 use time::{Duration as TimeDuration, OffsetDateTime};
 
+/// Global JWT secret storage using OnceLock for thread-safe one-time initialization
+/// This ensures the secret is set once at application startup and never changed
 pub static JWT_SECRET: OnceLock<String> = OnceLock::new();
 
+/// Blacklist of known weak/placeholder JWT secrets that should be rejected
+/// These are common default values that developers might accidentally use in production
 const SECRET_BLACKLIST: &[&str] = &[
     "CHANGE_ME_OR_APP_WILL_FAIL",
     "your-super-secret-jwt-key-min-32-chars-change-me-in-production",
     "PLEASE-SET-THIS-VIA-DOCKER-COMPOSE-ENV",
 ];
 
+/// Minimum required length for JWT secrets (43 chars = ~256 bits of entropy when base64 encoded)
 const MIN_SECRET_LENGTH: usize = 43;
+
+/// Minimum number of unique characters required in JWT secrets to prevent repetition attacks
 const MIN_UNIQUE_CHARS: usize = 10;
+
+/// Minimum number of character classes (lowercase, uppercase, digits, symbols) required
 const MIN_CHAR_CLASSES: usize = 3;
 
+/// Name of the authentication cookie stored in the user's browser
 pub const AUTH_COOKIE_NAME: &str = "ltcms_session";
+
+/// Time-to-live for authentication cookies in seconds (24 hours)
 const AUTH_COOKIE_TTL_SECONDS: i64 = 24 * 60 * 60;
 
+/// Initialize the JWT secret from environment variables with comprehensive security validation
+///
+/// This function should be called once during application startup to validate and set the JWT secret.
+/// It performs multiple security checks to ensure the secret is strong enough for production use.
+///
+/// # Returns
+/// * `Ok(())` - JWT secret successfully initialized and validated
+/// * `Err(String)` - Detailed error message describing why initialization failed
+///
+/// # Security Checks Performed:
+/// 1. Environment variable existence
+/// 2. Empty/whitespace rejection
+/// 3. Known placeholder/blacklist rejection
+/// 4. Entropy and complexity validation
+///
+/// # Example
+/// ```rust
+/// if let Err(e) = init_jwt_secret() {
+///     eprintln!("Failed to initialize JWT secret: {}", e);
+///     std::process::exit(1);
+/// }
+/// ```
 pub fn init_jwt_secret() -> Result<(), String> {
 
     let secret = env::var("JWT_SECRET")

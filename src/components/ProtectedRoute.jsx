@@ -2,6 +2,15 @@ import { Navigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { useAuth } from '../context/AuthContext'
 
+/**
+ * Route protection component that requires authentication.
+ * Redirects to login page if user is not authenticated.
+ * Shows loading spinner while checking authentication status.
+ * 
+ * @param {Object} props - Component props
+ * @param {React.ReactNode} props.children - Child components to render if authenticated
+ * @returns {JSX.Element} Children if authenticated, loading spinner, or redirect to login
+ */
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
 

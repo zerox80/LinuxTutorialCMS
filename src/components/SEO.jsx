@@ -1,6 +1,22 @@
 import { Helmet } from 'react-helmet-async';
 import PropTypes from 'prop-types';
 
+/**
+ * SEO component for managing page metadata and social media tags.
+ * Sets HTML head tags for search engines and social media platforms.
+ * 
+ * @param {Object} props - Component props
+ * @param {string} [props.title] - Page title
+ * @param {string} [props.description] - Page description
+ * @param {string} [props.keywords] - SEO keywords
+ * @param {string} [props.image] - Social media preview image path
+ * @param {string} [props.url] - Canonical URL
+ * @param {string} [props.type='website'] - Open Graph type
+ * @param {string} [props.author] - Content author
+ * @param {string} [props.publishedTime] - Article publish time (ISO 8601)
+ * @param {string} [props.modifiedTime] - Article modification time (ISO 8601)
+ * @returns {JSX.Element} Helmet component with configured meta tags
+ */
 const SEO = ({
   title,
   description,

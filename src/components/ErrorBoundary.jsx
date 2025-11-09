@@ -2,19 +2,40 @@ import { Component } from 'react'
 import PropTypes from 'prop-types'
 import { AlertCircle, RefreshCw } from 'lucide-react'
 
+/**
+ * Error boundary component that catches and displays React errors gracefully.
+ * Provides a user-friendly error UI with reset functionality.
+ */
 class ErrorBoundary extends Component {
   
+  /**
+   * Creates an ErrorBoundary instance.
+   * 
+   * @param {Object} props - Component props
+   */
   constructor(props) {
     super(props)
     this.state = { hasError: false, error: null, errorInfo: null }
   }
 
   
+  /**
+   * Updates state when an error is caught.
+   * 
+   * @param {Error} error - The error that was thrown
+   * @returns {Object} Updated state with hasError flag
+   */
   static getDerivedStateFromError(error) {
     return { hasError: true }
   }
 
   
+  /**
+   * Logs error details when an error is caught.
+   * 
+   * @param {Error} error - The error that was thrown
+   * @param {Object} errorInfo - Additional error information including component stack
+   */
   componentDidCatch(error, errorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo)
     this.setState({
@@ -24,6 +45,9 @@ class ErrorBoundary extends Component {
   }
 
   
+  /**
+   * Resets the error state and navigates to home page.
+   */
   handleReset = () => {
     this.setState({ hasError: false, error: null, errorInfo: null })
     if (typeof window !== 'undefined' && window.history) {
@@ -33,6 +57,11 @@ class ErrorBoundary extends Component {
   }
 
   
+  /**
+   * Renders either the error UI or children components.
+   * 
+   * @returns {JSX.Element} Error UI if error occurred, otherwise children
+   */
   render() {
     if (this.state.hasError) {
       return (

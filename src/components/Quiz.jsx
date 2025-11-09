@@ -2,6 +2,17 @@ import { useState } from 'react';
 import { Check, X, RotateCcw } from 'lucide-react';
 import PropTypes from 'prop-types';
 
+/**
+ * Interactive quiz component with multiple-choice questions.
+ * Tracks user answers, calculates scores, and displays results.
+ * 
+ * @param {Object} props - Component props
+ * @param {Array<Object>} props.questions - Array of question objects
+ * @param {string} props.questions[].question - The question text
+ * @param {Array<string>} props.questions[].answers - Array of possible answers
+ * @param {number} props.questions[].correctAnswer - Index of the correct answer
+ * @returns {JSX.Element} Rendered quiz interface or results screen
+ */
 const Quiz = ({ questions }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({});
@@ -9,6 +20,12 @@ const Quiz = ({ questions }) => {
   const [score, setScore] = useState(0);
 
   
+  /**
+   * Records the user's answer for a specific question.
+   * 
+   * @param {number} questionIndex - Index of the question being answered
+   * @param {number} answerIndex - Index of the selected answer
+   */
   const handleAnswer = (questionIndex, answerIndex) => {
     setSelectedAnswers(prev => ({
       ...prev,
@@ -17,6 +34,10 @@ const Quiz = ({ questions }) => {
   };
 
   
+  /**
+   * Calculates the final score and displays results.
+   * Counts correct answers and shows the results screen.
+   */
   const handleSubmit = () => {
     let correctCount = 0;
     questions.forEach((q, idx) => {
@@ -29,6 +50,9 @@ const Quiz = ({ questions }) => {
   };
 
   
+  /**
+   * Resets the quiz to initial state for retaking.
+   */
   const handleReset = () => {
     setCurrentQuestion(0);
     setSelectedAnswers({});

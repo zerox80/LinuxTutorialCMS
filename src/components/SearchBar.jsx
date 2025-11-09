@@ -4,6 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { api } from '../api/client';
 
+/**
+ * Search bar component with tutorial search and topic filtering.
+ * Provides real-time search with debouncing and topic-based filtering.
+ * 
+ * @param {Object} props - Component props
+ * @param {Function} [props.onClose] - Callback to close the search bar
+ * @returns {JSX.Element} Rendered search bar overlay
+ */
 const SearchBar = ({ onClose }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
@@ -55,12 +63,24 @@ const SearchBar = ({ onClose }) => {
   }, [query, selectedTopic]);
 
   
+  /**
+   * Handles clicking on a search result.
+   * Navigates to the tutorial and closes the search bar.
+   * 
+   * @param {string} id - Tutorial ID to navigate to
+   */
   const handleResultClick = (id) => {
     navigate(`/tutorials/${id}`);
     if (onClose) onClose();
   };
 
   
+  /**
+   * Handles keyboard events in the search input.
+   * Closes search bar on Escape key.
+   * 
+   * @param {KeyboardEvent} e - Keyboard event
+   */
   const handleKeyDown = (e) => {
     if (e.key === 'Escape') {
       if (onClose) onClose();

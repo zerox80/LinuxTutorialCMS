@@ -48,6 +48,14 @@ const defaultLayoutConfig = {
 
 const defaultLayoutJson = JSON.stringify(defaultLayoutConfig, null, 2)
 
+/**
+ * Parses a JSON string field with error handling.
+ * 
+ * @param {string} value - JSON string to parse
+ * @param {string} field - Field name for error messages
+ * @returns {Object} Parsed JSON object or empty object if value is empty
+ * @throws {Error} If JSON parsing fails
+ */
 const parseJsonField = (value, field) => {
   const trimmed = (value ?? '').trim()
   if (!trimmed) {
@@ -62,6 +70,13 @@ const parseJsonField = (value, field) => {
   }
 }
 
+/**
+ * Sanitizes a value to an integer with fallback.
+ * 
+ * @param {*} value - Value to sanitize
+ * @param {number} [fallback=0] - Fallback value if parsing fails
+ * @returns {number} Sanitized integer value
+ */
 const sanitizeInteger = (value, fallback = 0) => {
   if (value === '' || value === null || value === undefined) return fallback
   const parsed = Number(value)
@@ -69,6 +84,18 @@ const sanitizeInteger = (value, fallback = 0) => {
   return parsed
 }
 
+/**
+ * Form component for creating and editing CMS pages.
+ * Handles page metadata, hero configuration, and layout settings.
+ * 
+ * @param {Object} props - Component props
+ * @param {'create'|'edit'} props.mode - Form mode (create or edit)
+ * @param {Object} [props.initialData] - Initial form data for edit mode
+ * @param {Function} props.onSubmit - Callback when form is submitted
+ * @param {Function} props.onCancel - Callback when form is cancelled
+ * @param {boolean} [props.submitting] - Whether form is currently submitting
+ * @returns {JSX.Element} Rendered page form
+ */
 const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
   const [title, setTitle] = useState(initialData?.title ?? '')
   const [slug, setSlug] = useState(initialData?.slug ?? '')
@@ -97,6 +124,12 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
   const slugDiffersAfterSanitize =
     slugHasInput && formSanitizedSlug && formSanitizedSlug !== slug.trim()
 
+  /**
+   * Handles form submission with validation.
+   * Validates and sanitizes all fields before calling onSubmit.
+   * 
+   * @param {Event} event - Form submit event
+   */
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError(null)
@@ -374,6 +407,18 @@ PageForm.propTypes = {
   submitting: PropTypes.bool,
 }
 
+/**
+ * Form component for creating and editing blog posts.
+ * Handles post content in Markdown format.
+ * 
+ * @param {Object} props - Component props
+ * @param {'create'|'edit'} props.mode - Form mode (create or edit)
+ * @param {Object} [props.initialData] - Initial form data for edit mode
+ * @param {Function} props.onSubmit - Callback when form is submitted
+ * @param {Function} props.onCancel - Callback when form is cancelled
+ * @param {boolean} [props.submitting] - Whether form is currently submitting
+ * @returns {JSX.Element} Rendered post form
+ */
 const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
   const [title, setTitle] = useState(initialData?.title ?? '')
   const [slug, setSlug] = useState(initialData?.slug ?? '')
@@ -588,6 +633,21 @@ PostForm.propTypes = {
   submitting: PropTypes.bool,
 }
 
+/**
+ * Panel component for managing posts within a page.
+ * Displays list of posts with edit and delete actions.
+ * 
+ * @param {Object} props - Component props
+ * @param {Object} props.page - The page object these posts belong to
+ * @param {Array} props.posts - Array of post objects
+ * @param {Function} props.onCreate - Callback to create new post
+ * @param {Function} props.onEdit - Callback to edit a post
+ * @param {Function} props.onDelete - Callback to delete a post
+ * @param {boolean} props.loading - Whether posts are loading
+ * @param {Error} [props.error] - Error object if loading failed
+ * @param {Function} props.onRefresh - Callback to refresh posts list
+ * @returns {JSX.Element} Rendered posts panel
+ */
 const PostsPanel = ({ page, posts, onCreate, onEdit, onDelete, loading, error, onRefresh }) => {
   const publishedCount = useMemo(
     () => posts.filter((post) => post.is_published).length,
@@ -707,6 +767,12 @@ PostsPanel.propTypes = {
   onRefresh: PropTypes.func.isRequired,
 }
 
+/**
+ * Main page manager component for CMS administration.
+ * Manages pages and their associated posts with full CRUD operations.
+ * 
+ * @returns {JSX.Element} Rendered page manager interface
+ */
 const PageManager = () => {
   const { navigation, pages: publishedPages } = useContent()
   const [pages, setPages] = useState([])

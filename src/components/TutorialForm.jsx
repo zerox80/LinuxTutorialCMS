@@ -3,6 +3,15 @@ import PropTypes from 'prop-types'
 import { useTutorials } from '../context/TutorialContext'
 import { X, Save, Plus, Trash2, AlertCircle } from 'lucide-react'
 
+/**
+ * Form component for creating and editing tutorials.
+ * Handles tutorial metadata, topics, and markdown content.
+ * 
+ * @param {Object} props - Component props
+ * @param {Object} [props.tutorial] - Existing tutorial data for edit mode
+ * @param {Function} props.onClose - Callback to close the form
+ * @returns {JSX.Element} Rendered tutorial form
+ */
 const TutorialForm = ({ tutorial, onClose }) => {
   const { addTutorial, updateTutorial } = useTutorials()
   const [formData, setFormData] = useState({
@@ -64,6 +73,12 @@ const TutorialForm = ({ tutorial, onClose }) => {
   ]
 
   
+  /**
+   * Handles form submission with validation.
+   * Creates or updates tutorial based on mode.
+   * 
+   * @param {Event} e - Form submit event
+   */
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (submitting) {
@@ -133,6 +148,12 @@ const TutorialForm = ({ tutorial, onClose }) => {
   }
 
   
+  /**
+   * Updates a topic at a specific index.
+   * 
+   * @param {number} index - Index of the topic to update
+   * @param {string} value - New topic value
+   */
   const handleTopicChange = (index, value) => {
     const newTopics = [...formData.topics]
     newTopics[index] = value
@@ -140,11 +161,19 @@ const TutorialForm = ({ tutorial, onClose }) => {
   }
 
   
+  /**
+   * Adds a new empty topic field to the form.
+   */
   const addTopic = () => {
     setFormData({ ...formData, topics: [...formData.topics, ''] })
   }
 
   
+  /**
+   * Removes a topic at a specific index.
+   * 
+   * @param {number} index - Index of the topic to remove
+   */
   const removeTopic = (index) => {
     const newTopics = formData.topics.filter((_, i) => i !== index)
     setFormData({ ...formData, topics: newTopics })

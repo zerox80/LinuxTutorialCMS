@@ -10,8 +10,115 @@ import {
 import PropTypes from 'prop-types'
 import { api } from '../api/client'
 
+/**
+ * @fileoverview Content context for managing site-wide content, navigation, and published pages in the LinuxTutorialCMS application.
+ *
+ * This context provides centralized content management including:
+ * - Site content sections with default values and API synchronization
+ * - Dynamic navigation management with static and dynamic route handling
+ * - Published page caching and retrieval with invalidation strategies
+ * - Content editing and updating with optimistic updates
+ * - Navigation merging and sorting with proper ordering
+ *
+ * Features:
+ * - Default content fallbacks for all site sections
+ * - Automatic content loading and error recovery
+ * - Page-level caching with manual invalidation support
+ * - Dynamic navigation from published pages with configurable ordering
+ * - Optimistic updates for content editing
+ * - Abort controller support for request cancellation
+ * - Comprehensive loading and error state management
+ *
+ * Performance Optimizations:
+ * - Multi-level caching with ref-based persistence
+ * - useMemo for expensive navigation computations
+ * - useCallback for stable function references
+ * - Lazy loading of published pages and navigation
+ * - Efficient state updates with proper dependency arrays
+ *
+ * Data Flow Patterns:
+ * 1. On mount: Load site content, navigation, and published pages
+ * 2. Content updates: Optimistic local updates with API synchronization
+ * 3. Page fetching: Cache-first with fallback to API
+ * 4. Navigation merging: Static + dynamic items with proper sorting
+ *
+ * Integration Patterns:
+ * - Used by SiteContentEditor for content management
+ * - Consumed by Header for navigation rendering
+ * - Integrated with PageManager for published page handling
+ * - Compatible with routing system for dynamic page access
+ *
+ * Security Considerations:
+ * - Content validation and sanitization
+ * - Safe fallback to default content
+ * - Error boundaries prevent content crashes
+ * - Input validation for section updates
+ *
+ * @version 1.0.0
+ * @author LinuxTutorialCMS Team
+ * @since 1.0.0
+ */
+
+/**
+ * Content context for managing site-wide content and navigation state.
+ *
+ * Provides content sections, navigation data, published pages, and content
+ * management operations throughout the application.
+ *
+ * @type {React.Context<Object|null>}
+ * @property {Object} content - Merged content object with default and API data
+ * @property {boolean} loading - Loading state for content operations
+ * @property {Object|null} error - Error information from content operations
+ * @property {Function} refreshContent - Function to reload content from API
+ * @property {Function} getSection - Function to get a specific content section
+ * @property {Function} getDefaultSection - Function to get default content for a section
+ * @property {Function} getSiteMeta - Function to get site metadata
+ * @property {Function} updateSection - Function to update a content section
+ * @property {Object} savingSections - Object indicating which sections are being saved
+ * @property {Object} navigation - Navigation data with loading, error, and refresh capabilities
+ * @property {Object} pages - Published pages data with cache, loading, and error states
+ */
 const ContentContext = createContext(null)
 
+/**
+ * Default content structure for the LinuxTutorialCMS application.
+ *
+ * This object provides fallback content for all sections of the site, ensuring
+ * that the application can function even when API data is unavailable. It serves
+ * as both a template for content structure and a safety net for content delivery.
+ *
+ * Content Structure:
+ * - hero: Main landing page content with CTAs and features
+ * - site_meta: SEO metadata and site-wide information
+ * - tutorial_section: Tutorial listing page content
+ * - header: Navigation header with brand and menu items
+ * - footer: Site footer with links and contact information
+ * - grundlagen_page: Linux basics page specific content
+ *
+ * Default Content Features:
+ * - Complete fallback for all site sections
+ * - Consistent German language content
+ * - Proper structure for nested content objects
+ * - Navigation targets with type specifications
+ * - Feature lists with color gradients
+ * - Contact and social media links
+ *
+ * Usage Patterns:
+ * - Initial content state before API loading
+ * - Fallback content when API is unavailable
+ * - Content structure reference for editing
+ * - Default values for missing API content
+ * - Template for new content sections
+ *
+ * Integration:
+ * - Merged with API content in ContentProvider
+ * - Used by getSection() and getDefaultSection() methods
+ * - Referenced by content editing components
+ * - Provides structure validation for content updates
+ *
+ * @type {Object}
+ * @readonly
+ */
 export const DEFAULT_CONTENT = {
   hero: {
     badgeText: 'Professionelles Linux Training',
@@ -167,8 +274,118 @@ export const DEFAULT_CONTENT = {
   },
 }
 
+/**
+ * Array of available content section identifiers.
+ *
+ * This array provides a reference list of all content sections that can be
+ * managed through the content context. It's used for validation, iteration,
+ * and UI generation for content management interfaces.
+ *
+ * Content Sections:
+ * - hero: Landing page hero section
+ * - site_meta: Site-wide metadata and SEO information
+ * - tutorial_section: Tutorial listing and management section
+ * - header: Site header with navigation and branding
+ * - footer: Site footer with links and information
+ * - grundlagen_page: Linux basics course page content
+ *
+ * Usage:
+ * - Content validation and type checking
+ * - Dynamic form generation for content editing
+ * - Navigation menu generation
+ * - Content section iteration and processing
+ *
+ * @type {string[]}
+ * @readonly
+ */
 export const CONTENT_SECTIONS = Object.keys(DEFAULT_CONTENT)
 
+/**
+ * Content context provider component that manages site-wide content, navigation, and page data.
+ *
+ * This provider handles comprehensive content management including loading, caching,
+ * updating, and synchronizing site content with the backend API. It provides a unified
+ * interface for accessing all content-related data and operations throughout the application.
+ *
+ * State Management:
+ * - content: Merged content object with defaults and API data
+ * - loading: Boolean for main content loading state
+ * - error: Error object for content loading failures
+ * - savingSections: Object tracking which sections are being saved
+ * - navigation: Dynamic navigation items from published pages
+ * - publishedPageSlugs: Array of published page identifiers
+ * - pageCache: Caching system for published page content
+ *
+ * Data Flow Patterns:
+ * 1. Content Loading: Load API content → Merge with defaults → Update state
+ * 2. Content Updates: Local optimistic update → API sync → Final state
+ * 3. Page Fetching: Cache check → API fetch → Cache update → Return data
+ * 4. Navigation: Load published pages → Merge with static → Sort by order
+ *
+ * Caching Strategies:
+ * - Page-level caching with ref-based persistence
+ * - Cache invalidation on content updates
+ * - Force refresh option bypassing cache
+ * - Fallback to cache on API failures
+ * - Automatic cache cleanup on provider unmount
+ *
+ * Performance Optimizations:
+ * - useMemo for expensive navigation computations
+ * - useCallback for stable function references
+ * - Dual caching (state + ref) for persistence
+ * - Lazy loading of optional data
+ * - Efficient state update patterns
+ *
+ * Error Handling:
+ * - Graceful fallback to default content
+ * - Retry mechanisms for failed requests
+ * - Error state propagation to consumers
+ * - Network error handling with user feedback
+ * - Validation of API responses
+ *
+ * Security Considerations:
+ * - Input validation for section updates
+ * - Content sanitization and validation
+ * - Safe error handling without data leakage
+ * - Proper cleanup on component unmount
+ *
+ * @param {Object} props - Component props
+ * @param {React.ReactNode} props.children - Child components that will have access to content context
+ * @returns {JSX.Element} ContentContext.Provider wrapping children with content state and methods
+ *
+ * @example
+ * ```jsx
+ * <ContentProvider>
+ *   <App />
+ * </ContentProvider>
+ * ```
+ *
+ * @example
+ * ```jsx
+ * // Using content context in a component
+ * function Header() {
+ *   const { content, navigation } = useContent();
+ *   const { brand, navItems } = content.header;
+ *
+ *   return (
+ *     <header>
+ *       <div>{brand.name}</div>
+ *       <nav>
+ *         {navigation.items.map(item => (
+ *           <Link key={item.id} to={item.path}>
+ *             {item.label}
+ *           </Link>
+ *         ))}
+ *       </nav>
+ *     </header>
+ *   );
+ * }
+ * ```
+ *
+ * @see useContent - Hook for accessing content context
+ * @see api.getSiteContent - API method for content retrieval
+ * @see api.updateSiteContentSection - API method for content updates
+ */
 export const ContentProvider = ({ children }) => {
   const [content, setContent] = useState(DEFAULT_CONTENT)
   const [loading, setLoading] = useState(true)
@@ -184,6 +401,61 @@ export const ContentProvider = ({ children }) => {
   const pageCacheRef = useRef({})
 
   
+  /**
+   * Loads site content from the API and merges it with default content values.
+   *
+   * This function handles the initial content loading process by fetching content
+   * from the backend API and intelligently merging it with the default content
+   * structure. It ensures that all content sections are available even if the
+   * API provides partial data or fails completely.
+   *
+   * Loading Process:
+   * 1. Sets loading state to true for UI feedback
+   * 2. Clears any existing error state
+   * 3. Fetches content from API endpoint
+   * 4. Creates merged content starting with defaults
+   * 5. Overwrites default sections with API data where available
+   * 6. Updates content state with merged result
+   * 7. Handles errors gracefully with fallback content
+   *
+   * Error Handling Strategy:
+   * - Network errors: Log error and set user-friendly message
+   * - API errors: Preserve status codes for appropriate handling
+   * - Invalid responses: Fallback to default content entirely
+   * - Empty responses: Use default content as fallback
+   * - Loading errors: Never leave application in broken state
+   *
+   * Data Validation:
+   * - Validates API response structure
+   * - Checks for items array existence
+   * - Validates section identifiers
+   * - Handles malformed content gracefully
+   * - Ensures section content is properly structured
+   *
+   * Performance Considerations:
+   * - Single API call for all content sections
+   * - Efficient merging algorithm
+   * - State update batching
+   * - Minimal re-renders through useCallback
+   *
+   * @async
+   * @returns {Promise<void>} Promise that resolves when content loading is complete
+   *
+   * @example
+   * ```jsx
+   * // Manual content refresh
+   * const { refreshContent } = useContent();
+   *
+   * const handleRefresh = async () => {
+   *   await refreshContent();
+   *   // Content is now updated with latest API data
+   * };
+   * ```
+   *
+   * @see api.getSiteContent - API method for fetching content
+   * @see DEFAULT_CONTENT - Default content fallback structure
+   * @see setContent - State setter for content updates
+   */
   const loadContent = useCallback(async () => {
     try {
       setLoading(true)
@@ -209,6 +481,64 @@ export const ContentProvider = ({ children }) => {
   }, [])
 
   
+  /**
+   * Loads dynamic navigation items from the API for integration with static navigation.
+   *
+   * This function fetches navigation items that represent published pages and
+   * dynamic content, which are then merged with static navigation items defined
+   * in the content configuration. The result provides a unified navigation
+   * structure for the entire application.
+   *
+   * Navigation Loading Process:
+   * 1. Sets navigation loading state for UI feedback
+   * 2. Clears any existing navigation error state
+   * 3. Fetches dynamic navigation items from API
+   * 4. Validates response structure and item array
+   * 5. Updates dynamic navigation items state
+   * 6. Handles errors gracefully with appropriate state updates
+   *
+   * Data Structure:
+   * - Each navigation item contains: id, label, slug, order_index
+   * - Items are sorted by order_index for consistent ordering
+   * - Invalid items are filtered out to prevent navigation errors
+   * - Empty responses result in empty navigation array
+   *
+   * Error Handling:
+   * - Network errors: Logged and stored for UI display
+   * - Invalid responses: Treated as empty navigation
+   * - Malformed items: Filtered out to prevent crashes
+   * - API errors: Preserved for appropriate user feedback
+   *
+   * Integration with Navigation System:
+   * - Combined with static navigation items in navigationData useMemo
+   * - Merged items are sorted by order_index and source priority
+   * - Used by Header component for navigation rendering
+   * - Supports both section-based and route-based navigation
+   *
+   * Performance Considerations:
+   * - Single API call for all dynamic navigation
+   * - Efficient array filtering and validation
+   * - Minimal state updates through useCallback
+   * - Separated loading states for better UX
+   *
+   * @async
+   * @returns {Promise<void>} Promise that resolves when navigation loading is complete
+   *
+   * @example
+   * ```jsx
+   * // Manual navigation refresh
+   * const { navigation } = useContent();
+   *
+   * const handleRefreshNav = async () => {
+   *   await navigation.refresh();
+   *   // Navigation is now updated with latest published pages
+   * };
+   * ```
+   *
+   * @see api.getNavigation - API method for fetching navigation items
+   * @see navigationData - Memoized navigation merging logic
+   * @see setDynamicNavItems - State setter for navigation items
+   */
   const loadNavigation = useCallback(async () => {
     try {
       setNavLoading(true)
@@ -225,6 +555,11 @@ export const ContentProvider = ({ children }) => {
   }, [])
 
   
+  /**
+   * Loads list of published page slugs from API.
+   * 
+   * @returns {Promise<void>}
+   */
   const loadPublishedPages = useCallback(async () => {
     try {
       setPublishedPagesLoading(true)
@@ -241,6 +576,115 @@ export const ContentProvider = ({ children }) => {
   }, [])
 
   
+  /**
+   * Fetches a published page by slug with intelligent caching and fallback strategies.
+   *
+   * This function implements a robust caching system for published page content,
+   * providing both performance optimization and resilience against network failures.
+   * It supports cache bypassing, request cancellation, and graceful fallback to
+   * cached content when the API is unavailable.
+   *
+   * Caching Strategy:
+   * - Dual caching: State + ref for persistence across re-renders
+   * - Cache-first approach for optimal performance
+   * - Force refresh option bypasses cache completely
+   * - Fallback to cache on API failures
+   * - Automatic cache population on successful fetches
+   *
+   * Fetch Flow:
+   * 1. Input validation and slug normalization
+   * 2. Cache check (unless force refresh)
+   * 3. API fetch if cache miss or force refresh
+   * 4. Cache update on successful fetch
+   * 5. Fallback to cached data on API failure
+   * 6. Error propagation if no cached fallback available
+   *
+   * Input Validation:
+   * - Validates slug parameter existence and type
+   * - Normalizes slug (trim, lowercase) for consistency
+   * - Throws descriptive errors for invalid inputs
+   * - Prevents API calls with invalid parameters
+   *
+   * Error Handling:
+   * - Input validation errors: Throw immediately
+   * - Network errors: Fall back to cached content if available
+   * - Not found errors: Propagate to caller
+   * - Request cancellation: Handle gracefully
+   * - No cached fallback: Propagate original error
+   *
+   * Performance Optimizations:
+   * - Cache-first approach minimizes API calls
+   * - Ref-based cache persists across state updates
+   * - Single cache update operation
+   * - Request cancellation support
+   * - Efficient slug normalization
+   *
+   * @async
+   * @param {string} slug - Page slug to fetch. Must be a non-empty string.
+   * @param {Object} [options={}] - Optional configuration for the fetch operation
+   * @param {boolean} [options.force=false] - Force refresh bypassing cache. When true, always fetches from API.
+   * @param {AbortSignal} [options.signal] - Abort signal for request cancellation. Allows cancellation of in-flight requests.
+   * @returns {Promise<Object>} Promise that resolves to published page data object
+   * @returns {string} returns.slug - The normalized page slug
+   * @returns {Object} returns.content - Page content object with sections and data
+   * @returns {string} returns.title - Page title from metadata
+   * @returns {Date} returns.updated_at - Last update timestamp
+   *
+   * @throws {Error} If slug is invalid or empty
+   * @throws {Error} If API request fails and no cached fallback is available
+   *
+   * @example
+   * ```jsx
+   * // Basic page fetch with caching
+   * const { pages } = useContent();
+   *
+   * const loadPage = async () => {
+   *   try {
+   *     const pageData = await pages.fetch('tutorial-basics');
+   *     setContent(pageData);
+   *   } catch (error) {
+   *     setError(error.message);
+   *   }
+   * };
+   * ```
+   *
+   * @example
+   * ```jsx
+   * // Force refresh bypassing cache
+   * const { pages } = useContent();
+   *
+   * const refreshPage = async () => {
+   *   const freshData = await pages.fetch('tutorial-basics', { force: true });
+   *   setContent(freshData);
+   * };
+   * ```
+   *
+   * @example
+   * ```jsx
+   * // With request cancellation
+   * const { pages } = useContent();
+   * const controller = new AbortController();
+   *
+   * const loadPage = async () => {
+   *   try {
+   *     const pageData = await pages.fetch('tutorial-basics', {
+   *       signal: controller.signal
+   *     });
+   *   } catch (error) {
+   *     if (error.name === 'AbortError') {
+   *       console.log('Request was cancelled');
+   *     }
+   *   }
+   * };
+   *
+   * // Cancel request if needed
+   * controller.abort();
+   * ```
+   *
+   * @see api.getPublishedPage - API method for fetching published pages
+   * @see invalidatePageCache - Method for cache invalidation
+   * @see pageCacheRef - Ref-based cache storage
+   */
   const fetchPublishedPage = useCallback(
     async (slug, { force = false, signal } = {}) => {
       if (!slug || typeof slug !== 'string') {
@@ -273,6 +717,11 @@ export const ContentProvider = ({ children }) => {
   )
 
   
+  /**
+   * Invalidates page cache for a specific slug or all pages.
+   * 
+   * @param {string} [slug] - Specific slug to invalidate, or undefined to clear all
+   */
   const invalidatePageCache = useCallback((slug) => {
     if (slug && typeof slug === 'string') {
       const normalizedSlug = slug.trim().toLowerCase()
@@ -306,6 +755,14 @@ export const ContentProvider = ({ children }) => {
   }, [loadNavigation, loadPublishedPages])
 
   
+  /**
+   * Updates a content section via API and updates local state.
+   * 
+   * @param {string} section - Section identifier to update
+   * @param {Object} newContent - New content for the section
+   * @returns {Promise<Object>} API response
+   * @throws {Error} If section is not provided
+   */
   const updateSection = useCallback(async (section, newContent) => {
     if (!section) {
       throw new Error('Section is required')
@@ -415,6 +872,174 @@ ContentProvider.propTypes = {
   children: PropTypes.node,
 }
 
+/**
+ * Custom hook for accessing the content context within functional components.
+ *
+ * This hook provides a clean interface for components to access site content,
+ * navigation data, published pages, and content management operations. It includes
+ * safety checks to ensure the hook is used within a ContentProvider wrapper.
+ *
+ * Hook Usage Patterns:
+ * - Call at the top level of functional components
+ * - Destructure needed values from the returned object
+ * - Handle loading and error states appropriately
+ * - Use for both read-only and content modification operations
+ *
+ * Available Context Values:
+ * - content: Merged site content object with all sections
+ * - loading: Boolean for main content loading state
+ * - error: Error object or null from content operations
+ * - refreshContent: Function to reload content from API
+ * - getSection: Function to retrieve specific content sections
+ * - getDefaultSection: Function to get default content for comparison
+ * - getSiteMeta: Function to get site metadata and SEO information
+ * - updateSection: Function to update content sections with API sync
+ * - savingSections: Object indicating which sections are being saved
+ * - navigation: Complete navigation data with loading states
+ * - pages: Published pages data with caching and management
+ *
+ * Error Handling:
+ * - Throws descriptive error if used outside ContentProvider
+ * - Error message helps developers debug context setup issues
+ * - Prevents undefined context access in components
+ * - Validates provider availability before returning context
+ *
+ * Performance Features:
+ * - Uses React's useContext for optimal performance
+ * - Stable context value through useMemo in provider
+ * - No additional re-renders beyond context value changes
+ * - Efficient prop access through destructuring
+ *
+ * Integration Examples:
+ * ```jsx
+ * // Header component using content and navigation
+ * function Header() {
+ *   const { content, navigation } = useContent();
+ *   const { brand } = content.header;
+ *
+ *   return (
+ *     <header>
+ *       <h1>{brand.name}</h1>
+ *       <nav>
+ *         {navigation.items.map(item => (
+ *           <Link key={item.id} to={item.path}>
+ *             {item.label}
+ *           </Link>
+ *         ))}
+ *       </nav>
+ *     </header>
+ *   );
+ * }
+ * ```
+ *
+ * ```jsx
+ * // Content editor component
+ * function ContentEditor({ section }) {
+ *   const { content, updateSection, savingSections } = useContent();
+ *   const [localContent, setLocalContent] = useState(content[section]);
+ *   const isSaving = savingSections[section];
+ *
+ *   const handleSave = async () => {
+ *     try {
+ *       await updateSection(section, localContent);
+ *       // Show success message
+ *     } catch (error) {
+ *       // Show error message
+ *     }
+ *   };
+ *
+ *   return (
+ *     <div>
+ *       {/* Content editing form */}
+ *       <button onClick={handleSave} disabled={isSaving}>
+ *         {isSaving ? 'Saving...' : 'Save'}
+ *       </button>
+ *     </div>
+ *   );
+ * }
+ * ```
+ *
+ * ```jsx
+ * // Page loader component
+ * function PageLoader({ slug }) {
+ *   const { pages } = useContent();
+ *   const [pageData, setPageData] = useState(null);
+ *   const [error, setError] = useState(null);
+ *
+ *   useEffect(() => {
+ *     const loadPage = async () => {
+ *       try {
+ *         const data = await pages.fetch(slug);
+ *         setPageData(data);
+ *       } catch (err) {
+ *         setError(err.message);
+ *       }
+ *     };
+ *
+ *     loadPage();
+ *   }, [slug, pages.fetch]);
+ *
+ *   if (error) return <ErrorMessage message={error} />;
+ *   if (!pageData) return <LoadingSpinner />;
+ *   return <PageRenderer content={pageData} />;
+ * }
+ * ```
+ *
+ * @returns {Object} Complete content context value object
+ * @returns {Object} returns.content - Merged site content with all sections
+ * @returns {boolean} returns.loading - Loading state for content operations
+ * @returns {Object|null} returns.error - Error information from content operations
+ * @returns {Function} returns.refreshContent - Function to reload content from API
+ * @returns {Function} returns.getSection - Function to get specific content section
+ * @returns {Function} returns.getDefaultSection - Function to get default content for section
+ * @returns {Function} returns.getSiteMeta - Function to get site metadata
+ * @returns {Function} returns.updateSection - Function to update content section
+ * @returns {Object} returns.savingSections - Object tracking section save operations
+ * @returns {Object} returns.navigation - Navigation data with loading, error, and items
+ * @returns {Object} returns.pages - Published pages data with cache and management
+ *
+ * @throws {Error} If the hook is used outside of a ContentProvider component
+ *
+ * @example
+ * ```jsx
+ * // Basic usage in a component
+ * function MyComponent() {
+ *   const { content, loading, error } = useContent();
+ *
+ *   if (loading) return <LoadingSpinner />;
+ *   if (error) return <ErrorMessage error={error} />;
+ *
+ *   return <div>{content.hero.title.line1}</div>;
+ * }
+ * ```
+ *
+ * @example
+ * ```jsx
+ * // Content management usage
+ * function ContentManager({ section }) {
+ *   const { getSection, updateSection, savingSections } = useContent();
+ *   const sectionContent = getSection(section);
+ *   const isSaving = savingSections[section];
+ *
+ *   const handleUpdate = async (newContent) => {
+ *     await updateSection(section, newContent);
+ *   };
+ *
+ *   return (
+ *     <ContentEditor
+ *       content={sectionContent}
+ *       onUpdate={handleUpdate}
+ *       isSaving={isSaving}
+ *     />
+ *   );
+ * }
+ * ```
+ *
+ * @see ContentProvider - Provider component that creates the content context
+ * @see ContentContext - The underlying React context object
+ * @see useContext - React hook used internally
+ * @see DEFAULT_CONTENT - Default content structure reference
+ */
 export const useContent = () => {
   const ctx = useContext(ContentContext)
   if (!ctx) {

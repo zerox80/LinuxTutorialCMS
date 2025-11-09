@@ -1,10 +1,20 @@
 import { Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+/**
+ * Language toggle button component for switching between German and English.
+ * Persists language preference to localStorage.
+ * 
+ * @returns {JSX.Element} Rendered language toggle button
+ */
 const LanguageToggle = () => {
   const { i18n } = useTranslation();
 
   
+  /**
+   * Toggles between German (de) and English (en) languages.
+   * Saves the selected language to localStorage.
+   */
   const toggleLanguage = () => {
     const newLang = i18n.language === 'de' ? 'en' : 'de';
     i18n.changeLanguage(newLang);

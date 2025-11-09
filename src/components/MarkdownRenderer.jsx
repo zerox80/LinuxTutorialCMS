@@ -9,6 +9,12 @@ import 'katex/dist/katex.min.css'
 import CodeBlock from './CodeBlock'
 import remarkMergeInlineParagraphs from '../utils/remarkMergeInlineParagraphs'
 
+/**
+ * Merges multiple class names into a single string, filtering out falsy values.
+ * 
+ * @param {...string} classes - Class names to merge
+ * @returns {string} Merged class names separated by spaces
+ */
 const mergeClassNames = (...classes) => classes.filter(Boolean).join(' ')
 
 const headingClasses = {
@@ -20,6 +26,16 @@ const headingClasses = {
   6: 'text-sm font-semibold text-gray-700 dark:text-slate-400 mt-4 first:mt-0 uppercase tracking-wider',
 }
 
+/**
+ * Markdown renderer component with syntax highlighting and custom styling.
+ * Renders markdown content with support for GFM, math equations, and code blocks.
+ * 
+ * @param {Object} props - Component props
+ * @param {string} [props.content] - Markdown content to render
+ * @param {string} [props.className=''] - Additional CSS classes for the container
+ * @param {boolean} [props.withBreaks=false] - Whether to enable automatic line breaks
+ * @returns {JSX.Element} Rendered markdown content with custom components
+ */
 const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
   const remarkPlugins = withBreaks
     ? [remarkMath, remarkGfm, remarkMergeInlineParagraphs, remarkBreaks]

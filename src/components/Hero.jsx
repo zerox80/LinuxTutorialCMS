@@ -5,6 +5,13 @@ import { getIconComponent } from '../utils/iconMap'
 import { scrollToSection } from '../utils/scrollToSection'
 import { sanitizeExternalUrl } from '../utils/urlValidation'
 
+/**
+ * Hero section component with dynamic content from CMS.
+ * Displays main heading, subtitle, call-to-action buttons, and feature cards.
+ * Includes animated background effects and smooth scrolling.
+ * 
+ * @returns {JSX.Element} Rendered hero section with CMS-driven content
+ */
 const Hero = () => {
   const navigate = useNavigate()
   const location = useLocation()
@@ -15,6 +22,14 @@ const Hero = () => {
   const features = Array.isArray(heroContent.features) ? heroContent.features : []
 
   
+  /**
+   * Handles navigation for CTA buttons based on target configuration.
+   * Supports sections, routes, external links, and href navigation.
+   * 
+   * @param {Object} target - Target configuration object
+   * @param {string} target.type - Type of navigation (section, route, external, href)
+   * @param {string} target.value - Target value (section ID, route path, URL)
+   */
   const handleTarget = (target) => {
     if (!target || !target.type) {
       return

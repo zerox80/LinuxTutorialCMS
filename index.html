@@ -1,41 +1,237 @@
 <!doctype html>
+<!--
+  LinuxTutorialCMS - Main HTML Template
+
+  This file serves as the entry point for the Linux Tutorial CMS web application.
+  It includes comprehensive meta tags for SEO, PWA functionality, social media
+  integration, and performance optimization.
+
+  Key Features:
+  - Progressive Web App (PWA) support
+  - Search Engine Optimization (SEO)
+  - Social Media integration (Open Graph, Twitter Cards)
+  - Responsive design support
+  - German language localization
+  - Performance optimization
+
+  Last Updated: 2025-11-09
+  Version: 1.0.0
+-->
 <html lang="de">
   <head>
+    <!-- ==================================================================== -->
+    <!-- BASIC HTML METADATA -->
+    <!-- ==================================================================== -->
+
+    <!-- Character Encoding -->
+    <!-- UTF-8 ensures proper display of German characters and emojis -->
     <meta charset="UTF-8" />
-    
-    <!-- PWA & Icons -->
+
+    <!-- ==================================================================== -->
+    <!-- PROGRESSIVE WEB APP (PWA) CONFIGURATION -->
+    <!-- ==================================================================== -->
+
+    <!-- Application Icon -->
+    <!-- SVG format for scalability and modern browser support -->
+    <!-- Fallback to PNG if SVG support is needed for older browsers -->
     <link rel="icon" type="image/svg+xml" href="/linux-icon.svg" />
+
+    <!-- PWA Manifest -->
+    <!-- Required for PWA installation and standalone mode -->
+    <!-- Defines app appearance and behavior when installed -->
     <link rel="manifest" href="/manifest.json" />
+
+    <!-- Theme Color -->
+    <!-- Controls browser UI elements (address bar, etc.) -->
+    <!-- Should match your brand colors and manifest theme_color -->
     <meta name="theme-color" content="#0ea5e9" />
+
+    <!-- Apple Touch Icon -->
+    <!-- Required for iOS home screen shortcuts -->
+    <!-- iOS will automatically apply appropriate rounded corners -->
     <link rel="apple-touch-icon" href="/linux-icon.svg" />
-    
-    <!-- Viewport -->
+
+    <!-- ==================================================================== -->
+    <!-- VIEWPORT AND RESPONSIVE DESIGN -->
+    <!-- ==================================================================== -->
+
+    <!-- Viewport Configuration -->
+    <!-- Ensures proper rendering and zoom on mobile devices -->
+    <!-- viewport-fit=cover enables content to extend to screen edges -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    
-    <!-- SEO Meta Tags -->
+
+    <!-- ==================================================================== -->
+    <!-- SEARCH ENGINE OPTIMIZATION (SEO) -->
+    <!-- ==================================================================== -->
+
+    <!-- Page Title -->
+    <!-- Primary SEO element - appears in browser tabs and search results -->
+    <!-- German localization for target audience -->
     <title>Linux Tutorial - Lerne Linux Schritt für Schritt</title>
+
+    <!-- Meta Description -->
+    <!-- Critical for SEO - appears in search results snippets -->
+    <!-- Should be compelling and under 160 characters for optimal display -->
     <meta name="description" content="Lerne Linux von Grund auf - Interaktiv, modern und praxisnah. Umfassende Tutorials für Einsteiger und Fortgeschrittene." />
+
+    <!-- Meta Keywords -->
+    <!-- Less important for modern SEO but still relevant for some search engines -->
+    <!-- Include relevant technical terms and German variations -->
     <meta name="keywords" content="Linux, Tutorial, Lernen, Bash, Terminal, Command Line, Debian, Ubuntu, Shell" />
+
+    <!-- Author Information -->
+    <!-- Establishes content ownership and credibility -->
     <meta name="author" content="Linux Tutorial CMS" />
-    
-    <!-- Open Graph / Social Media -->
+
+    <!-- ==================================================================== -->
+    <!-- SOCIAL MEDIA INTEGRATION -->
+    <!-- ==================================================================== -->
+
+    <!-- Open Graph Protocol (Facebook, LinkedIn, etc.) -->
+    <!-- Standardized metadata for social media sharing -->
+
+    <!-- Content Type -->
     <meta property="og:type" content="website" />
+
+    <!-- Social Media Title -->
+    <!-- Should be engaging and shareable -->
     <meta property="og:title" content="Linux Tutorial - Lerne Linux Schritt für Schritt" />
+
+    <!-- Social Media Description -->
+    <!-- Optimized for social sharing context -->
     <meta property="og:description" content="Lerne Linux von Grund auf - Interaktiv, modern und praxisnah." />
+
+    <!-- Social Media Image -->
+    <!-- Recommended size: 1200x630px, max 5MB -->
+    <!-- Currently using SVG icon - consider dedicated social image for better sharing -->
     <meta property="og:image" content="/linux-icon.svg" />
+
+    <!-- Locale -->
+    <!-- Important for regional targeting and content filtering -->
     <meta property="og:locale" content="de_DE" />
-    
-    <!-- Twitter Card -->
+
+    <!-- Twitter Card Configuration -->
+    <!-- Enhanced sharing on Twitter/X platform -->
+
+    <!-- Card Type -->
+    <!-- summary_large_image for rich media with large image -->
     <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Twitter Title -->
+    <!-- Optimized for Twitter's character limits and audience -->
     <meta name="twitter:title" content="Linux Tutorial - Lerne Linux Schritt für Schritt" />
+
+    <!-- Twitter Description -->
+    <!-- Twitter-specific description for better engagement -->
     <meta name="twitter:description" content="Lerne Linux von Grund auf - Interaktiv, modern und praxisnah." />
-    
-    <!-- Performance & Security -->
+
+    <!-- ==================================================================== -->
+    <!-- PERFORMANCE AND SECURITY -->
+    <!-- ==================================================================== -->
+
+    <!-- Search Engine Instructions -->
+    <!-- index, follow allows search engines to index and follow links -->
+    <!-- Consider adding 'max-snippet' and 'max-image-preview' for more control -->
     <meta name="robots" content="index, follow" />
+
+    <!-- Resource Hints -->
+    <!-- Preconnect to external domains to reduce latency -->
+    <!-- Critical for Google Fonts loading performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
+
+    <!-- Additional Performance Optimizations (Consider adding): -->
+    <!--
+    <link rel="dns-prefetch" href="//fonts.gstatic.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" href="/fonts/your-font.woff2" as="font" type="font/woff2" crossorigin />
+    -->
+
+    <!-- ==================================================================== -->
+    <!-- SECURITY AND PRIVACY (Optional Additions) -->
+    <!-- ==================================================================== -->
+
+    <!-- Consider adding these security headers for production: -->
+    <!--
+
+    Content Security Policy (CSP)
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.example.com;">
+
+    Referrer Policy
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    Permissions Policy
+    <meta name="permissions-policy" content="camera=(), microphone=(), geolocation=()">
+
+    -->
+
+    <!-- ==================================================================== -->
+    <!-- ACCESSIBILITY (Consider adding) -->
+    <!-- ==================================================================== -->
+
+    <!-- Accessibility improvements for better screen reader support: -->
+    <!--
+
+    Skip Navigation Link (should be the first focusable element)
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    Language declaration for screen readers
+    <meta name="language" content="German">
+
+    -->
   </head>
   <body>
+    <!-- ==================================================================== -->
+    <!-- APPLICATION ROOT ELEMENT -->
+    <!-- ==================================================================== -->
+
+    <!-- React Application Mount Point -->
+    <!-- All React components will be rendered inside this div -->
+    <!-- Should remain empty in the static HTML template -->
     <div id="root"></div>
+
+    <!-- ==================================================================== -->
+    <!-- JAVASCRIPT MODULES -->
+    <!-- ==================================================================== -->
+
+    <!-- Main Application Entry Point -->
+    <!-- type="module" enables ES modules and modern JavaScript features -->
+    <!-- Vite handles module bundling and hot reload in development -->
     <script type="module" src="/src/main.jsx"></script>
+
+    <!-- ==================================================================== -->
+    <!-- NOSCRIPT FALLBACK (Optional Addition) -->
+    <!-- ==================================================================== -->
+
+    <!-- Fallback content for users with JavaScript disabled -->
+    <!-- Consider adding a basic HTML version for accessibility: -->
+    <!--
+    <noscript>
+      <div style="padding: 20px; text-align: center; font-family: Arial, sans-serif;">
+        <h1>JavaScript Required</h1>
+        <p>Die Linux Tutorial CMS erfordert JavaScript für die volle Funktionalität.</p>
+        <p>Please enable JavaScript in your browser settings to continue.</p>
+        <p><a href="/accessibility">Accessible Version</a></p>
+      </div>
+    </noscript>
+    -->
+
+    <!-- ==================================================================== -->
+    <!-- ANALYTICS AND TRACKING (Production Only) -->
+    <!-- ==================================================================== -->
+
+    <!-- Add analytics scripts here for production environment -->
+    <!-- Ensure GDPR compliance for EU users -->
+    <!--
+
+    Google Analytics 4 (Example)
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'GA_MEASUREMENT_ID');
+    </script>
+
+    -->
   </body>
 </html>

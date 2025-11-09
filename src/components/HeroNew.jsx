@@ -1,5 +1,12 @@
 import { Terminal, Code, Book, Zap, Sparkles, ArrowRight } from 'lucide-react'
 
+/**
+ * Alternative hero section component with hardcoded content.
+ * Displays main heading, subtitle, call-to-action buttons, and feature cards.
+ * Includes animated background effects and modern gradient design.
+ * 
+ * @returns {JSX.Element} Rendered hero section with static content
+ */
 const Hero = () => {
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-indigo-900">

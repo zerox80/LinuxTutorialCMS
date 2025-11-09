@@ -1,11 +1,29 @@
 
 
-mod auth;
-mod csrf;
-mod db;
-mod handlers;
-mod models;
+/**
+ * Linux Tutorial CMS - Main Application Entry Point
+ * 
+ * This file contains the main server setup and configuration for the Rust backend.
+ * It initializes all middleware, routes, security layers, and starts the HTTP server.
+ * 
+ * Architecture Overview:
+ * - AXUM web framework for HTTP handling
+ * - SQLite database with SQLx for async operations  
+ * - JWT-based authentication with HttpOnly cookies
+ * - CSRF protection for state-changing requests
+ * - Rate limiting to prevent abuse
+ * - Comprehensive security headers
+ * - CORS configuration for frontend integration
+ */
 
+// Module declarations for organizing the backend codebase
+mod auth;     // Authentication and JWT token management
+mod csrf;     // Cross-Site Request Forgery protection
+mod db;       // Database connection and pooling
+mod handlers; // HTTP request handlers organized by feature
+mod models;   // Data structures and database models
+
+// HTTP-related imports for building the web server
 use axum::http::{
     header::{
         AUTHORIZATION, CACHE_CONTROL, CONTENT_SECURITY_POLICY, CONTENT_TYPE, EXPIRES, PRAGMA,
@@ -21,6 +39,7 @@ use axum::{
     Router,
 };
 
+// External dependencies for configuration, async runtime, and middleware
 use dotenv::dotenv;
 use std::env;
 use std::io::ErrorKind;
@@ -32,16 +51,28 @@ use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tower_http::limit::RequestBodyLimitLayer;
 use tracing_subscriber;
 
+// Custom HTTP header constants for security policies
 const PERMISSIONS_POLICY: HeaderName = HeaderName::from_static("permissions-policy");
 const REFERRER_POLICY: HeaderName = HeaderName::from_static("referrer-policy");
 const X_XSS_PROTECTION: HeaderName = HeaderName::from_static("x-xss-protection");
 
+// Forwarded header constants for proxy handling
 const FORWARDED_HEADER: HeaderName = HeaderName::from_static("forwarded");
 const X_FORWARDED_FOR_HEADER: HeaderName = HeaderName::from_static("x-forwarded-for");
 const X_FORWARDED_PROTO_HEADER: HeaderName = HeaderName::from_static("x-forwarded-proto");
 const X_FORWARDED_HOST_HEADER: HeaderName = HeaderName::from_static("x-forwarded-host");
 const X_REAL_IP_HEADER: HeaderName = HeaderName::from_static("x-real-ip");
 
+/// Parses an environment variable as a boolean value.
+/// Accepts: "1", "true", "yes", "on" for true; "0", "false", "no", "off" for false.
+/// This function provides flexible boolean parsing for environment configuration.
+///
+/// # Arguments
+/// * `key` - Environment variable name to look up
+/// * `default` - Default value to return if variable is not set or invalid
+///
+/// # Returns
+/// Boolean value parsed from environment or default fallback
 fn parse_env_bool(key: &str, default: bool) -> bool {
     env::var(key)
         .ok()
@@ -58,10 +89,26 @@ fn parse_env_bool(key: &str, default: bool) -> bool {
         .unwrap_or(default)
 }
 
+/// Middleware to strip untrusted proxy headers from requests.
+/// This prevents IP spoofing attacks by removing X-Forwarded-* headers
+/// that could be used to fake client IP addresses for rate limiting.
+///
+/// # Security Purpose
+/// - Prevents clients from spoofing their IP address
+/// - Ensures rate limiting uses the real client IP
+/// - Stops proxy header injection attacks
+///
+/// # Arguments
+/// * `request` - Incoming HTTP request
+/// * `next` - Next middleware in the chain
+///
+/// # Returns
+/// HTTP response from next middleware with proxy headers removed
 async fn strip_untrusted_forwarded_headers(mut request: Request, next: Next) -> Response {
     {
         let headers = request.headers_mut();
 
+        // Remove all potentially spoofable forwarded headers
         headers.remove(FORWARDED_HEADER);
         headers.remove(X_FORWARDED_FOR_HEADER);
         headers.remove(X_FORWARDED_PROTO_HEADER);
@@ -72,12 +119,32 @@ async fn strip_untrusted_forwarded_headers(mut request: Request, next: Next) -> 
     next.run(request).await
 }
 
+/// Middleware to add comprehensive security headers to all responses.
+/// This implements defense-in-depth security through HTTP headers.
+///
+/// # Security Headers Added:
+/// - Content-Security-Policy (CSP): Prevents XSS and code injection
+/// - Strict-Transport-Security (HSTS): Forces HTTPS in production
+/// - X-Frame-Options: Prevents clickjacking attacks
+/// - X-Content-Type-Options: Stops MIME-type sniffing
+/// - Referrer-Policy: Controls referrer information leakage
+/// - Permissions-Policy: Disables browser features (camera, mic, geolocation)
+/// - X-XSS-Protection: Legacy XSS protection (set to 0 for modern CSP)
+/// - Cache-Control: Configures caching based on endpoint sensitivity
+///
+/// # Arguments
+/// * `request` - Incoming HTTP request
+/// * `next` - Next middleware in the chain
+///
+/// # Returns
+/// HTTP response with security headers added
 async fn security_headers(request: Request, next: Next) -> Response {
     use axum::http::Method;
 
     let method = request.method().clone();
     let path = request.uri().path().to_string();
 
+    // Detect if request is over HTTPS for HSTS header
     let is_https = request
         .headers()
         .get("x-forwarded-proto")
@@ -88,13 +155,15 @@ async fn security_headers(request: Request, next: Next) -> Response {
     let mut response = next.run(request).await;
     let headers = response.headers_mut();
 
+    // Configure cache control based on endpoint type
+    // Public endpoints can be cached, sensitive endpoints cannot
     let cacheable = method == Method::GET
         && (path == "/api/tutorials"
             || path.starts_with("/api/tutorials/")
             || path.starts_with("/api/public/"));
 
     if cacheable {
-
+        // Allow caching for public read-only endpoints (5 minutes)
         headers.insert(
             CACHE_CONTROL,
             HeaderValue::from_static("public, max-age=300, stale-while-revalidate=60"),
@@ -102,7 +171,7 @@ async fn security_headers(request: Request, next: Next) -> Response {
         headers.remove(PRAGMA);
         headers.remove(EXPIRES);
     } else {
-
+        // No caching for sensitive endpoints (auth, admin, etc.)
         headers.insert(
             CACHE_CONTROL,
             HeaderValue::from_static("no-store, no-cache, must-revalidate"),
@@ -111,16 +180,18 @@ async fn security_headers(request: Request, next: Next) -> Response {
         headers.insert(EXPIRES, HeaderValue::from_static("0"));
     }
 
+    // Content Security Policy - varies between dev and production
     let csp = if cfg!(debug_assertions) {
-
+        // Development CSP - allows unsafe-inline for easier debugging
         "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
     } else {
-
+        // Production CSP - stricter, no unsafe-inline
         "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;"
     };
 
     headers.insert(CONTENT_SECURITY_POLICY, HeaderValue::from_static(csp));
 
+    // HSTS - only add if already using HTTPS
     if is_https {
         headers.insert(
             STRICT_TRANSPORT_SECURITY,
@@ -128,28 +199,50 @@ async fn security_headers(request: Request, next: Next) -> Response {
         );
     }
 
+    // Anti-MIME-sniffing header
     headers.insert(X_CONTENT_TYPE_OPTIONS, HeaderValue::from_static("nosniff"));
 
+    // Clickjacking protection
     headers.insert(X_FRAME_OPTIONS, HeaderValue::from_static("DENY"));
 
+    // Referrer privacy
     headers.insert(REFERRER_POLICY, HeaderValue::from_static("no-referrer"));
 
+    // Disable browser features that could compromise privacy
     headers.insert(
         PERMISSIONS_POLICY,
         HeaderValue::from_static("geolocation=(), microphone=(), camera=()"),
     );
 
+    // Legacy XSS filter (disabled in favor of CSP)
     headers.insert(X_XSS_PROTECTION, HeaderValue::from_static("0"));
 
     response
 }
 
-const LOGIN_BODY_LIMIT: usize = 64 * 1024;
-const PUBLIC_BODY_LIMIT: usize = 2 * 1024 * 1024;
-const ADMIN_BODY_LIMIT: usize = 8 * 1024 * 1024;
+// Request body size limits for different endpoint types
+// These prevent DoS attacks through large payloads
+const LOGIN_BODY_LIMIT: usize = 64 * 1024;      // 64KB for login endpoints
+const PUBLIC_BODY_LIMIT: usize = 2 * 1024 * 1024; // 2MB for public endpoints
+const ADMIN_BODY_LIMIT: usize = 8 * 1024 * 1024;  // 8MB for admin content uploads
 
+// Default CORS origins for development environment
+// In production, FRONTEND_ORIGINS environment variable must be set
 const DEV_DEFAULT_FRONTEND_ORIGINS: &[&str] = &["http://localhost:5173", "http://localhost:3000"];
 
+/// Parses and validates CORS allowed origins from environment configuration.
+/// This function ensures only valid HTTP(S) origins are accepted for CORS.
+///
+/// # Security Purpose
+/// - Prevents malicious origins from accessing the API
+/// - Validates URL format to prevent header injection
+/// - Ensures only HTTP/HTTPS protocols are allowed
+///
+/// # Arguments
+/// * `origins` - Iterator of origin strings from environment variable
+///
+/// # Returns
+/// Vector of validated HeaderValue origins ready for CORS configuration
 fn parse_allowed_origins<'a, I>(origins: I) -> Vec<HeaderValue>
 where
     I: IntoIterator<Item = &'a str>,
@@ -159,10 +252,12 @@ where
         .filter_map(|origin| {
             let trimmed = origin.trim();
 
+            // Skip empty origins
             if trimmed.is_empty() {
                 return None;
             }
 
+            // Only allow HTTP and HTTPS protocols
             if !trimmed.starts_with("http://") && !trimmed.starts_with("https://") {
                 tracing::warn!(
                     "Ignoring invalid origin (must start with http:// or https://): '{trimmed}'"
@@ -170,11 +265,13 @@ where
                 return None;
             }
 
+            // Validate URL format
             if let Err(e) = url::Url::parse(trimmed) {
                 tracing::warn!("Ignoring malformed origin URL '{trimmed}': {e}");
                 return None;
             }
 
+            // Convert to HeaderValue for AXUM CORS
             match HeaderValue::from_str(trimmed) {
                 Ok(value) => Some(value),
                 Err(err) => {
@@ -186,6 +283,8 @@ where
         .collect()
 }
 
+/// Main application entry point.
+/// Initializes database, configures middleware, sets up routes, and starts the server.
 #[tokio::main]
 async fn main() {
 
@@ -432,6 +531,8 @@ async fn main() {
     tracing::info!("Server shutdown complete");
 }
 
+/// Handles graceful shutdown signals (Ctrl+C and SIGTERM).
+/// Waits for shutdown signal and initiates graceful shutdown.
 async fn shutdown_signal() {
 
     let ctrl_c = async {

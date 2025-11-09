@@ -1,5 +1,32 @@
 
 
+/**
+ * Database Module - SQLite Database Operations
+ *
+ * This module provides all database-related functionality for the Linux Tutorial CMS.
+ * It handles SQLite database connection management, migrations, and all database operations
+ * for tutorials, users, site content, pages, and posts.
+ *
+ * Architecture:
+ * - SQLite with WAL (Write-Ahead Logging) mode for better concurrency
+ * - Connection pooling with SQLx for async operations
+ * - Comprehensive database migrations and schema management
+ * - Full-text search with FTS5 for tutorial content
+ * - Foreign key constraints and proper indexing
+ *
+ * Security Considerations:
+ * - SQL injection prevention through parameterized queries
+ * - Proper transaction handling for data consistency
+ * - Input validation for slugs and user data
+ * - Directory permissions for SQLite file storage
+ *
+ * Performance Features:
+ * - Connection pooling (max 5 connections)
+ * - Proper indexing on frequently queried columns
+ * - FTS5 virtual tables for fast text search
+ * - WAL mode for better concurrent access
+ */
+
 use regex::Regex;
 use serde_json::{json, Value};
 use sqlx::{
@@ -10,8 +37,18 @@ use std::env;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
+/// Type alias for the SQLite connection pool
+/// This provides a convenient shorthand for the SqlitePool type used throughout the application
 pub type DbPool = SqlitePool;
 
+/// Creates and configures a SQLite database connection pool.
+/// Runs migrations and sets up WAL mode with foreign key constraints.
+///
+/// # Returns
+/// Configured database pool or error
+///
+/// # Errors
+/// Returns error if database connection or migration fails
 pub async fn create_pool() -> Result<DbPool, sqlx::Error> {
 
     let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| {
@@ -43,6 +80,17 @@ pub async fn create_pool() -> Result<DbPool, sqlx::Error> {
     Ok(pool)
 }
 
+/// Returns a compiled regex pattern for validating URL slugs.
+/// Uses OnceLock for thread-safe lazy initialization.
+///
+/// # Pattern Details
+/// - Allows: lowercase letters (a-z), numbers (0-9), and single hyphens
+/// - Disallows: consecutive hyphens, leading/trailing hyphens, uppercase letters
+/// - Examples of valid slugs: "tutorial-1", "linux-basics", "advanced-networking"
+/// - Examples of invalid slugs: "Tutorial", "test--slug", "slug-", "-slug"
+///
+/// # Returns
+/// A static reference to the compiled Regex pattern
 fn slug_regex() -> &'static Regex {
     use std::sync::OnceLock;
 
@@ -50,6 +98,17 @@ fn slug_regex() -> &'static Regex {
     SLUG_RE.get_or_init(|| Regex::new(r"^[a-z0-9]+(?:-[a-z0-9]+)*$").expect("valid slug regex"))
 }
 
+/// Validates a slug format for URL safety.
+/// Slugs must contain only lowercase letters, numbers, and hyphens.
+///
+/// # Arguments
+/// * `slug` - Slug string to validate
+///
+/// # Returns
+/// Ok if valid, Error if invalid
+///
+/// # Errors
+/// Returns error if slug exceeds max length or contains invalid characters
 pub fn validate_slug(slug: &str) -> Result<(), sqlx::Error> {
     const MAX_SLUG_LENGTH: usize = 100;
 
@@ -70,16 +129,43 @@ pub fn validate_slug(slug: &str) -> Result<(), sqlx::Error> {
     }
 }
 
+/// Serializes a JSON value to a string for database storage.
+///
+/// # Arguments
+/// * `value` - The JSON value to serialize
+///
+/// # Returns
+/// JSON string or database error if serialization fails
+///
+/// # Error Handling
+/// Converts serde_json errors to sqlx::Error for consistent error handling
 fn serialize_json_value(value: &Value) -> Result<String, sqlx::Error> {
     serde_json::to_string(value)
         .map_err(|e| sqlx::Error::Protocol(format!("Failed to serialize JSON: {e}").into()))
 }
 
+/// Deserializes a JSON string from database storage.
+///
+/// # Arguments
+/// * `value` - The JSON string to deserialize
+///
+/// # Returns
+/// JSON value or database error if deserialization fails
+///
+/// # Error Handling
+/// Converts serde_json errors to sqlx::Error for consistent error handling
 fn deserialize_json_value(value: &str) -> Result<Value, sqlx::Error> {
     serde_json::from_str(value)
         .map_err(|e| sqlx::Error::Protocol(format!("Failed to deserialize JSON: {e}").into()))
 }
 
+/// Lists all site pages ordered by order_index and title.
+///
+/// # Arguments
+/// * `pool` - Database connection pool
+///
+/// # Returns
+/// Vector of site pages or database error
 pub async fn list_site_pages(pool: &DbPool) -> Result<Vec<crate::models::SitePage>, sqlx::Error> {
     sqlx::query_as::<_, crate::models::SitePage>(
         "SELECT id, slug, title, description, nav_label, show_in_nav, order_index, is_published, hero_json, layout_json, created_at, updated_at FROM site_pages ORDER BY order_index, title",
@@ -88,6 +174,13 @@ pub async fn list_site_pages(pool: &DbPool) -> Result<Vec<crate::models::SitePag
     .await
 }
 
+/// Lists published pages that should appear in navigation.
+///
+/// # Arguments
+/// * `pool` - Database connection pool
+///
+/// # Returns
+/// Vector of published navigation pages or database error
 pub async fn list_nav_pages(pool: &DbPool) -> Result<Vec<crate::models::SitePage>, sqlx::Error> {
     sqlx::query_as::<_, crate::models::SitePage>(
         "SELECT id, slug, title, description, nav_label, show_in_nav, order_index, is_published, hero_json, layout_json, created_at, updated_at
@@ -408,6 +501,22 @@ pub async fn delete_site_post(pool: &DbPool, id: &str) -> Result<(), sqlx::Error
     }
 }
 
+/// Creates and ensures the site page database schema exists.
+/// This function creates tables for site content, pages, and posts with proper indexes.
+///
+/// # Arguments
+/// * `pool` - Database connection pool
+///
+/// # Returns
+/// Ok if schema creation succeeds, error otherwise
+///
+/// # Tables Created
+/// - site_content: JSON content for different site sections
+/// - site_pages: Main pages with navigation and publication settings
+/// - site_posts: Blog posts within pages
+///
+/// # Security
+/// Uses proper foreign key constraints and unique indexes to prevent data corruption
 async fn ensure_site_page_schema(pool: &DbPool) -> Result<(), sqlx::Error> {
     let mut tx = pool.begin().await?;
 
@@ -482,6 +591,29 @@ async fn ensure_site_page_schema(pool: &DbPool) -> Result<(), sqlx::Error> {
     Ok(())
 }
 
+/// Applies core database migrations for the main application schema.
+/// Creates all essential tables, indexes, and triggers for the CMS functionality.
+///
+/// # Arguments
+/// * `tx` - Database transaction for atomic migration execution
+///
+/// # Returns
+/// Ok if migrations succeed, error otherwise
+///
+/// # Schema Components Created
+/// - users: Admin user accounts with bcrypt password hashing
+/// - login_attempts: Failed login attempt tracking for security
+/// - tutorials: Main tutorial content with versioning
+/// - tutorial_topics: Many-to-many relationship for tutorial categorization
+/// - comments: User comments on tutorials
+/// - tutorials_fts: Full-text search table using FTS5
+/// - Triggers: Automatic FTS index maintenance
+///
+/// # Security Features
+/// - Foreign key constraints for data integrity
+/// - Proper indexing for performance and security
+/// - FTS5 triggers for automatic search index updates
+/// - UNIQUE constraints on usernames and tutorial IDs
 async fn apply_core_migrations(
     tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
 ) -> Result<(), sqlx::Error> {
@@ -707,6 +839,26 @@ pub async fn upsert_site_content(
         .ok_or_else(|| sqlx::Error::RowNotFound)
 }
 
+/// Seeds default site content for a fresh installation.
+/// Inserts predefined content for hero section, navigation, footer, and default pages.
+///
+/// # Arguments
+/// * `tx` - Database transaction for atomic seeding
+///
+/// # Returns
+/// Ok if seeding succeeds, error otherwise
+///
+/// # Content Sections Created
+/// - hero: Homepage hero section with call-to-action
+/// - tutorial_section: Tutorial listing section configuration
+/// - site_meta: SEO metadata and site information
+/// - header: Navigation header configuration
+/// - footer: Footer links and branding
+/// - grundlagen_page: Basic Linux tutorial page content
+///
+/// # Behavior
+/// Only inserts content if sections don't already exist
+/// Preserves existing content to avoid overwriting user customizations
 async fn seed_site_content_tx(
     tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
 ) -> Result<(), sqlx::Error> {
@@ -731,6 +883,27 @@ async fn seed_site_content_tx(
     Ok(())
 }
 
+/// Returns the default site content for a fresh installation.
+/// Provides comprehensive starting content with German language defaults.
+///
+/// # Returns
+/// Vector of (section_name, JSON_content) tuples
+///
+/// # Content Sections
+/// Each section is carefully designed to provide a complete website experience:
+/// - SEO-optimized meta tags and descriptions
+/// - Responsive navigation with proper routing
+/// - Compelling hero section with feature highlights
+/// - Tutorial section with clear call-to-actions
+/// - Professional footer with contact links
+/// - Basic Linux tutorial page with structured learning path
+///
+/// # Design Principles
+/// - Mobile-first responsive design
+/// - Clear information hierarchy
+/// - Engaging call-to-action elements
+/// - Professional German-language content
+/// - Accessibility-friendly structure
 fn default_site_content() -> Vec<(&'static str, serde_json::Value)> {
     vec![
         (
@@ -949,6 +1122,32 @@ fn sqlite_file_path(database_url: &str) -> Option<PathBuf> {
     Some(PathBuf::from(normalized))
 }
 
+/// Runs all database migrations and initializes the application state.
+/// This is the main entry point for database setup and includes:
+/// - Core schema migrations
+/// - Site page schema setup
+/// - Default content seeding
+/// - Admin user creation from environment variables
+///
+/// # Arguments
+/// * `pool` - Database connection pool
+///
+/// # Returns
+/// Ok if all migrations succeed, error otherwise
+///
+/// # Environment Variables
+/// - ADMIN_USERNAME: Creates admin user if set (non-empty)
+/// - ADMIN_PASSWORD: Password for admin user (must be ≥12 characters)
+/// - ENABLE_DEFAULT_TUTORIALS: Set to "true" to seed default tutorials
+///
+/// # Security
+/// - Admin password must meet NIST minimum length requirement (12 chars)
+/// - Default tutorials are only seeded if database is empty
+/// - All operations run in transactions for data consistency
+///
+/// # Error Handling
+/// Rolls back transactions on any migration failure
+/// Validates admin password strength before creating users
 pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     let mut tx = pool.begin().await?;
 

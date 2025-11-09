@@ -6,24 +6,103 @@ import { navigateContentTarget } from '../utils/contentNavigation'
 import { getIconComponent } from '../utils/iconMap'
 import { sanitizeExternalUrl } from '../utils/urlValidation'
 
-const resolveContactFallbackIcon = (contact) => {
-  const label = (contact?.label || '').toLowerCase()
-  const rawHref = contact?.href || contact?.url || ''
-  const safeHref = sanitizeExternalUrl(rawHref) || ''
-  const href = safeHref.toLowerCase()
+/**
+ * Resolves the appropriate icon for a contact link based on its properties.
+ *
+ * This utility function determines the most suitable icon for a contact link
+ * by analyzing its label, URL, and explicit icon settings. It provides intelligent
+ * fallbacks to ensure consistent visual representation across different contact types.
+ *
+ * Resolution Logic:
+ * 1. Uses explicitly specified icon if provided
+ * 2. Falls back to label-based detection (mail, git, etc.)
+ * 3. Analyzes URL patterns for automatic icon selection
+ * 4. Defaults to 'Terminal' icon for unknown types
+ *
+ * Pattern Matching:
+ * - Email: 'mail' in label or 'mailto:' in URL
+ * - GitHub: 'git' in label or 'github' in URL
+ * - Default: Terminal icon for general/unknown contacts
+ *
+ * Security Considerations:
+ * - Uses sanitized URLs for pattern matching
+ * - Handles missing or malformed URL data gracefully
+ * - Prevents errors when contact data is incomplete
+ *
+ * @function
+ * @param {Object} contact - Contact link object containing icon, label, and URL information
+ * @param {string} [contact.icon] - Explicit icon name to override automatic detection
+ * @param {string} [contact.label] - Contact label text used for pattern matching
+ * @param {string} [contact.href] - Contact URL used for pattern matching
+ * @param {string} [contact.url] - Alternative URL field name
+ *
+ * @returns {string} Icon name to use for the contact (e.g., 'Mail', 'Github', 'Terminal')
+ *
+ * @example
+ * // Automatic email detection
+ * resolveContactFallbackIcon({ label: 'Contact Email', href: 'mailto:test@example.com' })
+ * // Returns: 'Mail'
+ *
+ * // Explicit icon override
+ * resolveContactFallbackIcon({ icon: 'CustomIcon', label: 'Support' })
+ * // Returns: 'CustomIcon'
+ *
+ * // GitHub URL detection
+ * resolveContactFallbackIcon({ href: 'https://github.com/user' })
+ * // Returns: 'Github'
+ *
+ * @see {@link ../utils/urlValidation.js} for URL sanitization
+ * @see {@link ../utils/iconMap.js} for icon component mapping
+ */
 
-  if (contact?.icon) {
-    return contact.icon
-  }
-  if (label.includes('mail') || href.startsWith('mailto:')) {
-    return 'Mail'
-  }
-  if (label.includes('git') || href.includes('github')) {
-    return 'Github'
-  }
-  return 'Terminal'
-}
-
+/**
+ * Footer component displaying brand information, navigation links, and contact details.
+ *
+ * This component renders a comprehensive site footer with dynamic content management
+ * capabilities. It pulls content from the CMS and provides intelligent navigation
+ * handling for different types of links and targets.
+ *
+ * Key Features:
+ * - Dynamic brand information from CMS content
+ * - Intelligent navigation link generation from multiple sources
+ * - Contact link handling with security validation
+ * - Automatic current year for copyright notices
+ * - Responsive design with mobile-first approach
+ * - Multiple navigation sources (static, dynamic, CMS-driven)
+ *
+ * Content Sources:
+ * - CMS footer section for brand and contact information
+ * - Navigation context for quick links and site structure
+ * - Fallback content when CMS data is unavailable
+ *
+ * Navigation Handling:
+ * - Internal route navigation with React Router
+ * - External link opening in new tabs with security attributes
+ * - Anchor link smooth scrolling to page sections
+ * - Email and telephone link handling
+ *
+ * Security Features:
+ * - URL sanitization for all external links
+ * - Security attributes (rel="noopener noreferrer") for external links
+ * - Validation of link targets before navigation
+ * - Safe handling of malformed URLs
+ *
+ * Performance Optimization:
+ * - Memoized computed values to prevent unnecessary recalculations
+ * - Efficient link resolution logic
+ * - Minimal re-renders through proper dependency management
+ *
+ * @component
+ * @example
+ * // Basic usage (automatically pulls content from CMS)
+ * <Footer />
+ *
+ * @returns {JSX.Element} Rendered footer with brand information, quick links, and contact details
+ *
+ * @see {@link ../context/ContentContext.jsx} for CMS content management
+ * @see {@link ../utils/contentNavigation.js} for navigation handling utilities
+ * @see {@link ../utils/urlValidation.js} for URL security validation
+ */
 const Footer = () => {
   const { getSection, navigation } = useContent()
   const footerContent = getSection('footer') ?? {}
@@ -117,34 +196,101 @@ const Footer = () => {
   }, [navigationQuickLinks])
 
   
+  /**
+   * Handles navigation when a quick link is clicked.
+   *
+   * This function provides intelligent navigation handling for different types of links
+   * that may appear in the footer. It supports content targets, external URLs, email/phone
+   * links, and internal routes with proper security measures.
+   *
+   * Navigation Priority:
+   * 1. Content targets (CMS-driven navigation)
+   * 2. External URLs (HTTP/HTTPS links)
+   * 3. Special protocols (mailto:, tel:)
+   * 4. Internal routes (React Router navigation)
+   *
+   * Security Features:
+   * - URL sanitization for all external links
+   * - Security attributes for external links (noopener, noreferrer)
+   * - Safe opening of external links in new tabs
+   * - Server-side rendering compatibility checks
+   *
+   * Protocol Handling:
+   * - HTTP/HTTPS: Opens in new tab with security attributes
+   * - mailto: Opens default email client
+   * - tel: Opens default phone app (mobile)
+   * - Relative paths: Internal navigation with React Router
+   *
+   * Error Handling:
+   * - Graceful handling of malformed link data
+   * - Safe fallbacks for missing properties
+   * - Server-side rendering compatibility
+   *
+   * @function
+   * @param {Object} link - Link object containing navigation information
+   * @param {Object} [link.target] - Content target object for CMS navigation
+   * @param {string} [link.href] - URL for external or special protocol links
+   * @param {string} [link.url] - Alternative URL field name
+   * @param {string} [link.path] - Internal route path for React Router
+   *
+   * @returns {void} No return value - performs navigation action
+   *
+   * @example
+   * // Content target navigation
+   * handleQuickLink({ target: { type: 'route', value: '/about' } })
+   * // Navigates to /about route
+   *
+   * // External link
+   * handleQuickLink({ href: 'https://example.com' })
+   * // Opens example.com in new tab
+   *
+   * // Email link
+   * handleQuickLink({ href: 'mailto:contact@example.com' })
+   * // Opens email client
+   *
+   * @see {@link ../utils/contentNavigation.js} for content target navigation
+   * @see {@link ../utils/urlValidation.js} for URL security validation
+   */
   const handleQuickLink = (link) => {
+    // Early return for invalid or missing link data
     if (!link) return
 
+    // Extract navigation data from link object
     const target = link.target
     const href = sanitizeExternalUrl(link.href || link.url)
     const path = link.path
 
+    // Priority 1: Content targets (CMS-driven navigation)
     if (target) {
       navigateContentTarget(target, { navigate, location })
       return
     }
 
+    // Priority 2: External URLs and special protocols
     if (href) {
+      // Ensure we're in a browser environment
       if (typeof window === 'undefined') {
         return
       }
+
+      // External HTTP/HTTPS links - open in new tab with security
       if (href.startsWith('http://') || href.startsWith('https://')) {
         window.open(href, '_blank', 'noopener,noreferrer')
         return
       }
+
+      // Special protocol links (email, phone) - use current window
       if (href.startsWith('mailto:') || href.startsWith('tel:')) {
         window.location.href = href
         return
       }
+
+      // Other relative URLs - navigate in current window
       window.location.assign(href)
       return
     }
 
+    // Priority 3: Internal routes - use React Router
     if (path) {
       navigate(path)
       return

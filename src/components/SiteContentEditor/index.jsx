@@ -17,6 +17,12 @@ const sectionLabels = {
   site_meta: 'Seitentitel & Beschreibung',
 }
 
+/**
+ * Deep clones content object using JSON serialization.
+ * 
+ * @param {*} value - Value to clone
+ * @returns {Object} Cloned object or empty object if value is null/undefined
+ */
 const cloneContent = (value) => {
   if (value === undefined || value === null) {
     return {}
@@ -24,6 +30,14 @@ const cloneContent = (value) => {
   return JSON.parse(JSON.stringify(value))
 }
 
+/**
+ * Sets a nested value in an object using a path array.
+ * 
+ * @param {Object} obj - Object to modify
+ * @param {Array<string>} path - Path to the nested property
+ * @param {*} value - Value to set
+ * @returns {Object} Modified object
+ */
 const setNestedValue = (obj, path, value) => {
   if (!Array.isArray(path) || path.length === 0) {
     return obj
@@ -40,6 +54,15 @@ const setNestedValue = (obj, path, value) => {
   return obj
 }
 
+/**
+ * Section picker component for selecting content sections to edit.
+ * 
+ * @param {Object} props - Component props
+ * @param {Array<string>} props.sections - Available section identifiers
+ * @param {string} [props.selected] - Currently selected section
+ * @param {Function} props.onSelect - Callback when section is selected
+ * @returns {JSX.Element} Rendered section picker grid
+ */
 const SectionPicker = ({ sections, selected, onSelect }) => {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -399,6 +422,12 @@ SectionPreview.propTypes = {
   content: PropTypes.object.isRequired,
 }
 
+/**
+ * Main site content editor component for managing CMS content.
+ * Provides JSON editing with visual preview for different content sections.
+ * 
+ * @returns {JSX.Element} Rendered content editor interface
+ */
 const SiteContentEditor = () => {
   const {
     content,

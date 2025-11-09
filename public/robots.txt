@@ -1,4 +1,69 @@
+# Robots.txt configuration for LinuxTutorialCMS
+# This file controls how search engine crawlers access and index the website
+#
+# SECURITY WARNING: This file allows full access to all crawlers. In production,
+# you may want to restrict access to sensitive areas or specific file types.
+# Always review and customize based on your security requirements.
+
+# Global permissions for all user agents (crawlers)
+# User-agent: * applies to all search engine crawlers including:
+# - Googlebot (Google)
+# - Bingbot (Microsoft Bing)
+# - Slurp (Yahoo)
+# - DuckDuckBot (DuckDuckGo)
+# - Baiduspider (Baidu)
 User-agent: *
+
+# Allow crawling of all content
+# This directive permits crawlers to access all pages and resources
+# Consider restricting access to:
+# - Admin panels (/admin/*)
+# - Sensitive files (*.json, *.env, *.config)
+# - Temporary directories (/tmp/*, /cache/*)
 Allow: /
 
+# Sitemap location for search engines
+# Update the domain to match your actual deployment domain
+# The sitemap helps crawlers discover and index your content efficiently
 Sitemap: https://your-domain.com/sitemap.xml
+
+# Example restrictions for production environments (commented out):
+#
+# Disallow access to admin areas
+# Disallow: /admin/
+# Disallow: /api/admin/
+#
+# Disallow access to sensitive file types
+# Disallow: /*.json$
+# Disallow: /*.env$
+# Disallow: /*.config$
+#
+# Disallow access to development and testing areas
+# Disallow: /test/
+# Disallow: /dev/
+# Disallow: /debug/
+#
+# Disallow access to temporary and cache directories
+# Disallow: /tmp/
+# Disallow: /cache/
+# Disallow: /.well-known/
+#
+# Specific user agent restrictions (uncomment if needed):
+#
+# Block aggressive crawlers
+# User-agent: Baiduspider
+# Disallow: /
+#
+# Allow only major search engines
+# User-agent: *
+# Disallow: /
+#
+# User-agent: Googlebot
+# Allow: /
+#
+# User-agent: Bingbot
+# Allow: /
+#
+# Crawl delay for server protection (uncomment if needed):
+# User-agent: *
+# Crawl-delay: 1

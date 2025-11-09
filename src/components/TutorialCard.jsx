@@ -2,8 +2,26 @@ import { ChevronRight, Sparkles } from 'lucide-react'
 import PropTypes from 'prop-types'
 import { scrollToSection } from '../utils/scrollToSection'
 
+/**
+ * Tutorial card component with animated hover effects.
+ * Displays tutorial information with icon, title, description, and topics.
+ * 
+ * @param {Object} props - Component props
+ * @param {React.ComponentType} props.icon - Icon component to display
+ * @param {string} props.title - Tutorial title
+ * @param {string} props.description - Tutorial description
+ * @param {Array<string>} props.topics - Array of tutorial topics
+ * @param {string} props.color - Tailwind gradient color classes
+ * @param {Function} [props.onSelect] - Callback when card is selected
+ * @param {string} [props.buttonLabel] - Custom button label
+ * @returns {JSX.Element} Rendered tutorial card
+ */
 const TutorialCard = ({ icon: Icon, title, description, topics, color, onSelect, buttonLabel }) => {
   
+  /**
+   * Handles card selection.
+   * Calls onSelect callback or scrolls to tutorials section.
+   */
   const handleSelect = () => {
     if (typeof onSelect === 'function') {
       onSelect()
