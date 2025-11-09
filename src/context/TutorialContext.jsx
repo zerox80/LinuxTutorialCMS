@@ -505,7 +505,7 @@ TutorialProvider.propTypes = {
  *     }
  *   };
  *
- *   return <form onSubmit={handleSubmit}>{/* Form fields */}</form>;
+ *   return <form onSubmit={handleSubmit}>Form fields here</form>;
  * }
  * ```
  *
