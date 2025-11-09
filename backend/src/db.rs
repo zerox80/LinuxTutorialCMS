@@ -1031,8 +1031,8 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     }
 
     let seed_enabled = env::var("ENABLE_DEFAULT_TUTORIALS")
-        .map(|v| v.trim().eq_ignore_ascii_case("true"))
-        .unwrap_or(false);
+        .map(|v| !v.trim().eq_ignore_ascii_case("false"))
+        .unwrap_or(true);
 
     let mut tx = pool.begin().await?;
 

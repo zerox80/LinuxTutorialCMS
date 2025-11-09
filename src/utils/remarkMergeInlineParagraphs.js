@@ -1,4 +1,9 @@
 import { visit } from 'unist-util-visit'
+
+const tightenListItems = () => {}
+const reattachDanglingParagraphs = () => {}
+const mergeLooseParagraphs = () => {}
+
 // Set of inline node types for classification
 const INLINE_NODE_TYPES = new Set([
   'text',
