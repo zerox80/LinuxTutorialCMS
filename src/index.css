@@ -187,16 +187,20 @@
 
   .markdown-renderer code {
     @apply align-baseline;
-    white-space: nowrap !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
     display: inline !important;
-    /* Prevent line breaks around inline code */
+    /* Keep inline spacing consistent */
     padding-left: 0.15em;
     padding-right: 0.15em;
   }
 
-  /* Ensure inline code in lists stays inline */
+  /* Ensure inline code in lists stays inline while allowing wrapping */
   .markdown-renderer li code {
-    white-space: nowrap !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+    word-break: break-word;
     display: inline !important;
   }
 
