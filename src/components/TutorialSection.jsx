@@ -19,7 +19,7 @@ const TutorialSection = () => {
   }, [tutorials])
   return (
     <section
-      className="relative isolate overflow-hidden bg-gradient-to-br from-surface-900 via-surface-800 to-surface-950 py-24 sm:py-28 text-neutral-100"
+      className="relative isolate overflow-hidden bg-gradient-to-br from-[#0b1733] via-[#101f3d] to-[#050a1a] py-24 sm:py-28 text-neutral-100"
       data-section="tutorials"
       id="tutorials"
     >
@@ -69,7 +69,7 @@ const TutorialSection = () => {
           ))}
         </div>
       )}
-        <div className="mt-20 rounded-3xl border border-white/10 bg-gradient-to-r from-primary-600 via-primary-700 to-primary-900 p-8 text-center text-neutral-50 shadow-card-xl md:p-12">
+        <div className="mt-20 rounded-3xl border border-white/10 bg-gradient-to-r from-primary-600 via-primary-700 to-[#0f1c45] p-8 text-center text-neutral-50 shadow-card-xl md:p-12">
           <h3 className="mb-4 text-3xl font-semibold md:text-4xl">
             {sectionContent.heading || 'Bereit anzufangen?'}
           </h3>

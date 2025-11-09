@@ -66,7 +66,8 @@
 
   /* Tutorial card component with glass morphism effect and hover animations */
   .tutorial-card {
-    @apply relative rounded-2xl border border-white/20 bg-white/10 p-8 shadow-soft transition-all duration-500 backdrop-blur-xl overflow-hidden;
+    @apply relative rounded-2xl border border-white/20 p-8 shadow-soft transition-all duration-500 backdrop-blur-xl overflow-hidden;
+    background: rgba(255, 255, 255, 0.08);
   }
 
   /* Hover overlay effect for tutorial cards using gradient overlay */
@@ -83,7 +84,8 @@
 
   /* Dark mode variant for tutorial cards with adjusted colors and opacity */
   .dark .tutorial-card {
-    @apply bg-surface-800 bg-opacity-70 border-white/10 shadow-card-xl;
+    @apply border-white/10 shadow-card-xl;
+    background: rgba(11, 23, 51, 0.72);
   }
 
   /* Dark mode hover overlay with purple tint instead of blue */
