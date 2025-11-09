@@ -83,7 +83,7 @@
 
   /* Dark mode variant for tutorial cards with adjusted colors and opacity */
   .dark .tutorial-card {
-    @apply bg-surface-800/70 border-white/10 shadow-card-xl;
+    @apply bg-surface-800 bg-opacity-70 border-white/10 shadow-card-xl;
   }
 
   /* Dark mode hover overlay with purple tint instead of blue */
