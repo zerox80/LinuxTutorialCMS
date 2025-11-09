@@ -1,5 +1,27 @@
 
 
+/**
+ * Tutorial Management Handlers Module
+ *
+ * This module provides HTTP request handlers for tutorial CRUD operations.
+ * It handles creating, reading, updating, and deleting tutorials with comprehensive
+ * validation, security controls, and error handling.
+ *
+ * Features:
+ * - Tutorial CRUD operations with proper authentication
+ * - Input validation for titles, descriptions, and content
+ * - Icon and color validation against allowed values
+ * - Topic management and categorization
+ * - Version tracking and automatic updates
+ * - Comprehensive error handling and logging
+ *
+ * Security:
+ * - Admin-only access for write operations
+ * - Input sanitization and validation
+ * - SQL injection prevention with parameterized queries
+ * - Size limits to prevent DoS attacks
+ */
+
 use crate::{auth, db::DbPool, models::*};
 use axum::{
     extract::{Path, Query, State},
@@ -11,18 +33,52 @@ use std::collections::HashSet;
 use std::convert::TryInto;
 use uuid::Uuid;
 
+/// Validates tutorial ID format and prevents injection attacks.
+///
+/// This function ensures tutorial IDs are safe for database operations and URL usage.
+/// It validates length, character set, and prevents potential injection attacks.
+///
+/// # Arguments
+/// * `id` - Tutorial ID to validate (typically a UUID)
+///
+/// # Returns
+/// Ok(()) if valid, Err(String) with error message if invalid
+///
+/// # Validation Rules
+/// - Non-empty string with maximum 100 characters
+/// - Only alphanumeric characters and hyphens allowed
+/// - Prevents SQL injection and URL path manipulation
 pub(crate) fn validate_tutorial_id(id: &str) -> Result<(), String> {
-
+    // Check length bounds to prevent buffer overflow attacks
     if id.is_empty() || id.len() > 100 {
         return Err("Invalid tutorial ID".to_string());
     }
 
+    // Ensure only safe characters for database and URL usage
     if !id.chars().all(|c| c.is_alphanumeric() || c == '-') {
         return Err("Tutorial ID contains invalid characters".to_string());
     }
     Ok(())
 }
 
+/// Validates tutorial content data with size limits to prevent abuse.
+///
+/// This function enforces reasonable limits on tutorial content to prevent
+/// storage abuse and ensure good performance. All text fields are trimmed
+/// and validated for length constraints.
+///
+/// # Arguments
+/// * `title` - Tutorial title (max 200 characters, required)
+/// * `description` - Tutorial description (max 1000 characters, required)
+/// * `content` - Tutorial content (max 100,000 characters, optional but recommended)
+///
+/// # Returns
+/// Ok(()) if all fields are valid, Err(String) with specific error message
+///
+/// # Security Notes
+/// - Size limits prevent DoS attacks through large payloads
+/// - Required fields ensure data completeness
+/// - Trimming prevents whitespace-only content
 fn validate_tutorial_data(title: &str, description: &str, content: &str) -> Result<(), String> {
     let title_trimmed = title.trim();
     if title_trimmed.is_empty() {
@@ -45,16 +101,31 @@ fn validate_tutorial_data(title: &str, description: &str, content: &str) -> Resu
     Ok(())
 }
 
+/// Validates tutorial icon against allowed Lucide icon names.
+///
+/// This function ensures only approved icon names are used, preventing
+/// potential XSS attacks and maintaining UI consistency.
+///
+/// # Arguments
+/// * `icon` - Icon name to validate
+///
+/// # Returns
+/// Ok(()) if icon is allowed, Err(String) with list of valid icons
+///
+/// # Security Notes
+/// - Whitelist approach prevents icon-based XSS
+/// - Uses Lucide React icon names for frontend consistency
+/// - Clear error message helps users choose valid icons
 pub(crate) fn validate_icon(icon: &str) -> Result<(), String> {
     const ALLOWED_ICONS: &[&str] = &[
-        "Terminal",
-        "FolderTree",
-        "FileText",
-        "Settings",
-        "Shield",
-        "Network",
-        "Database",
-        "Server",
+        "Terminal",    // Command line and shell tutorials
+        "FolderTree",  // File system and directory tutorials
+        "FileText",    // Text editing and file manipulation
+        "Settings",    // System configuration and settings
+        "Shield",      // Security and permissions
+        "Network",     // Networking and connectivity
+        "Database",    // Database and data management
+        "Server",      // Server administration and services
     ];
 
     if ALLOWED_ICONS.contains(&icon) {

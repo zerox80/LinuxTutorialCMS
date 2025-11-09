@@ -1,5 +1,45 @@
 
 
+/**
+ * Content Import Utility
+ *
+ * This binary utility imports site content from a structured JSON file into the
+ * Linux Tutorial CMS database. It's designed for content restoration, development
+ * environment setup, and content migration between instances.
+ *
+ * Usage:
+ * ```bash
+ * cargo run --bin import_content -- input.json
+ * ```
+ *
+ * Features:
+ * - Imports site content (hero sections, headers, footers)
+ * - Imports site pages with navigation and publication settings
+ * - Imports blog posts with markdown content
+ * - Preserves original IDs and timestamps when available
+ * - Validates content structure and data integrity
+ * - Runs all operations in database transactions
+ * - Handles duplicate content gracefully with upserts
+ *
+ * Input Format:
+ * The JSON file should contain the same structure as produced by export_content:
+ * - site_content: Array of content section objects
+ * - pages: Array of page objects with hero/layout data
+ * - posts: Array of blog post objects with markdown content
+ *
+ * Security:
+ * - Validates file paths to prevent directory traversal
+ * - Validates JSON structure before processing
+ * - Uses database transactions for atomic operations
+ * - Handles all errors gracefully with detailed reporting
+ *
+ * Error Handling:
+ * - File not found or inaccessible
+ * - Invalid JSON format or structure
+ * - Database connection or transaction errors
+ * - Data validation failures
+ */
+
 use std::{env, fs, path::Path};
 
 use anyhow::{anyhow, Context, Result};

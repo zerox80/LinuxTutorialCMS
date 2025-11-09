@@ -1,5 +1,38 @@
 
 
+/**
+ * Content Export Utility
+ *
+ * This binary utility exports all site content from the Linux Tutorial CMS database
+ * to a structured JSON file. It's designed for backup purposes, content migration,
+ * and development environment setup.
+ *
+ * Usage:
+ * ```bash
+ * cargo run --bin export_content -- output.json
+ * ```
+ *
+ * Features:
+ * - Exports site content (hero sections, headers, footers)
+ * - Exports site pages with navigation and publication settings
+ * - Exports blog posts with markdown content
+ * - Exports tutorials with topics and metadata
+ * - Preserves creation and update timestamps
+ * - Validates file paths and handles errors gracefully
+ *
+ * Output Format:
+ * The exported JSON contains nested structures for:
+ * - site_content: Dynamic content sections
+ * - pages: Static pages with hero and layout data
+ * - posts: Blog posts with markdown content
+ * - tutorials: Educational content with categorization
+ *
+ * Security:
+ * - Validates file paths to prevent directory traversal
+ * - Handles database errors safely
+ * - Uses proper error handling for file operations
+ */
+
 use std::{env, fs, path::Path};
 
 use anyhow::{Context, Result};

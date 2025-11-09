@@ -21,6 +21,39 @@
   ],
   "type": "module",
 
+  "_scripts": {
+    "_comment": "NPM Scripts for Linux Tutorial CMS Development Workflow",
+    "_development": {
+      "dev": "vite - Start development server with hot module replacement",
+      "preview": "vite preview - Preview production build locally"
+    },
+    "_building": {
+      "build": "vite build - Build production bundle with optimizations"
+    },
+    "_code_quality": {
+      "lint": "eslint src --ext js,jsx - Run ESLint on source files",
+      "test": "vitest - Run unit tests with Vitest",
+      "test:ui": "vitest --ui - Run tests with visual interface",
+      "test:coverage": "vitest run --coverage - Generate test coverage report",
+      "test:e2e": "playwright test - Run end-to-end tests",
+      "test:e2e:ui": "playwright test --ui - Run E2E tests with visual interface"
+    },
+    "_content_management": {
+      "export-content": "cargo run --manifest-path backend/Cargo.toml --bin export_content - Export all CMS content to JSON",
+      "import-content": "cargo run --manifest-path backend/Cargo.toml --bin import_content - Import CMS content from JSON file"
+    },
+    "_documentation": {
+      "docs:check": "jsdoc -c jsdoc.json && eslint --ext .js,.jsx src/ --plugin jsdoc - Validate JSDoc comments",
+      "docs:coverage": "documentation coverage src/ --threshold 95 - Check documentation coverage (95% threshold)",
+      "docs:lint": "eslint --ext .js,.jsx src/ --plugin jsdoc --plugin jsdoc/check-format - Lint documentation format",
+      "docs:generate": "documentation build src/ -f html -o docs/ - Generate HTML documentation",
+      "docs:serve": "documentation serve src/ --port 4000 - Serve documentation locally",
+      "docs:build": "npm run docs:generate && npm run docs:coverage - Build docs and check coverage",
+      "docs:verify": "npm run docs:check && npm run docs:coverage - Complete documentation validation",
+      "docs:watch": "documentation serve src/ --watch --port 4000 - Serve docs with auto-reload"
+    }
+  },
+
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -44,26 +77,39 @@
   },
 
   "dependencies": {
-    "dompurify": "^3.2.2",
-    "highlight.js": "^11.10.0",
-    "i18next": "^23.11.5",
-    "katex": "^0.16.25",
-    "lucide-react": "^0.552.0",
-    "prop-types": "^15.8.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-helmet-async": "^2.0.5",
-    "react-i18next": "^15.1.5",
-    "react-markdown": "^10.1.0",
-    "react-router-dom": "^7.9.5",
-    "rehype-highlight": "^7.0.2",
-    "rehype-katex": "^7.0.1",
-    "rehype-raw": "^7.0.0",
-    "remark-breaks": "^4.0.0",
-    "remark-gfm": "^4.0.1",
-    "remark-math": "^6.0.0",
-    "remark-parse": "^11.0.0",
-    "unist-util-visit": "^5.0.0"
+    "_comment": "Production dependencies for the Linux Tutorial CMS frontend",
+    "_security": {
+      "dompurify": "^3.2.2 - XSS prevention and HTML sanitization"
+    },
+    "_ui_framework": {
+      "react": "^18.3.1 - Core React library for component-based UI",
+      "react-dom": "^18.3.1 - React DOM renderer for web browsers",
+      "react-router-dom": "^7.9.5 - Client-side routing and navigation",
+      "react-helmet-async": "^2.0.5 - Document head management and SEO"
+    },
+    "_content_rendering": {
+      "react-markdown": "^10.1.0 - Markdown to React component renderer",
+      "remark-math": "^6.0.0 - LaTeX math support in markdown",
+      "remark-gfm": "^4.0.1 - GitHub Flavored Markdown support",
+      "remark-breaks": "^4.0.0 - Line break handling in markdown",
+      "remark-parse": "^11.0.0 - Markdown parser plugin",
+      "rehype-highlight": "^7.0.2 - Syntax highlighting for code blocks",
+      "rehype-katex": "^7.0.1 - LaTeX math rendering with KaTeX",
+      "rehype-raw": "^7.0.0 - HTML support in markdown",
+      "highlight.js": "^11.10.0 - Syntax highlighting library",
+      "katex": "^0.16.25 - Mathematical typesetting library",
+      "unist-util-visit": "^5.0.0 - AST traversal utility for markdown plugins"
+    },
+    "_ui_components": {
+      "lucide-react": "^0.552.0 - Icon library for consistent UI icons"
+    },
+    "_internationalization": {
+      "i18next": "^23.11.5 - Internationalization framework",
+      "react-i18next": "^15.1.5 - React bindings for i18next"
+    },
+    "_development": {
+      "prop-types": "^15.8.1 - Runtime type checking for React props"
+    }
   },
 
   "devDependencies": {

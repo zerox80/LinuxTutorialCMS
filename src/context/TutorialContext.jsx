@@ -523,7 +523,7 @@ TutorialProvider.propTypes = {
  *     <div>
  *       <h1>{tutorial.title}</h1>
  *       <p>{tutorial.description}</p>
- *       {/* Additional tutorial content */}
+ *       Additional tutorial content here
  *     </div>
  *   );
  * }
@@ -581,7 +581,7 @@ TutorialProvider.propTypes = {
  *   return (
  *     <div>
  *       <h1>Available Tutorials ({tutorials.length})</h1>
- *       {/* Tutorial display */}
+ *       // Tutorial display content here
  *     </div>
  *   );
  * }
@@ -613,7 +613,7 @@ TutorialProvider.propTypes = {
  *
  *   return (
  *     <div>
- *       {/* Tutorial management UI */}
+ *       Tutorial management UI here
  *     </div>
  *   );
  * }
