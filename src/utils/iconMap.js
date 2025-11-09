@@ -25,6 +25,7 @@ import {
   RefreshCw,
   Edit,
   Trash2,
+  Phone,
 } from 'lucide-react'
 const ICON_MAP = {
   Terminal,
@@ -53,6 +54,7 @@ const ICON_MAP = {
   RefreshCw,
   Edit,
   Trash2,
+  Phone,
 }
 export const getIconComponent = (iconName, fallback = 'Terminal') => {
   if (iconName && ICON_MAP[iconName]) {

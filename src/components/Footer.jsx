@@ -5,6 +5,45 @@ import { useContent } from '../context/ContentContext'
 import { navigateContentTarget } from '../utils/contentNavigation'
 import { getIconComponent } from '../utils/iconMap'
 import { sanitizeExternalUrl } from '../utils/urlValidation'
+
+const resolveContactFallbackIcon = (contact) => {
+  if (!contact) {
+    return 'Terminal'
+  }
+
+  if (contact.icon) {
+    return contact.icon
+  }
+
+  const href = typeof contact.href === 'string' ? contact.href : contact.url
+  if (typeof href === 'string') {
+    const value = href.toLowerCase()
+    if (value.startsWith('mailto:')) {
+      return 'Mail'
+    }
+    if (value.startsWith('tel:')) {
+      return 'Phone'
+    }
+    if (value.includes('github.com')) {
+      return 'Github'
+    }
+  }
+
+  if (typeof contact.type === 'string') {
+    const type = contact.type.toLowerCase()
+    if (type === 'email') {
+      return 'Mail'
+    }
+    if (type === 'phone') {
+      return 'Phone'
+    }
+    if (type === 'github') {
+      return 'Github'
+    }
+  }
+
+  return 'Terminal'
+}
 const Footer = () => {
   const { getSection, navigation } = useContent()
   const footerContent = getSection('footer') ?? {}
