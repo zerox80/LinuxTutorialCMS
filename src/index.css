@@ -66,13 +66,13 @@
 
   /* Tutorial card component with glass morphism effect and hover animations */
   .tutorial-card {
-    @apply relative bg-white/80 backdrop-blur-sm rounded-2xl shadow-soft hover:shadow-2xl transition-all duration-500 p-8 border border-gray-100/50 overflow-hidden;
+    @apply relative rounded-2xl border border-white/20 bg-white/10 p-8 shadow-soft transition-all duration-500 backdrop-blur-xl overflow-hidden;
   }
 
   /* Hover overlay effect for tutorial cards using gradient overlay */
   .tutorial-card::before {
     content: '';
-    background: linear-gradient(to bottom right, rgba(14, 165, 233, 0.05), transparent);
+    background: linear-gradient(to bottom right, rgba(59, 130, 246, 0.1), rgba(34, 211, 238, 0.05));
     @apply absolute inset-0 opacity-0 transition-opacity duration-500;
   }
 
@@ -83,18 +83,18 @@
 
   /* Dark mode variant for tutorial cards with adjusted colors and opacity */
   .dark .tutorial-card {
-    @apply bg-slate-900/80 border-gray-800/60 shadow-2xl;
+    @apply bg-surface-800/70 border-white/10 shadow-card-xl;
   }
 
   /* Dark mode hover overlay with purple tint instead of blue */
   .dark .tutorial-card::before {
-    background: linear-gradient(to bottom right, rgba(79, 70, 229, 0.08), transparent);
+    background: linear-gradient(to bottom right, rgba(168, 85, 247, 0.16), transparent);
   }
 
   /* Section title with gradient text effect (light mode only) */
   .section-title {
-    color: #0f172a;
-    background: linear-gradient(to right, #38bdf8, #0ea5e9, #38bdf8);
+    color: #38bdf8;
+    background: linear-gradient(to right, #22d3ee, #3b82f6, #1d4ed8);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
