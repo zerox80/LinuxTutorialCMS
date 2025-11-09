@@ -58,6 +58,14 @@
       "updated_at": "2025-11-01 21:39:38"
     },
     {
+      "section": "site_meta",
+      "content": {
+        "title": "Linux Tutorial - Lerne Linux Schritt für Schritt",
+        "description": "Lerne Linux von Grund auf - Interaktiv, modern und praxisnah."
+      },
+      "updated_at": "2025-11-01 21:39:38"
+    },
+    {
       "section": "grundlagen_page",
       "content": {
         "cta": {

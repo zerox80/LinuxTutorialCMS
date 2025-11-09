@@ -14,6 +14,7 @@ const sectionLabels = {
   header: 'Navigation & Header',
   footer: 'Footer',
   grundlagen_page: 'Grundlagen-Seite',
+  site_meta: 'Seitentitel & Beschreibung',
 }
 
 /**
@@ -322,6 +323,93 @@ HeroContentForm.propTypes = {
 }
 
 /**
+ * Preview card for global site metadata (title & description).
+ *
+ * @param {object} props - Component props.
+ * @param {object} props.content - Site meta content object.
+ * @returns {JSX.Element}
+ */
+const SiteMetaPreview = ({ content }) => {
+  return (
+    <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+      <div className="flex items-center justify-between">
+        <h4 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Seitentitel (Tab)</h4>
+        <span className="rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
+          Vorschau
+        </span>
+      </div>
+      <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+        <p className="text-sm font-semibold text-gray-800">{content?.title || 'Linux Tutorial - Lerne Linux Schritt für Schritt'}</p>
+        <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+          {content?.description || 'Lerne Linux von Grund auf - Interaktiv, modern und praxisnah.'}
+        </p>
+      </div>
+      <p className="text-xs text-gray-500">
+        Diese Angaben erscheinen als Browser-Titel und Meta-Beschreibung (z. B. in Suchmaschinen).
+      </p>
+    </div>
+  )
+}
+
+SiteMetaPreview.propTypes = {
+  content: PropTypes.object.isRequired,
+}
+
+/**
+ * Structured form inputs for editing global site metadata.
+ *
+ * @param {object} props - Component props.
+ * @param {object} [props.content] - Site meta object.
+ * @param {Function} props.onFieldChange - Change handler for fields.
+ * @returns {JSX.Element}
+ */
+const SiteMetaForm = ({ content, onFieldChange }) => {
+  const siteMeta = content || {}
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Seitentitel & Beschreibung</h3>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="site-meta-title">
+            Browser-Titel
+          </label>
+          <input
+            id="site-meta-title"
+            type="text"
+            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
+            value={siteMeta.title || ''}
+            onChange={(event) => onFieldChange(['title'], event.target.value)}
+            placeholder="z. B. Linux Tutorial - Lerne Linux Schritt für Schritt"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="site-meta-description">
+            Meta-Beschreibung
+          </label>
+          <textarea
+            id="site-meta-description"
+            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
+            rows="3"
+            value={siteMeta.description || ''}
+            onChange={(event) => onFieldChange(['description'], event.target.value)}
+            placeholder="Kurze Beschreibung, die in Suchergebnissen angezeigt wird"
+          />
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Empfehlung: 50–160 Zeichen, enthält wichtige Schlüsselbegriffe.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+SiteMetaForm.propTypes = {
+  content: PropTypes.object,
+  onFieldChange: PropTypes.func.isRequired,
+}
+
+/**
  * Visual preview of the tutorial section content.
  *
  * @param {object} props - The component props.
@@ -382,6 +470,8 @@ const SectionPreview = ({ section, content }) => {
       return <HeroPreview content={content} />
     case 'tutorial_section':
       return <TutorialSectionPreview content={content} />
+    case 'site_meta':
+      return <SiteMetaPreview content={content} />
     default:
       return (
         <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600 shadow-sm">
@@ -609,6 +699,9 @@ const SiteContentEditor = () => {
 
           {selectedSection === 'hero' && (
             <HeroContentForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
+          )}
+          {selectedSection === 'site_meta' && (
+            <SiteMetaForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
           )}
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

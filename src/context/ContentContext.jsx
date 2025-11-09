@@ -56,6 +56,10 @@ export const DEFAULT_CONTENT = {
       },
     ],
   },
+  site_meta: {
+    title: 'Linux Tutorial - Lerne Linux Schritt für Schritt',
+    description: 'Lerne Linux von Grund auf - Interaktiv, modern und praxisnah.',
+  },
   tutorial_section: {
     title: 'Tutorial Inhalte',
     description: 'Umfassende Lernmodule für alle Erfahrungsstufen – vom Anfänger bis zum Profi',
@@ -423,6 +427,7 @@ export const ContentProvider = ({ children }) => {
     refreshContent: loadContent,
     getSection: (section) => content[section] ?? DEFAULT_CONTENT[section],
     getDefaultSection: (section) => DEFAULT_CONTENT[section],
+    getSiteMeta: () => content?.site_meta ?? DEFAULT_CONTENT.site_meta,
     updateSection,
     savingSections,
     navigation: {
