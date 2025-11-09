@@ -58,6 +58,35 @@ const isInlineCodeOnly = (paragraph) =>
   paragraph.children.length === 1 &&
   paragraph.children[0].type === 'inlineCode'
 
+const endsWithInlineCode = (paragraph) => {
+  if (!paragraph || !Array.isArray(paragraph.children)) {
+    return false
+  }
+
+  for (let index = paragraph.children.length - 1; index >= 0; index -= 1) {
+    const child = paragraph.children[index]
+
+    if (child.type === 'text') {
+      if (child.value && child.value.trim()) {
+        return false
+      }
+      continue
+    }
+
+    if (child.type === 'inlineCode') {
+      return Boolean(child.value && child.value.trim())
+    }
+
+    if (child.type === 'break') {
+      continue
+    }
+
+    return false
+  }
+
+  return false
+}
+
 const isInlineParagraph = (node) => {
   if (!node || node.type !== 'paragraph') {
     return false
@@ -241,6 +270,10 @@ const reattachDanglingParagraphs = (parent) => {
 
 const shouldChainParagraph = (previousParagraph, currentParagraph) => {
   if (!previousParagraph) {
+    return false
+  }
+
+  if (endsWithInlineCode(previousParagraph)) {
     return false
   }
 
