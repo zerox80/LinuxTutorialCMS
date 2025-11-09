@@ -40,15 +40,15 @@ const TutorialCard = ({ icon: Icon, title, description, topics, color, onSelect,
           <Sparkles className="w-3 h-3 text-white" />
         </div>
       </div>
-      <h3 className="text-2xl font-bold text-neutral-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
+      <h3 className="text-2xl font-bold text-neutral-50 mb-3 group-hover:text-primary-300 transition-colors duration-300">
         {title}
       </h3>
-      <p className="text-neutral-500 mb-6 leading-relaxed line-clamp-2">{description}</p>
+      <p className="text-neutral-200 mb-6 leading-relaxed line-clamp-2">{description}</p>
       <div className="space-y-3 mb-8">
         {topics.map((topic, index) => (
           <div
             key={`${topic}-${index}`}
-            className="flex items-start text-sm text-neutral-500 group/item hover:text-primary-600 transition-colors duration-200"
+            className="flex items-start text-sm text-neutral-200 group/item hover:text-primary-300 transition-colors duration-200"
           >
             <div className={`mt-0.5 mr-3 w-5 h-5 rounded-full bg-gradient-to-br ${color} flex items-center justify-center flex-shrink-0 group-hover/item:scale-110 transition-transform duration-200`}>
               <ChevronRight className="w-3 h-3 text-white" />
