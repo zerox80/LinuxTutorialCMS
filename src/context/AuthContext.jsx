@@ -470,7 +470,7 @@ AuthProvider.propTypes = {
  *   return (
  *     <form onSubmit={handleSubmit}>
  *       {error && <ErrorMessage message={error} />}
- *       {/* Form fields */}
+ *       // Form fields here
  *       <button type="submit" disabled={loading}>
  *         {loading ? 'Logging in...' : 'Login'}
  *       </button>
