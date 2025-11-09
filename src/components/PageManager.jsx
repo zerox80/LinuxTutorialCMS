@@ -19,7 +19,6 @@ import { api } from '../api/client'
 import { useContent } from '../context/ContentContext'
 import { normalizeTitle } from '../utils/postUtils'
 import { sanitizeSlug, isValidSlug } from '../utils/slug'
-
 const defaultHeroJson = JSON.stringify(
   {
     badge: 'Neue Seite',
@@ -30,9 +29,7 @@ const defaultHeroJson = JSON.stringify(
   null,
   2,
 )
-
 const defaultHeroTitle = normalizeTitle(JSON.parse(defaultHeroJson).title, '')
-
 const defaultLayoutConfig = {
   aboutSection: {
     title: 'Über diese Seite',
@@ -45,17 +42,7 @@ const defaultLayoutConfig = {
     countLabelPlural: '{count} veröffentlichte Beiträge',
   },
 }
-
 const defaultLayoutJson = JSON.stringify(defaultLayoutConfig, null, 2)
-
-/**
- * Parses a JSON string field with error handling.
- * 
- * @param {string} value - JSON string to parse
- * @param {string} field - Field name for error messages
- * @returns {Object} Parsed JSON object or empty object if value is empty
- * @throws {Error} If JSON parsing fails
- */
 const parseJsonField = (value, field) => {
   const trimmed = (value ?? '').trim()
   if (!trimmed) {
@@ -69,33 +56,12 @@ const parseJsonField = (value, field) => {
     throw error
   }
 }
-
-/**
- * Sanitizes a value to an integer with fallback.
- * 
- * @param {*} value - Value to sanitize
- * @param {number} [fallback=0] - Fallback value if parsing fails
- * @returns {number} Sanitized integer value
- */
 const sanitizeInteger = (value, fallback = 0) => {
   if (value === '' || value === null || value === undefined) return fallback
   const parsed = Number(value)
   if (Number.isNaN(parsed)) return fallback
   return parsed
 }
-
-/**
- * Form component for creating and editing CMS pages.
- * Handles page metadata, hero configuration, and layout settings.
- * 
- * @param {Object} props - Component props
- * @param {'create'|'edit'} props.mode - Form mode (create or edit)
- * @param {Object} [props.initialData] - Initial form data for edit mode
- * @param {Function} props.onSubmit - Callback when form is submitted
- * @param {Function} props.onCancel - Callback when form is cancelled
- * @param {boolean} [props.submitting] - Whether form is currently submitting
- * @returns {JSX.Element} Rendered page form
- */
 const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
   const [title, setTitle] = useState(initialData?.title ?? '')
   const [slug, setSlug] = useState(initialData?.slug ?? '')
@@ -117,23 +83,14 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
     return initialData?.title ?? defaultHeroTitle
   })
   const [error, setError] = useState(null)
-
   const formSanitizedSlug = useMemo(() => sanitizeSlug(slug), [slug])
   const slugHasInput = slug.trim().length > 0
   const slugHasInvalidCharacters = slugHasInput && !formSanitizedSlug
   const slugDiffersAfterSanitize =
     slugHasInput && formSanitizedSlug && formSanitizedSlug !== slug.trim()
-
-  /**
-   * Handles form submission with validation.
-   * Validates and sanitizes all fields before calling onSubmit.
-   * 
-   * @param {Event} event - Form submit event
-   */
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError(null)
-
     try {
       const trimmedTitle = title.trim()
       const trimmedDescription = description.trim()
@@ -144,25 +101,20 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
       const trimmedHeroTitle = heroTitle.trim()
       const trimmedSlug = slug.trim()
       const sanitizedSlug = sanitizeSlug(trimmedSlug)
-
       if (trimmedHeroTitle) {
         heroPayload.title = trimmedHeroTitle
       } else if (!heroPayload.title) {
         heroPayload.title = trimmedTitle
       }
-
       if (!trimmedTitle) {
         throw new Error('Titel darf nicht leer sein.')
       }
-
       if (!sanitizedSlug) {
         throw new Error('Slug darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten.')
       }
-
       if (!isValidSlug(sanitizedSlug)) {
         throw new Error('Slug ist ungültig.')
       }
-
       const payload = {
         title: trimmedTitle,
         slug: sanitizedSlug,
@@ -174,14 +126,12 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
         hero: heroPayload,
         layout: parseJsonField(layout, 'Layout JSON'),
       }
-
       await onSubmit(payload)
       setSlug(sanitizedSlug)
     } catch (err) {
       setError(err)
     }
   }
-
   return (
     <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto dark:bg-slate-900">
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-800">
@@ -201,7 +151,6 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
           <X className="w-5 h-5" />
         </button>
       </div>
-
       <form onSubmit={handleSubmit} className="space-y-6 px-6 py-6">
         {error && (
           <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300">
@@ -212,7 +161,6 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
             </div>
           </div>
         )}
-
         <div className="grid gap-4 md:grid-cols-2">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
             Titel
@@ -224,7 +172,6 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
               required
             />
           </label>
-
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
             Slug
             <input
@@ -248,7 +195,6 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
             )}
           </label>
         </div>
-
         <div className="grid gap-4 md:grid-cols-2">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
             Navigationstitel
@@ -259,7 +205,6 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
               onChange={(event) => setNavLabel(event.target.value)}
             />
           </label>
-
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
             Reihenfolge (Navigation)
             <input
@@ -270,7 +215,6 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
             />
           </label>
         </div>
-
         <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
           Beschreibung
           <textarea
@@ -281,7 +225,6 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
             placeholder="Kurzbeschreibung der Seite"
           />
         </label>
-
         <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
           Hero-Titel
           <input
@@ -314,7 +257,6 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
             Wird beim Speichern automatisch in das Hero JSON übernommen.
           </span>
         </label>
-
         <div className="flex flex-wrap items-center gap-4">
           <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-slate-200">
             <input
@@ -335,7 +277,6 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
             Veröffentlicht
           </label>
         </div>
-
         <div className="grid gap-4 lg:grid-cols-2">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
             Hero JSON
@@ -353,7 +294,6 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
                     derivedTitle !== previous ? derivedTitle : previous,
                   )
                 } catch (err) {
-
                 }
               }}
             />
@@ -372,7 +312,6 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
             </span>
           </label>
         </div>
-
         <div className="flex justify-end gap-3 pt-2">
           <button
             type="button"
@@ -398,7 +337,6 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
     </div>
   )
 }
-
 PageForm.propTypes = {
   mode: PropTypes.oneOf(['create', 'edit']).isRequired,
   initialData: PropTypes.object,
@@ -406,19 +344,6 @@ PageForm.propTypes = {
   onCancel: PropTypes.func.isRequired,
   submitting: PropTypes.bool,
 }
-
-/**
- * Form component for creating and editing blog posts.
- * Handles post content in Markdown format.
- * 
- * @param {Object} props - Component props
- * @param {'create'|'edit'} props.mode - Form mode (create or edit)
- * @param {Object} [props.initialData] - Initial form data for edit mode
- * @param {Function} props.onSubmit - Callback when form is submitted
- * @param {Function} props.onCancel - Callback when form is cancelled
- * @param {boolean} [props.submitting] - Whether form is currently submitting
- * @returns {JSX.Element} Rendered post form
- */
 const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
   const [title, setTitle] = useState(initialData?.title ?? '')
   const [slug, setSlug] = useState(initialData?.slug ?? '')
@@ -428,17 +353,14 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
   const [isPublished, setIsPublished] = useState(Boolean(initialData?.is_published))
   const [publishedAt, setPublishedAt] = useState(initialData?.published_at ?? '')
   const [error, setError] = useState(null)
-
   const sanitizedPostSlug = useMemo(() => sanitizeSlug(slug), [slug])
   const postSlugHasInput = slug.trim().length > 0
   const postSlugInvalid = postSlugHasInput && !sanitizedPostSlug
   const postSlugDiffers =
     postSlugHasInput && sanitizedPostSlug && sanitizedPostSlug !== slug.trim()
-
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError(null)
-
     try {
       if (!title.trim()) {
         throw new Error('Titel darf nicht leer sein.')
@@ -449,17 +371,13 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
       if (!content.trim()) {
         throw new Error('Inhalt darf nicht leer sein.')
       }
-
       const sanitizedSlug = sanitizeSlug(slug.trim())
-
       if (!sanitizedSlug) {
         throw new Error('Slug darf nur Kleinbuchstaben, Zahlen und Bindestriche enthalten.')
       }
-
       if (!isValidSlug(sanitizedSlug)) {
         throw new Error('Slug ist ungültig.')
       }
-
       const payload = {
         title: title.trim(),
         slug: sanitizedSlug,
@@ -469,14 +387,12 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
         is_published: isPublished,
         published_at: publishedAt.trim() ? publishedAt : null,
       }
-
       await onSubmit(payload)
       setSlug(sanitizedSlug)
     } catch (err) {
       setError(err)
     }
   }
-
   return (
     <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto dark:bg-slate-900">
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-800">
@@ -496,7 +412,6 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
           <X className="w-5 h-5" />
         </button>
       </div>
-
       <form onSubmit={handleSubmit} className="space-y-6 px-6 py-6">
         {error && (
           <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300">
@@ -507,7 +422,6 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
             </div>
           </div>
         )}
-
         <div className="grid gap-4 md:grid-cols-2">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
             Titel
@@ -519,7 +433,6 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
               required
             />
           </label>
-
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
             Slug
             <input
@@ -543,7 +456,6 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
             )}
           </label>
         </div>
-
         <div className="grid gap-4 md:grid-cols-2">
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
             Reihenfolge
@@ -554,7 +466,6 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
               onChange={(event) => setOrderIndex(event.target.value)}
             />
           </label>
-
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
             Veröffentlichungsdatum (optional)
             <input
@@ -566,7 +477,6 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
             />
           </label>
         </div>
-
         <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
           Auszug
           <textarea
@@ -577,7 +487,6 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
             placeholder="Kurze Zusammenfassung des Beitrags"
           />
         </label>
-
         <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
           Inhalt (Markdown)
           <textarea
@@ -588,7 +497,6 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
             required
           />
         </label>
-
         <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-slate-200">
           <input
             type="checkbox"
@@ -598,7 +506,6 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
           />
           Veröffentlicht
         </label>
-
         <div className="flex justify-end gap-3 pt-2">
           <button
             type="button"
@@ -624,7 +531,6 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
     </div>
   )
 }
-
 PostForm.propTypes = {
   mode: PropTypes.oneOf(['create', 'edit']).isRequired,
   initialData: PropTypes.object,
@@ -632,28 +538,11 @@ PostForm.propTypes = {
   onCancel: PropTypes.func.isRequired,
   submitting: PropTypes.bool,
 }
-
-/**
- * Panel component for managing posts within a page.
- * Displays list of posts with edit and delete actions.
- * 
- * @param {Object} props - Component props
- * @param {Object} props.page - The page object these posts belong to
- * @param {Array} props.posts - Array of post objects
- * @param {Function} props.onCreate - Callback to create new post
- * @param {Function} props.onEdit - Callback to edit a post
- * @param {Function} props.onDelete - Callback to delete a post
- * @param {boolean} props.loading - Whether posts are loading
- * @param {Error} [props.error] - Error object if loading failed
- * @param {Function} props.onRefresh - Callback to refresh posts list
- * @returns {JSX.Element} Rendered posts panel
- */
 const PostsPanel = ({ page, posts, onCreate, onEdit, onDelete, loading, error, onRefresh }) => {
   const publishedCount = useMemo(
     () => posts.filter((post) => post.is_published).length,
     [posts],
   )
-
   return (
     <div className="bg-white shadow-lg border border-gray-200 rounded-2xl p-6 space-y-6 dark:bg-slate-900 dark:border-slate-800">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -681,7 +570,6 @@ const PostsPanel = ({ page, posts, onCreate, onEdit, onDelete, loading, error, o
           </button>
         </div>
       </div>
-
       {error && (
         <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           <AlertCircle className="h-4 w-4" />
@@ -691,7 +579,6 @@ const PostsPanel = ({ page, posts, onCreate, onEdit, onDelete, loading, error, o
           </div>
         </div>
       )}
-
       {loading && posts.length === 0 ? (
         <div className="py-12 text-center text-gray-500 dark:text-slate-400">Beiträge werden geladen…</div>
       ) : posts.length === 0 ? (
@@ -732,7 +619,6 @@ const PostsPanel = ({ page, posts, onCreate, onEdit, onDelete, loading, error, o
                     <p className="text-sm text-gray-600 line-clamp-2 dark:text-slate-300">{post.excerpt}</p>
                   )}
                 </header>
-
                 <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-gray-100 dark:border-slate-800">
                   <button
                     onClick={() => onEdit(post)}
@@ -755,7 +641,6 @@ const PostsPanel = ({ page, posts, onCreate, onEdit, onDelete, loading, error, o
     </div>
   )
 }
-
 PostsPanel.propTypes = {
   page: PropTypes.object.isRequired,
   posts: PropTypes.array.isRequired,
@@ -766,36 +651,25 @@ PostsPanel.propTypes = {
   error: PropTypes.any,
   onRefresh: PropTypes.func.isRequired,
 }
-
-/**
- * Main page manager component for CMS administration.
- * Manages pages and their associated posts with full CRUD operations.
- * 
- * @returns {JSX.Element} Rendered page manager interface
- */
 const PageManager = () => {
   const { navigation, pages: publishedPages } = useContent()
   const [pages, setPages] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedPageId, setSelectedPageId] = useState(null)
-
   const [pageFormMode, setPageFormMode] = useState(null)
   const [pageFormData, setPageFormData] = useState(null)
   const [pageFormSubmitting, setPageFormSubmitting] = useState(false)
-
   const [posts, setPosts] = useState([])
   const [postsLoading, setPostsLoading] = useState(false)
   const [postsError, setPostsError] = useState(null)
   const postsRequestRef = useRef(0)
-
   const [postFormMode, setPostFormMode] = useState(null)
   const [postFormData, setPostFormData] = useState(null)
   const [postFormSubmitting, setPostFormSubmitting] = useState(false)
   const pagesAbortRef = useRef(null)
   const postsAbortRef = useRef(null)
   const isMountedRef = useRef(true)
-
   useEffect(() => {
     isMountedRef.current = true
     return () => {
@@ -804,28 +678,23 @@ const PageManager = () => {
       postsAbortRef.current?.abort()
     }
   }, [])
-
   const selectedPage = useMemo(
     () => pages.find((item) => item.id === selectedPageId) ?? null,
     [pages, selectedPageId],
   )
-
   const loadPages = useCallback(async () => {
     const controller = new AbortController()
     if (pagesAbortRef.current) {
       pagesAbortRef.current.abort()
     }
     pagesAbortRef.current = controller
-
     try {
       setLoading(true)
       setError(null)
-
       const data = await api.listPages({ signal: controller.signal })
       if (controller.signal.aborted || !isMountedRef.current) {
         return
       }
-
       const items = Array.isArray(data?.items) ? data.items : []
       setPages(items)
       if (items.length === 0) {
@@ -836,7 +705,6 @@ const PageManager = () => {
         setPostsLoading(false)
         return
       }
-
       if (!items.find((item) => item.id === selectedPageId)) {
         setSelectedPageId(items[0].id)
       }
@@ -853,12 +721,10 @@ const PageManager = () => {
       }
     }
   }, [selectedPageId])
-
   const refreshNavigation = useCallback(() => {
     navigation?.refresh?.()
     publishedPages?.refresh?.()
   }, [navigation, publishedPages])
-
   const loadPosts = useCallback(
     async (pageId) => {
       if (!pageId) {
@@ -872,16 +738,13 @@ const PageManager = () => {
         setPostsError(null)
         return
       }
-
       const controller = new AbortController()
       if (postsAbortRef.current) {
         postsAbortRef.current.abort()
       }
       postsAbortRef.current = controller
-
       const requestId = postsRequestRef.current + 1
       postsRequestRef.current = requestId
-
       setPostsLoading(true)
       setPostsError(null)
       try {
@@ -906,27 +769,22 @@ const PageManager = () => {
     },
     [],
   )
-
   useEffect(() => {
     loadPages()
   }, [loadPages])
-
   useEffect(() => {
     if (selectedPageId) {
       loadPosts(selectedPageId)
     }
   }, [selectedPageId, loadPosts])
-
   const handleCreatePage = () => {
     setPageFormMode('create')
     setPageFormData(null)
   }
-
   const handleEditPage = (page) => {
     setPageFormMode('edit')
     setPageFormData(page)
   }
-
   const handleDeletePage = async (page) => {
     const pageId = page?.id
     if (!pageId) {
@@ -949,7 +807,6 @@ const PageManager = () => {
       alert(err?.message || 'Seite konnte nicht gelöscht werden')
     }
   }
-
   const submitPageForm = async (payload) => {
     try {
       setPageFormSubmitting(true)
@@ -959,17 +816,14 @@ const PageManager = () => {
       } else {
         response = await api.createPage(payload)
       }
-
       const previousSlug = pageFormMode === 'edit' ? pageFormData?.slug : null
       const nextSlug = response?.slug ?? payload?.slug ?? previousSlug
-
       if (previousSlug && previousSlug !== nextSlug) {
         publishedPages?.invalidate?.(previousSlug)
       }
       if (nextSlug) {
         publishedPages?.invalidate?.(nextSlug)
       }
-
       setPageFormMode(null)
       setPageFormData(null)
       await loadPages()
@@ -979,18 +833,15 @@ const PageManager = () => {
       setPageFormSubmitting(false)
     }
   }
-
   const handleCreatePost = () => {
     if (!selectedPage) return
     setPostFormMode('create')
     setPostFormData(null)
   }
-
   const handleEditPost = (post) => {
     setPostFormMode('edit')
     setPostFormData(post)
   }
-
   const handleDeletePost = async (post) => {
     if (!window.confirm('Soll dieser Beitrag wirklich gelöscht werden?')) {
       return
@@ -1007,12 +858,10 @@ const PageManager = () => {
       alert(err?.message || 'Beitrag konnte nicht gelöscht werden')
     }
   }
-
   const submitPostForm = async (payload) => {
     if (!selectedPageId) {
       return
     }
-
     try {
       setPostFormSubmitting(true)
       if (postFormMode === 'edit' && postFormData?.id) {
@@ -1033,20 +882,16 @@ const PageManager = () => {
       setPostFormSubmitting(false)
     }
   }
-
   const closePageForm = () => {
     setPageFormMode(null)
     setPageFormData(null)
   }
-
   const closePostForm = () => {
     setPostFormMode(null)
     setPostFormData(null)
   }
-
   const dynamicPagesInNav = navigation?.dynamic?.length ?? 0
   const totalPublishedPages = publishedPages?.publishedSlugs?.length ?? 0
-
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -1073,7 +918,6 @@ const PageManager = () => {
           </button>
         </div>
       </div>
-
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-slate-900">
           <div className="flex items-center gap-3 border-b border-gray-100 pb-4 mb-4 dark:border-gray-800">
@@ -1097,7 +941,6 @@ const PageManager = () => {
             )}
           </div>
         </div>
-
         <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-slate-900">
           <div className="flex items-center gap-3 border-b border-gray-100 pb-4 mb-4 dark:border-gray-800">
             <Eye className="h-5 w-5 text-green-600" />
@@ -1119,7 +962,6 @@ const PageManager = () => {
             )}
           </div>
         </div>
-
         <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-slate-900">
           <div className="flex items-center gap-3 border-b border-gray-100 pb-4 mb-4 dark:border-gray-800">
             <Layers className="h-5 w-5 text-indigo-600" />
@@ -1142,7 +984,6 @@ const PageManager = () => {
           </div>
         </div>
       </div>
-
       {error && (
         <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           <AlertCircle className="h-4 w-4" />
@@ -1152,7 +993,6 @@ const PageManager = () => {
           </div>
         </div>
       )}
-
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-4">
           {loading && pages.length === 0 ? (
@@ -1196,14 +1036,12 @@ const PageManager = () => {
                         <FileText className="h-3.5 w-3.5" /> /pages/{page.slug}
                       </span>
                     </div>
-
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">{page.title}</h3>
                       {page.description && (
                         <p className="mt-1 text-sm text-gray-600 line-clamp-2 dark:text-slate-300">{page.description}</p>
                       )}
                     </div>
-
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         onClick={() => setSelectedPageId(page.id)}
@@ -1234,7 +1072,6 @@ const PageManager = () => {
             })
           )}
         </div>
-
         <div>
           {selectedPage ? (
             <PostsPanel
@@ -1254,7 +1091,6 @@ const PageManager = () => {
           )}
         </div>
       </div>
-
       {(pageFormMode || postFormMode) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           {pageFormMode && (
@@ -1280,5 +1116,4 @@ const PageManager = () => {
     </div>
   )
 }
-
 export default PageManager

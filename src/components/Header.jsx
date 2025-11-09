@@ -9,18 +9,10 @@ import { scrollToSection } from '../utils/scrollToSection'
 import { sanitizeExternalUrl } from '../utils/urlValidation'
 import ThemeToggle from './ThemeToggle'
 import SearchBar from './SearchBar'
-
 const FALLBACK_NAV_ITEMS = [
   { id: 'home', label: 'Home', type: 'section' },
   { id: 'grundlagen', label: 'Grundlagen', type: 'route', path: '/grundlagen' },
 ]
-
-/**
- * Main header navigation component with responsive design.
- * Displays brand, navigation menu, search, theme toggle, and authentication controls.
- * 
- * @returns {JSX.Element} Rendered header with navigation and controls
- */
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -28,20 +20,11 @@ const Header = () => {
   const location = useLocation()
   const { isAuthenticated } = useAuth()
   const { getSection, navigation } = useContent()
-
   const headerContent = getSection('header') ?? {}
   const contentNavItems = Array.isArray(headerContent.navItems) ? headerContent.navItems : []
   const BrandIcon = getIconComponent(headerContent?.brand?.icon, 'Terminal')
   const ctaContent = headerContent?.cta ?? {}
   const CTAIcon = getIconComponent(ctaContent.icon, 'Lock')
-
-  
-  /**
-   * Resolves the section ID from a navigation item.
-   * 
-   * @param {Object} item - Navigation item object
-   * @returns {string|null} Section ID or null if not found
-   */
   const resolveSectionId = (item) => {
     if (!item) return null
     if (item.target?.type === 'section') return item.target.value
@@ -49,7 +32,6 @@ const Header = () => {
     if (typeof item.id === 'string') return item.id
     return null
   }
-
   const computedNavItems = useMemo(() => {
     if (navigation?.items?.length) {
       return navigation.items
@@ -59,76 +41,51 @@ const Header = () => {
     }
     return FALLBACK_NAV_ITEMS
   }, [navigation?.items, contentNavItems])
-
-  
-  /**
-   * Handles navigation when a menu item is clicked.
-   * Supports routes, sections, and external URLs.
-   * 
-   * @param {Object} item - Navigation item object
-   */
   const handleNavigation = (item) => {
     if (!item) return
-
     if (item.target) {
       navigateContentTarget(item.target, { navigate, location })
       return
     }
-
     if (item.href && typeof window !== 'undefined') {
       const safeUrl = sanitizeExternalUrl(item.href)
       if (!safeUrl) {
         console.warn('Blocked unsafe navigation URL:', item.href)
         return
       }
-
       if (safeUrl.startsWith('http://') || safeUrl.startsWith('https://')) {
         window.open(safeUrl, '_blank', 'noopener,noreferrer')
         return
       }
-
       if (safeUrl.startsWith('mailto:') || safeUrl.startsWith('tel:')) {
         window.location.href = safeUrl
         return
       }
-
       window.location.assign(safeUrl)
       return
     }
-
     const type = item.type || 'section'
     if (type === 'route' && item.path) {
       navigate(item.path)
       return
     }
-
     if (type === 'section') {
       const sectionId = resolveSectionId(item)
       if (!sectionId) return
-
       if (location.pathname !== '/') {
         navigate('/', { state: { scrollTo: sectionId } })
         return
       }
-
       scrollToSection(sectionId)
     }
   }
-
-  
-  /**
-   * Handles click on the call-to-action button.
-   * Navigates to admin dashboard if authenticated, otherwise to login.
-   */
   const handleCtaClick = () => {
     if (ctaContent.target) {
       navigateContentTarget(ctaContent.target, { navigate, location })
       return
     }
-
     navigate(isAuthenticated ? '/admin' : '/login')
   }
-
   return (
     <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl shadow-soft sticky top-0 z-50 border-b border-gray-100/50 dark:border-gray-800/50">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -145,7 +102,6 @@ const Header = () => {
               {headerContent?.brand?.name || 'Linux Tutorial'}
             </span>
           </div>
-
           {}
           <div className="hidden md:flex items-center space-x-8">
             {computedNavItems.map((item, index) => (
@@ -174,7 +130,6 @@ const Header = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
             </button>
           </div>
-
           {}
           <div className="md:hidden flex items-center space-x-2">
             <button
@@ -193,7 +148,6 @@ const Header = () => {
             </button>
           </div>
         </div>
-
         {}
         {mobileMenuOpen && (
           <div className="md:hidden pb-4 space-y-2">
@@ -222,11 +176,9 @@ const Header = () => {
           </div>
         )}
       </nav>
-      
       {}
       {searchOpen && <SearchBar onClose={() => setSearchOpen(false)} />}
     </header>
   )
 }
-
 export default Header

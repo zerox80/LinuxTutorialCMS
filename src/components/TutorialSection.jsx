@@ -5,28 +5,18 @@ import { useTutorials } from '../context/TutorialContext'
 import { AlertCircle } from 'lucide-react'
 import { useContent } from '../context/ContentContext'
 import { navigateContentTarget } from '../utils/contentNavigation'
-
-/**
- * Tutorial section component displaying all available tutorials.
- * Shows tutorial cards in a grid layout with CTA section.
- * 
- * @returns {JSX.Element} Rendered tutorial section with cards and call-to-action
- */
 const TutorialSection = () => {
   const { tutorials, getIconComponent, loading, error } = useTutorials()
   const navigate = useNavigate()
   const location = useLocation()
   const { getSection } = useContent()
-
   const sectionContent = getSection('tutorial_section') ?? {}
-
   const normalizedTutorials = useMemo(() => {
     return tutorials.map((tutorial) => ({
       ...tutorial,
       topics: Array.isArray(tutorial.topics) ? tutorial.topics : [],
     }))
   }, [tutorials])
-
   return (
     <section
       className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
@@ -40,7 +30,6 @@ const TutorialSection = () => {
             'Umfassende Lernmodule für alle Erfahrungsstufen - vom Anfänger bis zum Profi'}
         </p>
       </div>
-
       {error && (
         <div className="mb-8 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700" role="alert">
           <AlertCircle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
@@ -50,7 +39,6 @@ const TutorialSection = () => {
           </div>
         </div>
       )}
-
       {loading && normalizedTutorials.length === 0 ? (
         <div className="text-center text-gray-600 dark:text-gray-300 py-12">Lade Tutorials…</div>
       ) : (
@@ -66,7 +54,6 @@ const TutorialSection = () => {
           ))}
         </div>
       )}
-
       {}
       <div className="mt-16 bg-gradient-to-r from-primary-600 to-primary-800 rounded-2xl p-8 md:p-12 text-white text-center shadow-xl">
         <h3 className="text-3xl font-bold mb-4">{sectionContent.heading || 'Bereit anzufangen?'}</h3>
@@ -98,5 +85,4 @@ const TutorialSection = () => {
     </section>
   )
 }
-
 export default TutorialSection

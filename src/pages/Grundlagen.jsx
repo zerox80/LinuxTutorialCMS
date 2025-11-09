@@ -1,7 +1,6 @@
 import { BookOpen } from 'lucide-react'
 import { useContent } from '../context/ContentContext'
 import { getIconComponent } from '../utils/iconMap'
-
 const Grundlagen = () => {
   const { getSection } = useContent()
   const pageContent = getSection('grundlagen_page') ?? {}
@@ -9,7 +8,6 @@ const Grundlagen = () => {
   const highlights = Array.isArray(pageContent.highlights) ? pageContent.highlights : []
   const modules = pageContent.modules ?? {}
   const cta = pageContent.cta ?? {}
-  
   const HeroIcon = getIconComponent(hero.icon, 'BookOpen')
   return (
     <main className="min-h-screen">
@@ -27,7 +25,6 @@ const Grundlagen = () => {
           </p>
         </div>
       </section>
-
       <section className="bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="mb-16 text-center">
@@ -37,7 +34,6 @@ const Grundlagen = () => {
               das notwendige Wissen, um Linux produktiv und sicher zu nutzen.
             </p>
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             {highlights.map((item, idx) => {
               const HighlightIcon = getIconComponent(item.icon, 'BookOpen')
@@ -62,7 +58,6 @@ const Grundlagen = () => {
           </div>
         </div>
       </section>
-
       <section className="bg-gray-50 border-t border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 grid gap-12 lg:grid-cols-2 lg:items-center">
           <div>
@@ -99,7 +94,6 @@ const Grundlagen = () => {
           </div>
         </div>
       </section>
-
       <section className="bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">{cta.title || 'Bereit für den nächsten Schritt?'}</h2>
@@ -125,5 +119,4 @@ const Grundlagen = () => {
     </main>
   )
 }
-
 export default Grundlagen

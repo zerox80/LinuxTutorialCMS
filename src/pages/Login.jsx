@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Terminal, Lock, User, AlertCircle } from 'lucide-react'
-
 const Login = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -12,12 +11,10 @@ const Login = () => {
   const [cooldownUntil, setCooldownUntil] = useState(null)
   const { login } = useAuth()
   const navigate = useNavigate()
-
   useEffect(() => {
     if (!cooldownUntil) {
       return
     }
-
     const intervalId = window.setInterval(() => {
       if (Date.now() >= cooldownUntil) {
         window.clearInterval(intervalId)
@@ -25,47 +22,36 @@ const Login = () => {
         setError('')
       }
     }, 500)
-
     return () => {
       window.clearInterval(intervalId)
     }
   }, [cooldownUntil])
-
-  
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
-
     const now = Date.now()
     if (cooldownUntil && now < cooldownUntil) {
       const remainingSeconds = Math.ceil((cooldownUntil - now) / 1000)
       setError(`Zu viele Anmeldeversuche. Bitte warte ${remainingSeconds} Sekunde${remainingSeconds === 1 ? '' : 'n'}.`)
       return
     }
-    
     if (isSubmitting) {
       return
     }
-
     const trimmedUsername = username.trim()
     if (!/^[a-zA-Z0-9_.-]{1,50}$/.test(trimmedUsername)) {
       setError('Benutzername darf nur Buchstaben, Zahlen sowie _ . - enthalten und max. 50 Zeichen lang sein.')
       return
     }
-
     if (password.length === 0) {
       setError('Passwort darf nicht leer sein.')
       return
     }
-
     if (password.length > 128) {
       setError('Passwort darf maximal 128 Zeichen lang sein.')
       return
     }
-
     setError('')
     setIsSubmitting(true)
-
     try {
       const result = await login(trimmedUsername, password)
       if (result.success) {
@@ -76,8 +62,6 @@ const Login = () => {
         const newAttempts = loginAttempts + 1
         setLoginAttempts(newAttempts)
         setError(result.error)
-        
-
         if (newAttempts >= 5) {
           const cooldown = now + 60000
           setCooldownUntil(cooldown)
@@ -92,7 +76,6 @@ const Login = () => {
       setIsSubmitting(false)
     }
   }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
@@ -104,18 +87,15 @@ const Login = () => {
           <h1 className="text-3xl font-bold text-white mb-2">Linux Tutorial</h1>
           <p className="text-primary-100">Admin Login</p>
         </div>
-
         {}
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Anmelden</h2>
-
           {error && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2">
               <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
               <p className="text-red-800 text-sm">{error}</p>
             </div>
           )}
-
           <form onSubmit={handleSubmit} className="space-y-6">
             {}
             <div>
@@ -136,7 +116,6 @@ const Login = () => {
                 />
               </div>
             </div>
-
             {}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -156,7 +135,6 @@ const Login = () => {
                 />
               </div>
             </div>
-
             {}
             <button
               type="submit"
@@ -166,9 +144,7 @@ const Login = () => {
               {isSubmitting ? 'Anmelden...' : 'Anmelden'}
             </button>
           </form>
-
         </div>
-
         {}
         <div className="text-center mt-6">
           <button
@@ -182,5 +158,4 @@ const Login = () => {
     </div>
   )
 }
-
 export default Login

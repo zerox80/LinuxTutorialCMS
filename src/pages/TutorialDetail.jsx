@@ -4,16 +4,13 @@ import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react'
 import { useTutorials } from '../context/TutorialContext'
 import { api } from '../api/client'
 import MarkdownRenderer from '../components/MarkdownRenderer'
-
 const TutorialDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const { getTutorial, tutorials } = useTutorials()
-
   const [tutorial, setTutorial] = useState(() => getTutorial(id))
   const [loading, setLoading] = useState(!getTutorial(id))
   const [error, setError] = useState(null)
-
   useEffect(() => {
     const controller = new AbortController()
     const fetchTutorial = async () => {
@@ -34,14 +31,11 @@ const TutorialDetail = () => {
         }
       }
     }
-
     fetchTutorial()
-
     return () => {
       controller.abort()
     }
   }, [id])
-
   useEffect(() => {
     if (!Array.isArray(tutorials)) {
       setTutorial(null)
@@ -50,15 +44,12 @@ const TutorialDetail = () => {
     const cached = tutorials.find((item) => item.id === id)
     setTutorial(cached || null)
   }, [id, tutorials])
-
   const topics = useMemo(() => {
     if (!tutorial?.topics) {
       return []
     }
     return Array.isArray(tutorial.topics) ? tutorial.topics : []
   }, [tutorial])
-
-  
   const handleBack = () => {
     if (window.history.length > 1) {
       navigate(-1)
@@ -66,7 +57,6 @@ const TutorialDetail = () => {
     }
     navigate('/')
   }
-
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 py-16">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -77,7 +67,6 @@ const TutorialDetail = () => {
           <ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-1" />
           Zurück
         </button>
-
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 text-gray-500">
             <Loader2 className="w-10 h-10 animate-spin mb-4" />
@@ -106,7 +95,6 @@ const TutorialDetail = () => {
                 </p>
               </div>
             </header>
-
             <div className="px-8 py-10 space-y-12">
               {topics.length > 0 && (
                 <section>
@@ -126,7 +114,6 @@ const TutorialDetail = () => {
                   </div>
                 </section>
               )}
-
               <section>
                 <h2 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-4">Inhalt</h2>
                 <MarkdownRenderer
@@ -144,5 +131,4 @@ const TutorialDetail = () => {
     </main>
   )
 }
-
 export default TutorialDetail

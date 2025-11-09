@@ -1,43 +1,17 @@
 import { useState } from 'react';
 import { Check, X, RotateCcw } from 'lucide-react';
 import PropTypes from 'prop-types';
-
-/**
- * Interactive quiz component with multiple-choice questions.
- * Tracks user answers, calculates scores, and displays results.
- * 
- * @param {Object} props - Component props
- * @param {Array<Object>} props.questions - Array of question objects
- * @param {string} props.questions[].question - The question text
- * @param {Array<string>} props.questions[].answers - Array of possible answers
- * @param {number} props.questions[].correctAnswer - Index of the correct answer
- * @returns {JSX.Element} Rendered quiz interface or results screen
- */
 const Quiz = ({ questions }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [showResults, setShowResults] = useState(false);
   const [score, setScore] = useState(0);
-
-  
-  /**
-   * Records the user's answer for a specific question.
-   * 
-   * @param {number} questionIndex - Index of the question being answered
-   * @param {number} answerIndex - Index of the selected answer
-   */
   const handleAnswer = (questionIndex, answerIndex) => {
     setSelectedAnswers(prev => ({
       ...prev,
       [questionIndex]: answerIndex,
     }));
   };
-
-  
-  /**
-   * Calculates the final score and displays results.
-   * Counts correct answers and shows the results screen.
-   */
   const handleSubmit = () => {
     let correctCount = 0;
     questions.forEach((q, idx) => {
@@ -48,25 +22,17 @@ const Quiz = ({ questions }) => {
     setScore(correctCount);
     setShowResults(true);
   };
-
-  
-  /**
-   * Resets the quiz to initial state for retaking.
-   */
   const handleReset = () => {
     setCurrentQuestion(0);
     setSelectedAnswers({});
     setShowResults(false);
     setScore(0);
   };
-
   const progress = ((currentQuestion + 1) / questions.length) * 100;
   const question = questions[currentQuestion];
-
   if (showResults) {
     const percentage = Math.round((score / questions.length) * 100);
     const passed = percentage >= 70;
-
     return (
       <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg">
         <div className="text-center">
@@ -79,19 +45,15 @@ const Quiz = ({ questions }) => {
               <X className="w-10 h-10 text-red-600 dark:text-red-400" />
             )}
           </div>
-          
           <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             {passed ? 'Bestanden!' : 'Nicht bestanden'}
           </h3>
-          
           <p className="text-4xl font-bold text-primary-600 dark:text-primary-400 mb-4">
             {percentage}%
           </p>
-          
           <p className="text-gray-600 dark:text-gray-400 mb-6">
             Du hast {score} von {questions.length} Fragen richtig beantwortet.
           </p>
-          
           <button
             onClick={handleReset}
             className="flex items-center gap-2 mx-auto px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors"
@@ -103,7 +65,6 @@ const Quiz = ({ questions }) => {
       </div>
     );
   }
-
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg">
       {}
@@ -123,12 +84,10 @@ const Quiz = ({ questions }) => {
           />
         </div>
       </div>
-
       {}
       <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">
         {question.question}
       </h3>
-
       {}
       <div className="space-y-3 mb-6">
         {question.answers.map((answer, idx) => (
@@ -145,7 +104,6 @@ const Quiz = ({ questions }) => {
           </button>
         ))}
       </div>
-
       {}
       <div className="flex justify-between items-center">
         <button
@@ -155,7 +113,6 @@ const Quiz = ({ questions }) => {
         >
           Zurück
         </button>
-        
         {currentQuestion === questions.length - 1 ? (
           <button
             onClick={handleSubmit}
@@ -177,7 +134,6 @@ const Quiz = ({ questions }) => {
     </div>
   );
 };
-
 Quiz.propTypes = {
   questions: PropTypes.arrayOf(
     PropTypes.shape({
@@ -187,5 +143,4 @@ Quiz.propTypes = {
     })
   ).isRequired,
 };
-
 export default Quiz;

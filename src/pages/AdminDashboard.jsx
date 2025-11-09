@@ -1,11 +1,8 @@
-
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-
 import { useAuth } from '../context/AuthContext'           // Authentication and user state
 import { useTutorials } from '../context/TutorialContext'   // Tutorial data and operations
 import { useContent } from '../context/ContentContext'     // Site content management
-
 import {
   Plus,
   Edit,
@@ -19,123 +16,87 @@ import {
   Paintbrush,
   FileText,
 } from 'lucide-react'
-
 import TutorialForm from '../components/TutorialForm'       // Tutorial creation/editing form
 import SiteContentEditor from '../components/SiteContentEditor' // Static site content editor
 import PageManager from '../components/PageManager'         // Dynamic page and post management
-
 const AdminDashboard = () => {
-
   const [activeTab, setActiveTab] = useState('tutorials')     // Currently active tab ('tutorials', 'content', 'pages')
-
   const [showForm, setShowForm] = useState(false)
   const [editingTutorial, setEditingTutorial] = useState(null)
-
   const [deletingId, setDeletingId] = useState(null)
   const [confirmingId, setConfirmingId] = useState(null)
   const [deleteError, setDeleteError] = useState(null)
-
   const isMountedRef = useRef(true)
-
   const { logout, user } = useAuth()
   const { tutorials, deleteTutorial, loading, error, refreshTutorials } = useTutorials()
   const { loading: contentLoading } = useContent()
   const navigate = useNavigate()
-
   const sortedTutorials = useMemo(
     () => [...tutorials].sort((a, b) => a.title.localeCompare(b.title, 'de')),
     [tutorials],
   )
-
-  
   const handleLogout = () => {
     logout()
     navigate('/login')
   }
-
-  
   const handleEdit = (tutorial) => {
     setEditingTutorial(tutorial)
     setShowForm(true)
   }
-
-  
   const handleDeleteRequest = (id) => {
     setDeleteError(null)
     setConfirmingId(id)
   }
-
-  
   const handleDeleteCancel = () => {
     setConfirmingId(null)
     setDeletingId(null)
     setDeleteError(null)
   }
-
-  
   const handleDeleteConfirm = async (id) => {
     setDeleteError(null)
     setDeletingId(id)
-
     try {
-
       await deleteTutorial(id)
-
       if (isMountedRef.current) {
         setConfirmingId(null)
       }
     } catch (err) {
-
       if (isMountedRef.current) {
         const message = err?.message || 'Löschen fehlgeschlagen'
         setDeleteError({ id, message })
       }
     } finally {
-
       if (isMountedRef.current) {
         setDeletingId(null)
       }
     }
   }
-
-  
   useEffect(() => {
     isMountedRef.current = true
     return () => {
       isMountedRef.current = false
     }
   }, [])
-
-  
-  
   const handleCloseForm = () => {
     setShowForm(false)
     setEditingTutorial(null)
   }
-
-  
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape' && showForm) {
         handleCloseForm()
       }
     }
-
     if (showForm) {
-
       document.addEventListener('keydown', handleEscape)
-
       document.body.style.overflow = 'hidden'
     }
-
     return () => {
       document.removeEventListener('keydown', handleEscape)
       document.body.style.overflow = 'unset'
     }
   }, [showForm])
-
   return (
-
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 text-gray-900 dark:text-slate-100">
       {}
       {}
@@ -153,7 +114,6 @@ const AdminDashboard = () => {
                 <p className="text-sm text-gray-600 dark:text-slate-400">Willkommen, {user?.username}</p>
               </div>
             </div>
-
             {}
             <div className="flex space-x-3">
               {}
@@ -164,7 +124,6 @@ const AdminDashboard = () => {
                 <Home className="w-4 h-4" />
                 <span>Startseite</span>
               </button>
-
               {}
               <button
                 onClick={handleLogout}
@@ -177,7 +136,6 @@ const AdminDashboard = () => {
           </div>
         </div>
       </header>
-
       {}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {}
@@ -197,7 +155,6 @@ const AdminDashboard = () => {
               <LayoutDashboard className="h-4 w-4" />
               Tutorials
             </button>
-
             {}
             <button
               type="button"
@@ -211,7 +168,6 @@ const AdminDashboard = () => {
               <Paintbrush className="h-4 w-4" />
               Seiteninhalte
             </button>
-
             {}
             <button
               type="button"
@@ -227,7 +183,6 @@ const AdminDashboard = () => {
             </button>
           </div>
         </div>
-
         {}
         {activeTab === 'tutorials' && (
           <>
@@ -248,7 +203,6 @@ const AdminDashboard = () => {
                   <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                   <span>{loading ? 'Aktualisiere…' : 'Aktualisieren'}</span>
                 </button>
-
                 {}
                 <button
                   onClick={() => {
@@ -262,7 +216,6 @@ const AdminDashboard = () => {
                 </button>
               </div>
             </div>
-
             {}
             {}
             {error && (
@@ -274,7 +227,6 @@ const AdminDashboard = () => {
                 </div>
               </div>
             )}
-
             {}
             {}
             {showForm && (
@@ -284,7 +236,6 @@ const AdminDashboard = () => {
                 aria-modal="true"
                 aria-labelledby="modal-title"
                 onClick={(e) => {
-
                   if (e.target === e.currentTarget) {
                     handleCloseForm()
                   }
@@ -302,33 +253,26 @@ const AdminDashboard = () => {
                 </div>
               </div>
             )}
-
             {}
             {}
             {loading && tutorials.length === 0 ? (
-
               <div className="py-16 text-center text-gray-600">Lade Tutorials…</div>
             ) : (
-
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {sortedTutorials.map((tutorial) => (
-
                   <div
                     key={tutorial.id}
                     className="rounded-xl border border-gray-100 bg-white shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden dark:border-slate-800 dark:bg-slate-900/80"
                   >
                     {}
                     <div className={`h-2 bg-gradient-to-r ${tutorial.color}`}></div>
-
                     <div className="p-6">
                       {}
                       <h3 className="text-xl font-bold text-gray-800 dark:text-slate-100 mb-2">{tutorial.title}</h3>
-
                       {}
                       <p className="text-gray-600 dark:text-slate-300 text-sm mb-4 line-clamp-2">
                         {tutorial.description}
                       </p>
-
                       {}
                       <div className="mb-4">
                         <div className="flex flex-wrap gap-2">
@@ -349,7 +293,6 @@ const AdminDashboard = () => {
                           )}
                         </div>
                       </div>
-
                       {}
                       <div className="flex space-x-2 pt-4 border-t border-gray-100 dark:border-slate-800">
                         {}
@@ -360,10 +303,8 @@ const AdminDashboard = () => {
                           <Edit className="w-4 h-4" />
                           <span>Bearbeiten</span>
                         </button>
-
                         {}
                         {confirmingId === tutorial.id ? (
-
                           <div className="flex-1 flex items-center justify-center gap-2">
                             <button
                               onClick={() => handleDeleteConfirm(tutorial.id)}
@@ -381,7 +322,6 @@ const AdminDashboard = () => {
                             </button>
                           </div>
                         ) : (
-
                           <button
                             onClick={() => handleDeleteRequest(tutorial.id)}
                             className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors duration-200 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50"
@@ -392,7 +332,6 @@ const AdminDashboard = () => {
                           </button>
                         )}
                       </div>
-
                       {}
                       {deleteError?.id === tutorial.id && (
                         <p className="mt-3 text-sm text-red-600 dark:text-red-400" role="alert">
@@ -404,7 +343,6 @@ const AdminDashboard = () => {
                 ))}
               </div>
             )}
-
             {}
             {}
             {!loading && tutorials.length === 0 && !error && (
@@ -413,17 +351,14 @@ const AdminDashboard = () => {
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
                   <Terminal className="w-8 h-8 text-gray-400" />
                 </div>
-
                 {}
                 <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">
                   Noch keine Tutorials vorhanden
                 </h3>
-
                 {}
                 <p className="text-gray-600 dark:text-gray-300 mb-6">
                   Erstelle dein erstes Tutorial, um loszulegen.
                 </p>
-
                 {}
                 <button
                   onClick={() => setShowForm(true)}
@@ -436,7 +371,6 @@ const AdminDashboard = () => {
             )}
           </>
         )}
-
         {}
         {}
         {activeTab === 'content' && (
@@ -452,7 +386,6 @@ const AdminDashboard = () => {
             <SiteContentEditor />
           </div>
         )}
-
         {}
         {}
         {activeTab === 'pages' && (
@@ -462,5 +395,4 @@ const AdminDashboard = () => {
     </div>
   )
 }
-
 export default AdminDashboard

@@ -1,29 +1,14 @@
 import { Helmet } from 'react-helmet-async'
 import { useMemo } from 'react'
 import { useContent } from '../context/ContentContext'
-
 const FALLBACK_TITLE = 'Linux Tutorial - Lerne Linux Schritt für Schritt'
 const FALLBACK_DESCRIPTION = 'Lerne Linux von Grund auf - Interaktiv, modern und praxisnah.'
-
-/**
- * Sanitizes a string value by trimming whitespace.
- * 
- * @param {*} value - Value to sanitize
- * @returns {string} Trimmed string or empty string if not a string
- */
 const sanitize = (value) => {
   if (typeof value !== 'string') {
     return ''
   }
   return value.trim()
 }
-
-/**
- * Global site metadata component that sets HTML head tags for SEO.
- * Configures title, description, and Open Graph/Twitter meta tags.
- * 
- * @returns {JSX.Element} Helmet component with configured meta tags
- */
 const GlobalSiteMeta = () => {
   const { getSiteMeta } = useContent()
   const meta = useMemo(() => {
@@ -34,10 +19,8 @@ const GlobalSiteMeta = () => {
       return {}
     }
   }, [getSiteMeta])
-
   const title = sanitize(meta.title) || FALLBACK_TITLE
   const description = sanitize(meta.description) || FALLBACK_DESCRIPTION
-
   return (
     <Helmet>
       <title>{title}</title>
@@ -50,5 +33,4 @@ const GlobalSiteMeta = () => {
     </Helmet>
   )
 }
-
 export default GlobalSiteMeta

@@ -8,15 +8,7 @@ import rehypeKatex from 'rehype-katex'
 import 'katex/dist/katex.min.css'
 import CodeBlock from './CodeBlock'
 import remarkMergeInlineParagraphs from '../utils/remarkMergeInlineParagraphs'
-
-/**
- * Merges multiple class names into a single string, filtering out falsy values.
- * 
- * @param {...string} classes - Class names to merge
- * @returns {string} Merged class names separated by spaces
- */
 const mergeClassNames = (...classes) => classes.filter(Boolean).join(' ')
-
 const headingClasses = {
   1: 'text-3xl sm:text-4xl font-bold text-gray-900 dark:text-slate-100 tracking-tight mt-10 first:mt-0',
   2: 'text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-slate-100 mt-8 first:mt-0',
@@ -25,22 +17,10 @@ const headingClasses = {
   5: 'text-base font-semibold text-gray-800 dark:text-slate-300 mt-4 first:mt-0 uppercase tracking-wide',
   6: 'text-sm font-semibold text-gray-700 dark:text-slate-400 mt-4 first:mt-0 uppercase tracking-wider',
 }
-
-/**
- * Markdown renderer component with syntax highlighting and custom styling.
- * Renders markdown content with support for GFM, math equations, and code blocks.
- * 
- * @param {Object} props - Component props
- * @param {string} [props.content] - Markdown content to render
- * @param {string} [props.className=''] - Additional CSS classes for the container
- * @param {boolean} [props.withBreaks=false] - Whether to enable automatic line breaks
- * @returns {JSX.Element} Rendered markdown content with custom components
- */
 const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
   const remarkPlugins = withBreaks
     ? [remarkMath, remarkGfm, remarkMergeInlineParagraphs, remarkBreaks]
     : [remarkMath, remarkGfm, remarkMergeInlineParagraphs]
-
   return (
     <div className={mergeClassNames('markdown-renderer text-gray-700 dark:text-slate-200', className)}>
       <ReactMarkdown
@@ -192,11 +172,9 @@ const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
     </div>
   )
 }
-
 MarkdownRenderer.propTypes = {
   content: PropTypes.string,
   className: PropTypes.string,
   withBreaks: PropTypes.bool,
 }
-
 export default MarkdownRenderer

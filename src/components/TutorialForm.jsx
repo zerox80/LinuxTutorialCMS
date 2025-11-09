@@ -2,16 +2,6 @@ import { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import { useTutorials } from '../context/TutorialContext'
 import { X, Save, Plus, Trash2, AlertCircle } from 'lucide-react'
-
-/**
- * Form component for creating and editing tutorials.
- * Handles tutorial metadata, topics, and markdown content.
- * 
- * @param {Object} props - Component props
- * @param {Object} [props.tutorial] - Existing tutorial data for edit mode
- * @param {Function} props.onClose - Callback to close the form
- * @returns {JSX.Element} Rendered tutorial form
- */
 const TutorialForm = ({ tutorial, onClose }) => {
   const { addTutorial, updateTutorial } = useTutorials()
   const [formData, setFormData] = useState({
@@ -24,7 +14,6 @@ const TutorialForm = ({ tutorial, onClose }) => {
   })
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
-
   useEffect(() => {
     if (tutorial) {
       const validTopics = Array.isArray(tutorial.topics) 
@@ -49,7 +38,6 @@ const TutorialForm = ({ tutorial, onClose }) => {
       })
     }
   }, [tutorial])
-
   const iconOptions = [
     'Terminal',
     'FolderTree',
@@ -60,7 +48,6 @@ const TutorialForm = ({ tutorial, onClose }) => {
     'Database',
     'Server',
   ]
-
   const colorOptions = [
     { value: 'from-blue-500 to-cyan-500', label: 'Blau' },
     { value: 'from-green-500 to-emerald-500', label: 'Grün' },
@@ -71,20 +58,11 @@ const TutorialForm = ({ tutorial, onClose }) => {
     { value: 'from-yellow-500 to-orange-500', label: 'Gelb' },
     { value: 'from-red-500 to-pink-500', label: 'Rot' },
   ]
-
-  
-  /**
-   * Handles form submission with validation.
-   * Creates or updates tutorial based on mode.
-   * 
-   * @param {Event} e - Form submit event
-   */
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (submitting) {
       return
     }
-
     const cleanedData = {
       title: formData.title.trim(),
       description: formData.description.trim(),
@@ -95,25 +73,20 @@ const TutorialForm = ({ tutorial, onClose }) => {
         .filter((t) => t !== ''),
       content: formData.content,
     }
-
     if (!cleanedData.title) {
       setFormError('Der Titel darf nicht leer sein.')
       return
     }
-
     if (!cleanedData.description) {
       setFormError('Die Beschreibung darf nicht leer sein.')
       return
     }
-
     if (cleanedData.topics.length === 0) {
       setFormError('Füge mindestens ein Thema hinzu.')
       return
     }
-
     setFormError('')
     setSubmitting(true)
-
     try {
       if (tutorial) {
         await updateTutorial(tutorial.id, cleanedData)
@@ -123,10 +96,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
       onClose()
     } catch (error) {
       console.error('Tutorial save error:', error)
-      
-
       let errorMessage = 'Fehler beim Speichern: '
-      
       if (error.status === 502) {
         errorMessage += 'Der Server antwortet nicht. Bitte versuche es in ein paar Sekunden erneut.'
       } else if (error.status === 504 || error.status === 408) {
@@ -140,45 +110,23 @@ const TutorialForm = ({ tutorial, onClose }) => {
       } else {
         errorMessage += error.message || 'Unbekannter Fehler'
       }
-      
       setFormError(errorMessage)
     } finally {
       setSubmitting(false)
     }
   }
-
-  
-  /**
-   * Updates a topic at a specific index.
-   * 
-   * @param {number} index - Index of the topic to update
-   * @param {string} value - New topic value
-   */
   const handleTopicChange = (index, value) => {
     const newTopics = [...formData.topics]
     newTopics[index] = value
     setFormData({ ...formData, topics: newTopics })
   }
-
-  
-  /**
-   * Adds a new empty topic field to the form.
-   */
   const addTopic = () => {
     setFormData({ ...formData, topics: [...formData.topics, ''] })
   }
-
-  
-  /**
-   * Removes a topic at a specific index.
-   * 
-   * @param {number} index - Index of the topic to remove
-   */
   const removeTopic = (index) => {
     const newTopics = formData.topics.filter((_, i) => i !== index)
     setFormData({ ...formData, topics: newTopics })
   }
-
   return (
     <div className="p-8 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100">
       {}
@@ -193,7 +141,6 @@ const TutorialForm = ({ tutorial, onClose }) => {
           <X className="w-6 h-6 text-gray-600 dark:text-slate-300" />
         </button>
       </div>
-
       {}
       <form onSubmit={handleSubmit} className="space-y-6">
         {formError && (
@@ -202,7 +149,6 @@ const TutorialForm = ({ tutorial, onClose }) => {
             <span className="text-sm">{formError}</span>
           </div>
         )}
-
         {}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
@@ -219,7 +165,6 @@ const TutorialForm = ({ tutorial, onClose }) => {
           />
           <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">{formData.title.length}/200 Zeichen</p>
         </div>
-
         {}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
@@ -236,7 +181,6 @@ const TutorialForm = ({ tutorial, onClose }) => {
           />
           <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">{formData.description.length}/1000 Zeichen</p>
         </div>
-
         {}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
@@ -255,7 +199,6 @@ const TutorialForm = ({ tutorial, onClose }) => {
               ))}
             </select>
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
               Farbe
@@ -273,7 +216,6 @@ const TutorialForm = ({ tutorial, onClose }) => {
             </select>
           </div>
         </div>
-
         {}
         <div>
           <div className="flex justify-between items-center mb-2">
@@ -313,7 +255,6 @@ const TutorialForm = ({ tutorial, onClose }) => {
             ))}
           </div>
         </div>
-
         {}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
@@ -329,7 +270,6 @@ const TutorialForm = ({ tutorial, onClose }) => {
           />
           <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">{formData.content.length}/100000 Zeichen</p>
         </div>
-
         {}
         <div className="flex space-x-4 pt-4 border-t border-gray-200 dark:border-slate-800">
           <button
@@ -352,7 +292,6 @@ const TutorialForm = ({ tutorial, onClose }) => {
     </div>
   )
 }
-
 TutorialForm.propTypes = {
   tutorial: PropTypes.shape({
     id: PropTypes.string,
@@ -365,5 +304,4 @@ TutorialForm.propTypes = {
   }),
   onClose: PropTypes.func.isRequired,
 }
-
 export default TutorialForm

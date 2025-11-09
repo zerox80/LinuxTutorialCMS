@@ -7,7 +7,6 @@ import {
   DEFAULT_CONTENT,
 } from '../../context/ContentContext'
 import { getIconComponent } from '../../utils/iconMap'
-
 const sectionLabels = {
   hero: 'Hero-Bereich',
   tutorial_section: 'Tutorial-Sektion',
@@ -16,28 +15,12 @@ const sectionLabels = {
   grundlagen_page: 'Grundlagen-Seite',
   site_meta: 'Seitentitel & Beschreibung',
 }
-
-/**
- * Deep clones content object using JSON serialization.
- * 
- * @param {*} value - Value to clone
- * @returns {Object} Cloned object or empty object if value is null/undefined
- */
 const cloneContent = (value) => {
   if (value === undefined || value === null) {
     return {}
   }
   return JSON.parse(JSON.stringify(value))
 }
-
-/**
- * Sets a nested value in an object using a path array.
- * 
- * @param {Object} obj - Object to modify
- * @param {Array<string>} path - Path to the nested property
- * @param {*} value - Value to set
- * @returns {Object} Modified object
- */
 const setNestedValue = (obj, path, value) => {
   if (!Array.isArray(path) || path.length === 0) {
     return obj
@@ -53,16 +36,6 @@ const setNestedValue = (obj, path, value) => {
   cursor[path[path.length - 1]] = value
   return obj
 }
-
-/**
- * Section picker component for selecting content sections to edit.
- * 
- * @param {Object} props - Component props
- * @param {Array<string>} props.sections - Available section identifiers
- * @param {string} [props.selected] - Currently selected section
- * @param {Function} props.onSelect - Callback when section is selected
- * @returns {JSX.Element} Rendered section picker grid
- */
 const SectionPicker = ({ sections, selected, onSelect }) => {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -88,13 +61,11 @@ const SectionPicker = ({ sections, selected, onSelect }) => {
     </div>
   )
 }
-
 SectionPicker.propTypes = {
   sections: PropTypes.arrayOf(PropTypes.string).isRequired,
   selected: PropTypes.string,
   onSelect: PropTypes.func.isRequired,
 }
-
 const SectionToolbar = ({ onBack, onReset, onSave, isSaving, hasChanges }) => (
   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
     <button
@@ -126,7 +97,6 @@ const SectionToolbar = ({ onBack, onReset, onSave, isSaving, hasChanges }) => (
     </div>
   </div>
 )
-
 SectionToolbar.propTypes = {
   onBack: PropTypes.func.isRequired,
   onReset: PropTypes.func.isRequired,
@@ -134,7 +104,6 @@ SectionToolbar.propTypes = {
   isSaving: PropTypes.bool,
   hasChanges: PropTypes.bool,
 }
-
 const ContentJsonEditor = ({ value, onChange, error, schemaHint }) => (
   <div className="space-y-3">
     <label className="block text-sm font-semibold text-gray-700 dark:text-slate-200">JSON-Inhalt</label>
@@ -157,18 +126,15 @@ const ContentJsonEditor = ({ value, onChange, error, schemaHint }) => (
     )}
   </div>
 )
-
 ContentJsonEditor.propTypes = {
   value: PropTypes.string.isRequired,
   onChange: PropTypes.func.isRequired,
   error: PropTypes.string,
   schemaHint: PropTypes.string,
 }
-
 const HeroPreview = ({ content }) => {
   const HeroIcon = getIconComponent(content.icon, 'Terminal')
   const features = Array.isArray(content.features) ? content.features : []
-
   return (
     <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="flex items-center justify-between">
@@ -218,19 +184,15 @@ const HeroPreview = ({ content }) => {
     </div>
   )
 }
-
 HeroPreview.propTypes = {
   content: PropTypes.object.isRequired,
 }
-
 const HeroContentForm = ({ content, onFieldChange }) => {
   const heroContent = content || {}
   const title = heroContent.title || {}
-
   const handleChange = (path) => (event) => {
     onFieldChange(path, event.target.value)
   }
-
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Hero-Inhalt bearbeiten</h3>
@@ -279,12 +241,10 @@ const HeroContentForm = ({ content, onFieldChange }) => {
     </div>
   )
 }
-
 HeroContentForm.propTypes = {
   content: PropTypes.object,
   onFieldChange: PropTypes.func.isRequired,
 }
-
 const SiteMetaPreview = ({ content }) => {
   return (
     <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
@@ -306,14 +266,11 @@ const SiteMetaPreview = ({ content }) => {
     </div>
   )
 }
-
 SiteMetaPreview.propTypes = {
   content: PropTypes.object.isRequired,
 }
-
 const SiteMetaForm = ({ content, onFieldChange }) => {
   const siteMeta = content || {}
-
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Seitentitel & Beschreibung</h3>
@@ -351,12 +308,10 @@ const SiteMetaForm = ({ content, onFieldChange }) => {
     </div>
   )
 }
-
 SiteMetaForm.propTypes = {
   content: PropTypes.object,
   onFieldChange: PropTypes.func.isRequired,
 }
-
 const TutorialSectionPreview = ({ content }) => {
   return (
     <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -366,23 +321,19 @@ const TutorialSectionPreview = ({ content }) => {
           Vorschau
         </span>
       </div>
-      
       <div className="space-y-3">
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Badge</p>
           <p className="mt-1 text-sm font-semibold text-gray-900">{content.badge || 'Tutorials'}</p>
         </div>
-        
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Titel</p>
           <p className="mt-1 text-sm font-semibold text-gray-900">{content.title || 'Linux Tutorials'}</p>
         </div>
-        
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Untertitel</p>
           <p className="mt-1 text-sm text-gray-700">{content.subtitle || 'Lerne die Grundlagen'}</p>
         </div>
-        
         <div className="rounded-lg border border-primary-200 bg-primary-50 p-3">
           <p className="text-xs font-medium uppercase tracking-wide text-primary-600">Button-Text</p>
           <p className="mt-1 text-sm font-semibold text-primary-700">{content.tutorialCardButton || 'Zum Tutorial'}</p>
@@ -392,11 +343,9 @@ const TutorialSectionPreview = ({ content }) => {
     </div>
   )
 }
-
 TutorialSectionPreview.propTypes = {
   content: PropTypes.object.isRequired,
 }
-
 const SectionPreview = ({ section, content }) => {
   switch (section) {
     case 'hero':
@@ -416,18 +365,10 @@ const SectionPreview = ({ section, content }) => {
       )
   }
 }
-
 SectionPreview.propTypes = {
   section: PropTypes.string.isRequired,
   content: PropTypes.object.isRequired,
 }
-
-/**
- * Main site content editor component for managing CMS content.
- * Provides JSON editing with visual preview for different content sections.
- * 
- * @returns {JSX.Element} Rendered content editor interface
- */
 const SiteContentEditor = () => {
   const {
     content,
@@ -439,7 +380,6 @@ const SiteContentEditor = () => {
     updateSection,
     savingSections,
   } = useContent()
-
   const sectionOptions = useMemo(() => {
     const base = [...CONTENT_SECTIONS]
     const extraKeys = content
@@ -447,14 +387,12 @@ const SiteContentEditor = () => {
       : []
     return [...base, ...extraKeys.sort()]
   }, [content])
-
   const [selectedSection, setSelectedSection] = useState(null)
   const [originalContent, setOriginalContent] = useState(null)
   const [draftContent, setDraftContent] = useState(null)
   const [editorValue, setEditorValue] = useState('')
   const [jsonError, setJsonError] = useState(null)
   const [status, setStatus] = useState(null)
-
   const activeContent = useMemo(() => {
     if (!selectedSection) {
       return null
@@ -464,12 +402,10 @@ const SiteContentEditor = () => {
     }
     return getSection(selectedSection)
   }, [content, getSection, selectedSection])
-
   useEffect(() => {
     if (!selectedSection) {
       return
     }
-
     const current = cloneContent(activeContent ?? getDefaultSection(selectedSection) ?? DEFAULT_CONTENT[selectedSection])
     setOriginalContent(current)
     setDraftContent(current)
@@ -477,12 +413,10 @@ const SiteContentEditor = () => {
     setJsonError(null)
     setStatus(null)
   }, [selectedSection, activeContent, getDefaultSection])
-
   const handleSectionSelect = useCallback((section) => {
     setSelectedSection(section)
     setStatus(null)
   }, [])
-
   const handleEditorChange = useCallback((value) => {
     setEditorValue(value)
     try {
@@ -493,7 +427,6 @@ const SiteContentEditor = () => {
       setJsonError(err.message)
     }
   }, [])
-
   const handleReset = useCallback(() => {
     if (!originalContent) {
       return
@@ -504,7 +437,6 @@ const SiteContentEditor = () => {
     setJsonError(null)
     setStatus(null)
   }, [originalContent])
-
   const handleBack = useCallback(() => {
     setSelectedSection(null)
     setOriginalContent(null)
@@ -513,14 +445,11 @@ const SiteContentEditor = () => {
     setJsonError(null)
     setStatus(null)
   }, [])
-
   const handleSave = useCallback(async () => {
     if (!selectedSection || !draftContent || jsonError) {
       return
     }
-
     setStatus(null)
-
     try {
       const response = await updateSection(selectedSection, draftContent)
       const updated = cloneContent(response?.content ?? draftContent)
@@ -532,16 +461,13 @@ const SiteContentEditor = () => {
       setStatus({ type: 'error', message: err?.message || 'Speichern fehlgeschlagen.' })
     }
   }, [draftContent, jsonError, selectedSection, updateSection])
-
   const hasChanges = useMemo(() => {
     if (!selectedSection || !draftContent || !originalContent || jsonError) {
       return false
     }
     return JSON.stringify(draftContent) !== JSON.stringify(originalContent)
   }, [draftContent, jsonError, originalContent, selectedSection])
-
   const isSaving = selectedSection ? Boolean(savingSections?.[selectedSection]) : false
-
   const schemaHint = useMemo(() => {
     if (!selectedSection) {
       return ''
@@ -549,7 +475,6 @@ const SiteContentEditor = () => {
     const base = getDefaultSection(selectedSection) ?? DEFAULT_CONTENT[selectedSection] ?? {}
     return JSON.stringify(base, null, 2)
   }, [getDefaultSection, selectedSection])
-
   const handleStructuredFieldChange = useCallback(
     (path, value) => {
       if (!selectedSection) {
@@ -567,7 +492,6 @@ const SiteContentEditor = () => {
     },
     [getDefaultSection, selectedSection],
   )
-
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -586,7 +510,6 @@ const SiteContentEditor = () => {
           {loading ? 'Aktualisiere…' : 'Inhalte neu laden'}
         </button>
       </div>
-
       {error && !selectedSection && (
         <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           <AlertCircle className="h-4 w-4" />
@@ -596,7 +519,6 @@ const SiteContentEditor = () => {
           </div>
         </div>
       )}
-
       {!selectedSection && (
         <div className="space-y-4">
           <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Wähle einen Inhaltsbereich aus:</p>
@@ -607,7 +529,6 @@ const SiteContentEditor = () => {
           />
         </div>
       )}
-
       {selectedSection && (
         <div className="space-y-6">
           <SectionToolbar
@@ -617,7 +538,6 @@ const SiteContentEditor = () => {
             isSaving={isSaving}
             hasChanges={hasChanges}
           />
-
           {status && (
             <div
               className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${
@@ -630,14 +550,12 @@ const SiteContentEditor = () => {
               <span>{status.message}</span>
             </div>
           )}
-
           {selectedSection === 'hero' && (
             <HeroContentForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
           )}
           {selectedSection === 'site_meta' && (
             <SiteMetaForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
           )}
-
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <ContentJsonEditor
               value={editorValue}
@@ -652,5 +570,4 @@ const SiteContentEditor = () => {
     </div>
   )
 }
-
 export default SiteContentEditor

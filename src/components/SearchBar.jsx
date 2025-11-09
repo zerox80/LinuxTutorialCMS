@@ -3,15 +3,6 @@ import { Search, X, Tag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { api } from '../api/client';
-
-/**
- * Search bar component with tutorial search and topic filtering.
- * Provides real-time search with debouncing and topic-based filtering.
- * 
- * @param {Object} props - Component props
- * @param {Function} [props.onClose] - Callback to close the search bar
- * @returns {JSX.Element} Rendered search bar overlay
- */
 const SearchBar = ({ onClose }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
@@ -20,11 +11,8 @@ const SearchBar = ({ onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef(null);
   const navigate = useNavigate();
-
   useEffect(() => {
     inputRef.current?.focus();
-    
-
     api.request('/search/topics', { cacheBust: false })
       .then((data) => setTopics(Array.isArray(data) ? data : []))
       .catch((err) => {
@@ -32,13 +20,11 @@ const SearchBar = ({ onClose }) => {
         setTopics([])
       })
   }, []);
-
   useEffect(() => {
     if (query.trim().length < 2) {
       setResults([]);
       return;
     }
-
     const timeoutId = setTimeout(async () => {
       setIsLoading(true);
       try {
@@ -46,7 +32,6 @@ const SearchBar = ({ onClose }) => {
         if (selectedTopic) {
           params.append('topic', selectedTopic);
         }
-        
         const data = await api.request(`/search/tutorials?${params.toString()}`, {
           cacheBust: false,
         })
@@ -58,35 +43,17 @@ const SearchBar = ({ onClose }) => {
         setIsLoading(false);
       }
     }, 300);
-
     return () => clearTimeout(timeoutId);
   }, [query, selectedTopic]);
-
-  
-  /**
-   * Handles clicking on a search result.
-   * Navigates to the tutorial and closes the search bar.
-   * 
-   * @param {string} id - Tutorial ID to navigate to
-   */
   const handleResultClick = (id) => {
     navigate(`/tutorials/${id}`);
     if (onClose) onClose();
   };
-
-  
-  /**
-   * Handles keyboard events in the search input.
-   * Closes search bar on Escape key.
-   * 
-   * @param {KeyboardEvent} e - Keyboard event
-   */
   const handleKeyDown = (e) => {
     if (e.key === 'Escape') {
       if (onClose) onClose();
     }
   };
-
   return (
     <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-start justify-center pt-20 px-4">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
@@ -112,7 +79,6 @@ const SearchBar = ({ onClose }) => {
               </button>
             )}
           </div>
-          
           {}
           {topics.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
@@ -143,7 +109,6 @@ const SearchBar = ({ onClose }) => {
             </div>
           )}
         </div>
-
         {}
         <div className="flex-1 overflow-y-auto p-4">
           {isLoading && (
@@ -151,19 +116,16 @@ const SearchBar = ({ onClose }) => {
               Suche läuft...
             </div>
           )}
-          
           {!isLoading && query.trim().length >= 2 && results.length === 0 && (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               Keine Ergebnisse gefunden
             </div>
           )}
-          
           {!isLoading && query.trim().length < 2 && (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               Gib mindestens 2 Zeichen ein
             </div>
           )}
-          
           {!isLoading && results.length > 0 && (
             <div className="space-y-2">
               {results.map(tutorial => (
@@ -197,9 +159,7 @@ const SearchBar = ({ onClose }) => {
     </div>
   );
 };
-
 SearchBar.propTypes = {
   onClose: PropTypes.func,
 };
-
 export default SearchBar;

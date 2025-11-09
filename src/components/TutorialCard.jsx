@@ -1,46 +1,22 @@
 import { ChevronRight, Sparkles } from 'lucide-react'
 import PropTypes from 'prop-types'
 import { scrollToSection } from '../utils/scrollToSection'
-
-/**
- * Tutorial card component with animated hover effects.
- * Displays tutorial information with icon, title, description, and topics.
- * 
- * @param {Object} props - Component props
- * @param {React.ComponentType} props.icon - Icon component to display
- * @param {string} props.title - Tutorial title
- * @param {string} props.description - Tutorial description
- * @param {Array<string>} props.topics - Array of tutorial topics
- * @param {string} props.color - Tailwind gradient color classes
- * @param {Function} [props.onSelect] - Callback when card is selected
- * @param {string} [props.buttonLabel] - Custom button label
- * @returns {JSX.Element} Rendered tutorial card
- */
 const TutorialCard = ({ icon: Icon, title, description, topics, color, onSelect, buttonLabel }) => {
-  
-  /**
-   * Handles card selection.
-   * Calls onSelect callback or scrolls to tutorials section.
-   */
   const handleSelect = () => {
     if (typeof onSelect === 'function') {
       onSelect()
       return
     }
-
     scrollToSection('tutorials')
   }
-
   return (
     <div className="tutorial-card group cursor-pointer hover:-translate-y-2 animate-fade-in">
       {}
       <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity duration-700 -z-10 blur-2xl`}></div>
-      
       {}
       <div className="absolute inset-0 rounded-2xl overflow-hidden">
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 shimmer"></div>
       </div>
-
       {}
       <div className="relative mb-6">
         <div className={`w-16 h-16 bg-gradient-to-br ${color} rounded-2xl flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-500`}>
@@ -50,11 +26,9 @@ const TutorialCard = ({ icon: Icon, title, description, topics, color, onSelect,
           <Sparkles className="w-3 h-3 text-white" />
         </div>
       </div>
-
       {}
       <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-primary-700 transition-colors duration-300">{title}</h3>
       <p className="text-gray-600 mb-6 leading-relaxed line-clamp-2">{description}</p>
-
       {}
       <div className="space-y-3 mb-8">
         {topics.map((topic, index) => (
@@ -69,7 +43,6 @@ const TutorialCard = ({ icon: Icon, title, description, topics, color, onSelect,
           </div>
         ))}
       </div>
-
       {}
       <button 
         type="button"
@@ -86,7 +59,6 @@ const TutorialCard = ({ icon: Icon, title, description, topics, color, onSelect,
     </div>
   )
 }
-
 TutorialCard.propTypes = {
   icon: PropTypes.elementType.isRequired,
   title: PropTypes.string.isRequired,
@@ -96,5 +68,4 @@ TutorialCard.propTypes = {
   onSelect: PropTypes.func,
   buttonLabel: PropTypes.string,
 }
-
 export default TutorialCard
