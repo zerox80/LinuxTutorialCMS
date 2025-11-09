@@ -1,24 +1,31 @@
+// React hooks imports
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import { useTutorials } from '../context/TutorialContext'
-import { useContent } from '../context/ContentContext'
+
+// Context imports for global state management
+import { useAuth } from '../context/AuthContext'           // Authentication and user state
+import { useTutorials } from '../context/TutorialContext'   // Tutorial data and operations
+import { useContent } from '../context/ContentContext'     // Site content management
+
+// Icon imports from Lucide React library
 import {
-  Plus,
-  Edit,
-  Trash2,
-  LogOut,
-  Home,
-  Terminal,
-  RefreshCw,
-  AlertCircle,
-  LayoutDashboard,
-  Paintbrush,
-  FileText,
+  Plus,              // Add/create icon
+  Edit,              // Edit/pencil icon
+  Trash2,            // Delete/trash icon
+  LogOut,            // Logout icon
+  Home,              // Home page icon
+  Terminal,          // Terminal/command line icon
+  RefreshCw,         // Refresh/rotate icon
+  AlertCircle,       // Warning/alert icon
+  LayoutDashboard,   // Dashboard layout icon
+  Paintbrush,        // Content/styling icon
+  FileText,          // Page/document icon
 } from 'lucide-react'
-import TutorialForm from '../components/TutorialForm'
-import SiteContentEditor from '../components/SiteContentEditor'
-import PageManager from '../components/PageManager'
+
+// Component imports for admin functionality
+import TutorialForm from '../components/TutorialForm'       // Tutorial creation/editing form
+import SiteContentEditor from '../components/SiteContentEditor' // Static site content editor
+import PageManager from '../components/PageManager'         // Dynamic page and post management
 
 /**
  * Renders the admin dashboard, which provides a user interface for managing tutorials,
@@ -27,17 +34,34 @@ import PageManager from '../components/PageManager'
  * @returns {JSX.Element} The rendered admin dashboard page.
  */
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState('tutorials')
-  const [showForm, setShowForm] = useState(false)
-  const [editingTutorial, setEditingTutorial] = useState(null)
-  const [deletingId, setDeletingId] = useState(null)
-  const [confirmingId, setConfirmingId] = useState(null)
-  const [deleteError, setDeleteError] = useState(null)
+  // === STATE MANAGEMENT ===
+
+  // UI state for tabbed interface
+  const [activeTab, setActiveTab] = useState('tutorials')     // Currently active tab ('tutorials', 'content', 'pages')
+
+  // Modal state for tutorial form
+  const [showForm, setShowForm] = useState(false)              // Controls tutorial form modal visibility
+  const [editingTutorial, setEditingTutorial] = useState(null) // Tutorial being edited (null for create mode)
+
+  // Delete operation state
+  const [deletingId, setDeletingId] = useState(null)           // ID of tutorial currently being deleted
+  const [confirmingId, setConfirmingId] = useState(null)       // ID of tutorial awaiting delete confirmation
+  const [deleteError, setDeleteError] = useState(null)         // Error message for failed delete operations
+
+  // Ref to track component mount state for async operations
   const isMountedRef = useRef(true)
-  const { logout, user } = useAuth()
-  const { tutorials, deleteTutorial, loading, error, refreshTutorials } = useTutorials()
-  const { loading: contentLoading } = useContent()
-  const navigate = useNavigate()
+
+  // === CONTEXT AND NAVIGATION ===
+
+  const { logout, user } = useAuth()                           // Auth context for logout and user info
+  const { tutorials, deleteTutorial, loading, error, refreshTutorials } = useTutorials() // Tutorial context
+  const { loading: contentLoading } = useContent()             // Content context loading state
+  const navigate = useNavigate()                              // React Router navigation function
+
+  // === DERIVED STATE ===
+
+  // Memoized sorted tutorials list for stable renders
+  // Sorts tutorials alphabetically by title using German locale
   const sortedTutorials = useMemo(
     () => [...tutorials].sort((a, b) => a.title.localeCompare(b.title, 'de')),
     [tutorials],
@@ -76,48 +100,60 @@ const AdminDashboard = () => {
   }
 
   /**
-   * Cancels the delete operation and resets error states.
+   * Cancels the delete operation and resets all delete-related states.
+   * This handles both the confirmation state and any error states.
    *
    * @returns {void}
    */
   const handleDeleteCancel = () => {
-    setConfirmingId(null)
-    setDeletingId(null)
-    setDeleteError(null)
+    setConfirmingId(null)     // Clear awaiting confirmation state
+    setDeletingId(null)       // Clear currently deleting state
+    setDeleteError(null)      // Clear any error messages
   }
 
   /**
-   * Confirms and executes the tutorial deletion.
+   * Confirms and executes the tutorial deletion with proper error handling.
+   * Includes loading states and mounted state checks to prevent memory leaks.
    *
    * @param {string} id - The ID of the tutorial to delete.
    * @returns {Promise<void>}
    */
   const handleDeleteConfirm = async (id) => {
-    setDeleteError(null)
-    setDeletingId(id)
-    
+    setDeleteError(null)      // Clear previous errors
+    setDeletingId(id)         // Set loading state for this specific tutorial
+
     try {
+      // Attempt to delete the tutorial via context
       await deleteTutorial(id)
+
+      // Only update state if component is still mounted
       if (isMountedRef.current) {
-        setConfirmingId(null)
+        setConfirmingId(null)  // Clear confirmation state on success
       }
     } catch (err) {
+      // Handle deletion errors gracefully
       if (isMountedRef.current) {
         const message = err?.message || 'Löschen fehlgeschlagen'
-        setDeleteError({ id, message })
+        setDeleteError({ id, message }) // Set error for this specific tutorial
       }
     } finally {
+      // Always clear the loading state
       if (isMountedRef.current) {
         setDeletingId(null)
       }
     }
   }
-  
-  // Track mounted state
+
+  // === LIFECYCLE EFFECTS ===
+
+  /**
+   * Effect to track component mount/unmount state.
+   * This prevents state updates on unmounted components during async operations.
+   */
   useEffect(() => {
     isMountedRef.current = true
     return () => {
-      isMountedRef.current = false
+      isMountedRef.current = false // Cleanup: mark as unmounted
     }
   }, [])
 
@@ -126,38 +162,55 @@ const AdminDashboard = () => {
    *
    * @returns {void}
    */
+  /**
+   * Closes the tutorial form modal and resets the editing state.
+   * Resets both form visibility and the tutorial being edited.
+   *
+   * @returns {void}
+   */
   const handleCloseForm = () => {
-    setShowForm(false)
-    setEditingTutorial(null)
+    setShowForm(false)         // Hide the modal
+    setEditingTutorial(null)   // Clear editing state (returns to create mode)
   }
-  
-  // Handle ESC key for modal
+
+  /**
+   * Effect to handle modal keyboard navigation and accessibility.
+   * - ESC key closes the modal
+   * - Prevents body scrolling when modal is open
+   * - Cleans up event listeners on unmount
+   */
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape' && showForm) {
-        handleCloseForm()
+        handleCloseForm() // Close modal on ESC key
       }
     }
-    
+
     if (showForm) {
+      // Add keyboard event listener for ESC key
       document.addEventListener('keydown', handleEscape)
-      // Trap focus in modal
+      // Prevent background scrolling when modal is open
       document.body.style.overflow = 'hidden'
     }
-    
+
+    // Cleanup function to remove event listeners and restore scrolling
     return () => {
       document.removeEventListener('keydown', handleEscape)
       document.body.style.overflow = 'unset'
     }
-  }, [showForm])
+  }, [showForm]) // Effect depends on modal visibility state
 
   return (
+    // Main container with responsive background and text colors
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 text-gray-900 dark:text-slate-100">
-      {/* Header */}
+      {/* ==================== HEADER SECTION ==================== */}
+      {/* Admin dashboard header with user info and navigation */}
       <header className="bg-white/90 dark:bg-slate-900/80 shadow-md backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
+            {/* Left side: Logo and welcome message */}
             <div className="flex items-center space-x-3">
+              {/* Terminal icon with gradient background */}
               <div className="bg-gradient-to-r from-primary-600 to-primary-800 p-2 rounded-lg shadow-lg shadow-primary-900/20">
                 <Terminal className="w-6 h-6 text-white" />
               </div>
@@ -166,7 +219,10 @@ const AdminDashboard = () => {
                 <p className="text-sm text-gray-600 dark:text-slate-400">Willkommen, {user?.username}</p>
               </div>
             </div>
+
+            {/* Right side: Navigation buttons */}
             <div className="flex space-x-3">
+              {/* Return to homepage button */}
               <button
                 onClick={() => navigate('/')}
                 className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
@@ -174,6 +230,8 @@ const AdminDashboard = () => {
                 <Home className="w-4 h-4" />
                 <span>Startseite</span>
               </button>
+
+              {/* Logout button with red styling */}
               <button
                 onClick={handleLogout}
                 className="flex items-center space-x-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors duration-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
@@ -186,42 +244,48 @@ const AdminDashboard = () => {
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* ==================== MAIN CONTENT AREA ==================== */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Tabs */}
+        {/* ==================== TAB NAVIGATION ==================== */}
+        {/* Tabbed interface for switching between admin sections */}
         <div className="mb-8 flex flex-col gap-3 border-b border-gray-200 pb-3 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
           <div className="flex flex-wrap items-center gap-2">
+            {/* Tutorials Tab - Default active tab */}
             <button
               type="button"
               onClick={() => setActiveTab('tutorials')}
               className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                 activeTab === 'tutorials'
-                  ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
+                  ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20' // Active state
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700' // Inactive state
               }`}
             >
               <LayoutDashboard className="h-4 w-4" />
               Tutorials
             </button>
+
+            {/* Site Content Tab */}
             <button
               type="button"
               onClick={() => setActiveTab('content')}
               className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                 activeTab === 'content'
-                  ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
+                  ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20' // Active state
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700' // Inactive state
               }`}
             >
               <Paintbrush className="h-4 w-4" />
               Seiteninhalte
             </button>
+
+            {/* Pages & Posts Tab */}
             <button
               type="button"
               onClick={() => setActiveTab('pages')}
               className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                 activeTab === 'pages'
-                  ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
+                  ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20' // Active state
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700' // Inactive state
               }`}
             >
               <FileText className="h-4 w-4" />
@@ -230,15 +294,18 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+        {/* ==================== TUTORIALS TAB CONTENT ==================== */}
         {activeTab === 'tutorials' && (
           <>
-            {/* Actions */}
+            {/* ==================== TUTORIAL MANAGEMENT ACTIONS ==================== */}
+            {/* Section header and action buttons for tutorial management */}
             <div className="mb-8 flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
               <div>
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Tutorial Verwaltung</h2>
                 <p className="text-gray-600 dark:text-gray-300 mt-1">Erstelle, bearbeite und verwalte deine Tutorials</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
+                {/* Refresh button - reloads tutorial list with loading state */}
                 <button
                   onClick={() => refreshTutorials()}
                   className="flex items-center justify-center gap-2 px-5 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 disabled:opacity-60"
@@ -247,10 +314,12 @@ const AdminDashboard = () => {
                   <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                   <span>{loading ? 'Aktualisiere…' : 'Aktualisieren'}</span>
                 </button>
+
+                {/* Create new tutorial button - opens modal in create mode */}
                 <button
                   onClick={() => {
-                    setEditingTutorial(null)
-                    setShowForm(true)
+                    setEditingTutorial(null) // Clear editing state for create mode
+                    setShowForm(true)       // Show the form modal
                   }}
                   className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
@@ -260,6 +329,8 @@ const AdminDashboard = () => {
               </div>
             </div>
 
+            {/* ==================== ERROR DISPLAY ==================== */}
+            {/* Error alert for tutorial loading failures */}
             {error && (
               <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 flex items-start gap-3 text-red-700" role="alert">
                 <AlertCircle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
@@ -270,50 +341,64 @@ const AdminDashboard = () => {
               </div>
             )}
 
-            {/* Tutorial Form Modal */}
+            {/* ==================== TUTORIAL FORM MODAL ==================== */}
+            {/* Modal overlay for creating/editing tutorials with click-outside-to-close */}
             {showForm && (
-              <div 
+              <div
                 className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="modal-title"
                 onClick={(e) => {
+                  // Close modal when clicking the backdrop (but not the modal content)
                   if (e.target === e.currentTarget) {
                     handleCloseForm()
                   }
                 }}
               >
-                <div 
+                <div
                   className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
                   role="document"
                 >
+                  {/* Tutorial form component handles both create and edit modes */}
                   <TutorialForm
-                    tutorial={editingTutorial}
-                    onClose={handleCloseForm}
+                    tutorial={editingTutorial} // null for create, tutorial object for edit
+                    onClose={handleCloseForm}  // Close handler function
                   />
                 </div>
               </div>
             )}
 
-            {/* Tutorials Grid */}
+            {/* ==================== TUTORIALS GRID ==================== */}
+            {/* Conditional rendering: loading state vs tutorial grid */}
             {loading && tutorials.length === 0 ? (
+              // Loading state when no tutorials are loaded yet
               <div className="py-16 text-center text-gray-600">Lade Tutorials…</div>
             ) : (
+              // Responsive grid of tutorial cards
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {sortedTutorials.map((tutorial) => (
+                  // Individual tutorial card component
                   <div
                     key={tutorial.id}
                     className="rounded-xl border border-gray-100 bg-white shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden dark:border-slate-800 dark:bg-slate-900/80"
                   >
+                    {/* Color-coded header strip for visual category identification */}
                     <div className={`h-2 bg-gradient-to-r ${tutorial.color}`}></div>
+
                     <div className="p-6">
+                      {/* Tutorial title */}
                       <h3 className="text-xl font-bold text-gray-800 dark:text-slate-100 mb-2">{tutorial.title}</h3>
+
+                      {/* Tutorial description with line clamp for consistent height */}
                       <p className="text-gray-600 dark:text-slate-300 text-sm mb-4 line-clamp-2">
                         {tutorial.description}
                       </p>
-                      
+
+                      {/* Topic tags display */}
                       <div className="mb-4">
                         <div className="flex flex-wrap gap-2">
+                          {/* Show up to 3 topic tags */}
                           {(tutorial.topics || []).slice(0, 3).map((topic, index) => (
                             <span
                               key={index}
@@ -322,6 +407,7 @@ const AdminDashboard = () => {
                               {topic}
                             </span>
                           ))}
+                          {/* Show "more" indicator if there are additional topics */}
                           {tutorial.topics && tutorial.topics.length > 3 && (
                             <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full dark:bg-slate-800 dark:text-slate-300">
                               +{tutorial.topics.length - 3} mehr
@@ -330,7 +416,9 @@ const AdminDashboard = () => {
                         </div>
                       </div>
 
+                      {/* Action buttons for edit and delete */}
                       <div className="flex space-x-2 pt-4 border-t border-gray-100 dark:border-slate-800">
+                        {/* Edit button - opens modal in edit mode */}
                         <button
                           onClick={() => handleEdit(tutorial)}
                           className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 transition-colors duration-200 dark:bg-primary-900/40 dark:text-primary-200 dark:hover:bg-primary-900/60"
@@ -338,7 +426,10 @@ const AdminDashboard = () => {
                           <Edit className="w-4 h-4" />
                           <span>Bearbeiten</span>
                         </button>
+
+                        {/* Conditional delete confirmation vs delete button */}
                         {confirmingId === tutorial.id ? (
+                          // Confirmation state: show confirm and cancel buttons
                           <div className="flex-1 flex items-center justify-center gap-2">
                             <button
                               onClick={() => handleDeleteConfirm(tutorial.id)}
@@ -356,6 +447,7 @@ const AdminDashboard = () => {
                             </button>
                           </div>
                         ) : (
+                          // Normal state: show delete button
                           <button
                             onClick={() => handleDeleteRequest(tutorial.id)}
                             className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors duration-200 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50"
@@ -366,6 +458,8 @@ const AdminDashboard = () => {
                           </button>
                         )}
                       </div>
+
+                      {/* Error message display for failed delete operations */}
                       {deleteError?.id === tutorial.id && (
                         <p className="mt-3 text-sm text-red-600 dark:text-red-400" role="alert">
                           {deleteError.message}
@@ -377,18 +471,26 @@ const AdminDashboard = () => {
               </div>
             )}
 
-            {/* Empty State */}
+            {/* ==================== EMPTY STATE ==================== */}
+            {/* Displayed when there are no tutorials to show */}
             {!loading && tutorials.length === 0 && !error && (
               <div className="text-center py-16">
+                {/* Terminal icon in circular background */}
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
                   <Terminal className="w-8 h-8 text-gray-400" />
                 </div>
+
+                {/* Empty state heading */}
                 <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">
                   Noch keine Tutorials vorhanden
                 </h3>
+
+                {/* Empty state description */}
                 <p className="text-gray-600 dark:text-gray-300 mb-6">
                   Erstelle dein erstes Tutorial, um loszulegen.
                 </p>
+
+                {/* Call-to-action button to create first tutorial */}
                 <button
                   onClick={() => setShowForm(true)}
                   className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-200"
@@ -401,17 +503,24 @@ const AdminDashboard = () => {
           </>
         )}
 
+        {/* ==================== CONTENT TAB ==================== */}
+        {/* Site content management section */}
         {activeTab === 'content' && (
           <div className="space-y-6">
+            {/* Loading indicator for content editor */}
             {contentLoading && (
               <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
                 <RefreshCw className="h-4 w-4 animate-spin" />
                 Inhalte werden geladen…
               </div>
             )}
+            {/* Main content editor component */}
             <SiteContentEditor />
           </div>
         )}
+
+        {/* ==================== PAGES TAB ==================== */}
+        {/* Dynamic page and post management section */}
         {activeTab === 'pages' && (
           <PageManager />
         )}

@@ -126,10 +126,12 @@ const hasProtocol = (value) => /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value)
  * @since 1.0.0
  */
 export const sanitizeExternalUrl = (value) => {
+  // Type validation: ensure input is a string
   if (typeof value !== 'string') {
     return null
   }
 
+  // Remove leading/trailing whitespace for consistent validation
   const trimmed = value.trim()
   if (!trimmed) {
     return null
@@ -141,16 +143,21 @@ export const sanitizeExternalUrl = (value) => {
     return null
   }
 
+  // Check if the URL has a protocol scheme (http:, https:, mailto:, etc.)
   if (!hasProtocol(trimmed)) {
     // Relative paths, anchors and query-only URLs are allowed
     // These are safe as they resolve relative to current origin
     return trimmed
   }
 
+  // For absolute URLs with protocols, validate against allowed protocols
   try {
     const parsed = new URL(trimmed)
+    // Convert protocol to lowercase for case-insensitive comparison
+    // Check against our whitelist of safe protocols
     return ALLOWED_PROTOCOLS.has(parsed.protocol.toLowerCase()) ? parsed.toString() : null
   } catch (error) {
+    // Log the error for debugging but don't expose details to user
     console.warn('Failed to parse external URL:', error)
     return null
   }
@@ -209,4 +216,8 @@ export const sanitizeExternalUrl = (value) => {
  * 
  * @since 1.0.0
  */
-export const isSafeExternalUrl = (value) => sanitizeExternalUrl(value) !== null
+export const isSafeExternalUrl = (value) => {
+  // Delegate to sanitization function and check if it returns a valid result
+  // This ensures consistency between boolean check and actual sanitization
+  return sanitizeExternalUrl(value) !== null
+}

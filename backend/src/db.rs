@@ -1,3 +1,9 @@
+// Database module for Linux Tutorial CMS
+//
+// This module provides all database operations for the content management system,
+// including site pages, posts, tutorials, user management, and search functionality.
+// It uses SQLite with sqlx for type-safe async database operations.
+
 use regex::Regex;
 use serde_json::{json, Value};
 use sqlx::{
@@ -9,40 +15,56 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 /// Convenience alias for the shared SQLite connection pool used throughout the backend.
+///
+/// This type alias makes it easier to reference the database pool across the application
+/// and provides a consistent naming convention for database operations.
 pub type DbPool = SqlitePool;
 
 /// Creates and configures the database connection pool.
 ///
-/// This function reads the `DATABASE_URL` environment variable, ensures the
-/// necessary directory structure exists for SQLite, and runs database migrations.
+/// This function sets up the SQLite database connection pool with optimal settings
+/// for the CMS application. It handles:
+/// - Database URL configuration with fallback to default
+/// - Directory structure creation for SQLite files
+/// - Connection pooling with appropriate limits
+/// - Database schema migrations
+/// - Default data seeding
+///
+/// The database is configured with WAL journal mode for better concurrency
+/// and includes proper foreign key constraints for data integrity.
 ///
 /// # Returns
 ///
 /// A `Result` containing the configured `DbPool` or a `sqlx::Error`.
 pub async fn create_pool() -> Result<DbPool, sqlx::Error> {
+    // Get database URL from environment or use default
     let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| {
         tracing::warn!("DATABASE_URL not set, defaulting to sqlite:./database.db");
         "sqlite:./database.db".to_string()
     });
 
+    // Ensure the directory for the SQLite database file exists
     ensure_sqlite_directory(&database_url)?;
 
+    // Configure SQLite connection options for optimal performance and reliability
     let connect_options = SqliteConnectOptions::from_str(&database_url)?
-        .create_if_missing(true)
-        .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
-        .synchronous(sqlx::sqlite::SqliteSynchronous::Normal)
-        .foreign_keys(true)
-        .busy_timeout(std::time::Duration::from_secs(60));
+        .create_if_missing(true)                      // Auto-create database file
+        .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)  // Better for concurrent access
+        .synchronous(sqlx::sqlite::SqliteSynchronous::Normal)  // Balance of safety/performance
+        .foreign_keys(true)                           // Enable foreign key constraints
+        .busy_timeout(std::time::Duration::from_secs(60));     // Handle database locking
 
+    // Configure connection pool with conservative limits for SQLite
     let pool = SqlitePoolOptions::new()
-        .max_connections(5)
-        .min_connections(1)
-        .acquire_timeout(std::time::Duration::from_secs(30))
-        .idle_timeout(None)
-        .max_lifetime(None)
+        .max_connections(5)                           // SQLite works best with few connections
+        .min_connections(1)                           // Keep one connection ready
+        .acquire_timeout(std::time::Duration::from_secs(30))  // Timeout for getting connection
+        .idle_timeout(None)                           // Keep connections alive
+        .max_lifetime(None)                           // Don't recycle connections
         .connect_with(connect_options)
         .await?;
 
+    // Run database migrations and seed data
     run_migrations(&pool).await?;
 
     tracing::info!("Database pool created successfully");
@@ -50,6 +72,15 @@ pub async fn create_pool() -> Result<DbPool, sqlx::Error> {
 }
 
 /// Returns a cached regex for slug validation.
+///
+/// Slugs are URL-friendly identifiers used in the CMS for pages and posts.
+/// This function uses OnceLock to ensure the regex is compiled only once
+/// for performance efficiency across multiple validation calls.
+///
+/// The regex pattern matches:
+/// - Lowercase letters and numbers (a-z, 0-9)
+/// - Single hyphens as separators (no consecutive hyphens)
+/// - No leading or trailing hyphens
 fn slug_regex() -> &'static Regex {
     use std::sync::OnceLock;
 
@@ -57,11 +88,17 @@ fn slug_regex() -> &'static Regex {
     SLUG_RE.get_or_init(|| Regex::new(r"^[a-z0-9]+(?:-[a-z0-9]+)*$").expect("valid slug regex"))
 }
 
-/// Validates a slug string.
+/// Validates a slug string for URL-friendly identifiers.
+///
+/// This function ensures that slugs used for pages and posts meet the CMS requirements
+/// for clean URLs and database uniqueness. Slugs are used in URLs and must be
+/// web-safe, readable, and consistent.
 ///
 /// A valid slug must:
-/// - Be no longer than 100 characters.
-/// - Contain only lowercase letters, numbers, and single hyphens.
+/// - Be no longer than 100 characters (practical limit for URLs and database indexing)
+/// - Contain only lowercase letters, numbers, and single hyphens
+/// - Not have consecutive hyphens or start/end with hyphens
+/// - Be URL-safe and human-readable
 ///
 /// # Arguments
 ///
@@ -73,6 +110,7 @@ fn slug_regex() -> &'static Regex {
 pub fn validate_slug(slug: &str) -> Result<(), sqlx::Error> {
     const MAX_SLUG_LENGTH: usize = 100;
 
+    // Check length constraint first for performance
     if slug.len() > MAX_SLUG_LENGTH {
         return Err(sqlx::Error::Protocol(
             format!("Invalid slug. Maximum length is {MAX_SLUG_LENGTH} characters: '{slug}'")
@@ -80,6 +118,7 @@ pub fn validate_slug(slug: &str) -> Result<(), sqlx::Error> {
         ));
     }
 
+    // Validate format using cached regex
     if slug_regex().is_match(slug) {
         Ok(())
     } else {
@@ -90,19 +129,57 @@ pub fn validate_slug(slug: &str) -> Result<(), sqlx::Error> {
     }
 }
 
-/// Serializes a `serde_json::Value` to a `String`.
+/// Serializes a `serde_json::Value` to a `String` for database storage.
+///
+/// This helper function handles JSON serialization for storing complex data
+/// structures (like hero sections and layouts) in the database as TEXT columns.
+/// It provides consistent error handling for all JSON serialization operations.
+///
+/// # Arguments
+///
+/// * `value` - The JSON value to serialize.
+///
+/// # Returns
+///
+/// Serialized JSON string or a `sqlx::Error` if serialization fails.
 fn serialize_json_value(value: &Value) -> Result<String, sqlx::Error> {
     serde_json::to_string(value)
         .map_err(|e| sqlx::Error::Protocol(format!("Failed to serialize JSON: {e}").into()))
 }
 
-/// Deserializes a `&str` into a `serde_json::Value`.
+/// Deserializes a `&str` into a `serde_json::Value` from database storage.
+///
+/// This helper function handles JSON deserialization for retrieving complex data
+/// structures from the database. It provides consistent error handling for all
+/// JSON deserialization operations and is used when loading hero sections,
+/// layouts, and other JSON-stored content.
+///
+/// # Arguments
+///
+/// * `value` - The JSON string to deserialize.
+///
+/// # Returns
+///
+/// Deserialized JSON value or a `sqlx::Error` if deserialization fails.
 fn deserialize_json_value(value: &str) -> Result<Value, sqlx::Error> {
     serde_json::from_str(value)
         .map_err(|e| sqlx::Error::Protocol(format!("Failed to deserialize JSON: {e}").into()))
 }
 
+// ========================
+// SITE PAGES OPERATIONS
+// ========================
+//
+// Site pages are the main content pages of the CMS. They can have custom hero sections,
+// layouts, and can be organized with navigation labels and ordering. Each page can
+// contain multiple posts and can be published or unpublished independently.
+
 /// Fetches all site pages from the database, ordered by `order_index` and `title`.
+///
+/// This function retrieves all pages regardless of their published status, making it
+/// suitable for admin interfaces where all content needs to be managed. The pages
+/// are ordered first by their manual order_index for custom positioning, then
+/// alphabetically by title for consistent organization.
 ///
 /// # Arguments
 ///
@@ -120,6 +197,11 @@ pub async fn list_site_pages(pool: &DbPool) -> Result<Vec<crate::models::SitePag
 }
 
 /// Fetches all published pages that should be shown in navigation menus.
+///
+/// This function is used for building the website's navigation structure. It only returns
+/// pages that are both published (visible to the public) and marked for navigation display.
+/// This allows content creators to have pages that exist but don't appear in the main site
+/// navigation (like thank you pages or internal admin pages).
 ///
 /// # Arguments
 ///
@@ -139,7 +221,11 @@ pub async fn list_nav_pages(pool: &DbPool) -> Result<Vec<crate::models::SitePage
     .await
 }
 
-/// Fetches all published pages.
+/// Fetches all published pages for public display.
+///
+/// This function returns all pages that are marked as published, regardless of whether
+/// they appear in navigation. It's used for sitemaps, search indexes, and other public-facing
+/// features where all accessible content should be included.
 ///
 /// # Arguments
 ///
@@ -161,7 +247,11 @@ pub async fn list_published_pages(
     .await
 }
 
-/// Fetches a single site page by its ID.
+/// Fetches a single site page by its unique ID.
+///
+/// This function retrieves a specific page using its database UUID. It returns None
+/// if the page doesn't exist, making it safe to use for page lookups without error
+/// handling for missing records.
 ///
 /// # Arguments
 ///
@@ -183,7 +273,12 @@ pub async fn get_site_page_by_id(
     .await
 }
 
-/// Fetches a single site page by its slug.
+/// Fetches a single site page by its URL slug.
+///
+/// This is the primary method for loading pages for public display via URLs.
+/// Slugs are human-readable, URL-friendly identifiers that are used in the website's
+/// URL structure (e.g., /linux-basics, /advanced-commands). Returns None if
+/// the page doesn't exist, allowing graceful handling of 404 scenarios.
 ///
 /// # Arguments
 ///
@@ -207,6 +302,11 @@ pub async fn get_site_page_by_slug(
 
 /// Creates a new site page in the database.
 ///
+/// This function handles the creation of new pages with all their metadata including
+/// hero sections, layouts, navigation settings, and ordering. It validates the slug
+/// for uniqueness and format, generates a UUID, and returns the complete created page
+/// record with all database-generated timestamps.
+///
 /// # Arguments
 ///
 /// * `pool` - Database pool used to run the insert.
@@ -218,15 +318,18 @@ pub async fn get_site_page_by_slug(
 pub async fn create_site_page(
     pool: &DbPool,
     page: crate::models::CreateSitePageRequest,
-) -> Result<crate::models::SitePage, sqlx::Error> {
+) -> Result<crate::models::SitePage>, sqlx::Error> {
+    // Validate slug format before database operations
     validate_slug(&page.slug)?;
 
+    // Generate unique identifier and prepare data
     let id = uuid::Uuid::new_v4().to_string();
     let hero_json = serialize_json_value(&page.hero)?;
     let layout_json = serialize_json_value(&page.layout)?;
     let description = page.description.unwrap_or_default();
     let order_index = page.order_index.unwrap_or(0);
 
+    // Insert the new page with all metadata
     sqlx::query(
         "INSERT INTO site_pages (id, slug, title, description, nav_label, show_in_nav, order_index, is_published, hero_json, layout_json)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -244,12 +347,19 @@ pub async fn create_site_page(
     .execute(pool)
     .await?;
 
+    // Return the complete created record
     get_site_page_by_id(pool, &id)
         .await?
         .ok_or_else(|| sqlx::Error::RowNotFound)
 }
 
-/// Updates an existing site page.
+/// Updates an existing site page with partial data.
+///
+/// This function supports partial updates - only the fields provided in the payload
+/// will be modified. It validates new slugs if provided, preserves existing data
+/// for unchanged fields, and automatically updates the updated_at timestamp.
+/// This approach allows for flexible API updates where clients can send only
+/// the fields they want to change.
 ///
 /// # Arguments
 ///
@@ -326,6 +436,11 @@ pub async fn update_site_page(
 
 /// Deletes a site page by its ID.
 ///
+/// This function removes a page permanently from the database. Due to foreign key
+/// constraints, this will also cascade-delete any posts associated with the page.
+/// The function returns RowNotFound if the page doesn't exist, making it safe to
+/// use without additional existence checks.
+///
 /// # Arguments
 ///
 /// * `pool` - Database pool reference.
@@ -347,7 +462,21 @@ pub async fn delete_site_page(pool: &DbPool, id: &str) -> Result<(), sqlx::Error
     }
 }
 
-/// Fetches all posts associated with a specific page, for admin views.
+// ========================
+// SITE POSTS OPERATIONS
+// ========================
+//
+// Site posts are content items that belong to pages. They support markdown content,
+// publishing workflows, and can be ordered within their parent page. Posts are
+// typically used for blog entries, tutorials, news updates, or any content that
+// belongs within a larger page context.
+
+/// Fetches all posts associated with a specific page for admin management.
+///
+/// This function returns all posts belonging to a page regardless of publish status,
+/// making it suitable for admin interfaces where content managers need to see and
+/// manage both draft and published posts. Posts are ordered by their manual
+/// order_index first, then by creation date for consistent organization.
 ///
 /// # Arguments
 ///
@@ -372,7 +501,12 @@ pub async fn list_site_posts_for_page(
     .await
 }
 
-/// Fetches all published posts for a specific page.
+/// Fetches all published posts for public display on a specific page.
+///
+/// This function returns only published posts for public-facing features like
+/// blog listings and page content. Posts are ordered by manual order_index first,
+/// then by their publication date (or creation date if no publication date is set)
+/// to ensure consistent display ordering for website visitors.
 ///
 /// # Arguments
 ///
@@ -847,7 +981,21 @@ async fn apply_core_migrations(
     Ok(())
 }
 
+// ========================
+// SITE CONTENT OPERATIONS
+// ========================
+//
+// Site content represents structured content sections that are used throughout the
+// website but aren't pages or posts. This includes hero sections, headers, footers,
+// and other reusable content components. These are stored as JSON in the database
+// to provide maximum flexibility for content structure while maintaining type safety.
+
 /// Fetches all site content sections from the database.
+///
+/// This function retrieves all content sections (hero, header, footer, etc.) used
+/// by the website template system. The content is returned ordered by section name
+/// for consistent processing. This is typically called during application startup
+/// or when refreshing the website cache.
 ///
 /// # Arguments
 ///
@@ -1161,6 +1309,19 @@ fn sqlite_file_path(database_url: &str) -> Option<PathBuf> {
 
 /// Runs all database migrations and seeding operations.
 ///
+/// This is the central migration function that sets up the complete database schema
+/// and populates it with default data. It handles:
+/// - Core table creation (users, tutorials, comments, etc.)
+/// - Site pages and posts schema
+/// - Full-text search setup with FTS5
+/// - Default content seeding (hero sections, headers, footers)
+/// - Admin user creation from environment variables
+/// - Default tutorial population (optional)
+///
+/// The function uses transactions to ensure atomicity and handles error recovery
+/// by rolling back failed migrations. It's designed to be safe to run multiple times
+/// and will only create what doesn't already exist.
+///
 /// # Arguments
 ///
 /// * `pool` - Database pool used to open the migration transaction.
@@ -1171,6 +1332,7 @@ fn sqlite_file_path(database_url: &str) -> Option<PathBuf> {
 pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     let mut tx = pool.begin().await?;
 
+    // Apply core schema migrations with rollback on failure
     if let Err(err) = apply_core_migrations(&mut tx).await {
         tx.rollback().await?;
         return Err(err);
@@ -1178,6 +1340,7 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
 
     tx.commit().await?;
 
+    // Ensure site page schema (separate transaction for clarity)
     ensure_site_page_schema(pool).await?;
 
     // Seed default site content if not already present
@@ -1193,12 +1356,15 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
 
     match (admin_username, admin_password) {
         (Some(username), Some(password)) if !username.is_empty() && !password.is_empty() => {
+            // Enforce strong password policy (NIST recommendation: minimum 12 characters)
             if password.len() < 12 {
                 tracing::error!(
                     "ADMIN_PASSWORD must be at least 12 characters long (NIST recommendation)!"
                 );
                 return Err(sqlx::Error::Protocol("Admin password too weak".into()));
             }
+
+            // Check if admin user already exists
             let existing_user: Option<(i64, String)> =
                 sqlx::query_as("SELECT id, password_hash FROM users WHERE username = ?")
                     .bind(&username)
@@ -1222,6 +1388,7 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
                     }
                 },
                 None => {
+                    // Create new admin user with secure password hash
                     let password_hash =
                         bcrypt::hash(&password, bcrypt::DEFAULT_COST).map_err(|e| {
                             tracing::error!("Failed to hash admin password: {}", e);
@@ -1256,6 +1423,7 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     let mut tx = pool.begin().await?;
 
     if seed_enabled {
+        // Check if tutorials have already been seeded
         let already_seeded: Option<(String,)> =
             sqlx::query_as("SELECT value FROM app_metadata WHERE key = 'default_tutorials_seeded'")
                 .fetch_optional(&mut *tx)
@@ -1265,6 +1433,7 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
             .fetch_one(&mut *tx)
             .await?;
 
+        // Only seed if not already done and no tutorials exist
         if already_seeded.is_none() && tutorial_count.0 == 0 {
             insert_default_tutorials_tx(&mut tx).await?;
             let timestamp = chrono::Utc::now().to_rfc3339();

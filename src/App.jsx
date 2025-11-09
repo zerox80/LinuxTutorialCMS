@@ -1,20 +1,27 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { HelmetProvider } from 'react-helmet-async'
-import { AuthProvider } from './context/AuthContext'
-import { ContentProvider } from './context/ContentContext'
-import { TutorialProvider } from './context/TutorialContext'
-import { ThemeProvider } from './context/ThemeContext'
-import ErrorBoundary from './components/ErrorBoundary'
-import Header from './components/Header'
-import Footer from './components/Footer'
-import Home from './pages/Home'
-import Grundlagen from './pages/Grundlagen'
-import Login from './pages/Login'
-import TutorialDetail from './pages/TutorialDetail'
-import DynamicPage from './pages/DynamicPage'
-import PostDetail from './pages/PostDetail'
-import AdminDashboard from './pages/AdminDashboard'
-import ProtectedRoute from './components/ProtectedRoute'
+// External library imports
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom' // React Router for client-side routing
+import { HelmetProvider } from 'react-helmet-async' // For managing document head tags and SEO
+
+// Context provider imports for global state management
+import { AuthProvider } from './context/AuthContext' // Authentication state management
+import { ContentProvider } from './context/ContentContext' // Content data management
+import { TutorialProvider } from './context/TutorialContext' // Tutorial-specific state management
+import { ThemeProvider } from './context/ThemeContext' // Theme and UI appearance management
+
+// Component imports
+import ErrorBoundary from './components/ErrorBoundary' // Error handling wrapper component
+import Header from './components/Header' // Site navigation header
+import Footer from './components/Footer' // Site footer
+import ProtectedRoute from './components/ProtectedRoute' // Route protection for authenticated users
+
+// Page component imports
+import Home from './pages/Home' // Landing/home page
+import Grundlagen from './pages/Grundlagen' // Linux basics page
+import Login from './pages/Login' // User authentication page
+import TutorialDetail from './pages/TutorialDetail' // Individual tutorial view
+import DynamicPage from './pages/DynamicPage' // CMS-driven dynamic pages
+import PostDetail from './pages/PostDetail' // Individual blog post view
+import AdminDashboard from './pages/AdminDashboard' // Admin control panel
 
 /**
  * The main application component.
@@ -29,97 +36,112 @@ import ProtectedRoute from './components/ProtectedRoute'
  */
 function App() {
   return (
+    // Main error boundary to catch any unhandled errors in the entire app
     <ErrorBoundary>
+      {/* Helmet provider for managing document head tags and SEO meta information */}
       <HelmetProvider>
+        {/* Theme provider for dark/light mode and overall styling */}
         <ThemeProvider>
+          {/* React Router for client-side routing and navigation */}
           <Router>
+            {/* Authentication provider for user login state and sessions */}
             <AuthProvider>
+              {/* Content provider for CMS content and page data */}
               <ContentProvider>
+                {/* Tutorial provider for tutorial-specific state and data */}
                 <TutorialProvider>
-                <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 transition-colors">
-                <Routes>
-                {/* Public Routes with Header & Footer */}
-                <Route
-                  path="/"
-                  element={
-                    <ErrorBoundary>
-                      <Header />
-                      <Home />
-                      <Footer />
-                    </ErrorBoundary>
-                  }
-                />
+                  {/* Main application container with responsive gradient background */}
+                  <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 transition-colors">
+                    <Routes>
+                      {/* Public Routes with Header & Footer */}
+                      {/* Home page route - landing page with full layout */}
+                      <Route
+                        path="/"
+                        element={
+                          <ErrorBoundary>
+                            <Header />
+                            <Home />
+                            <Footer />
+                          </ErrorBoundary>
+                        }
+                      />
 
-                <Route
-                  path="/grundlagen"
-                  element={
-                    <ErrorBoundary>
-                      <Header />
-                      <Grundlagen />
-                      <Footer />
-                    </ErrorBoundary>
-                  }
-                />
+                      {/* Linux basics page route */}
+                      <Route
+                        path="/grundlagen"
+                        element={
+                          <ErrorBoundary>
+                            <Header />
+                            <Grundlagen />
+                            <Footer />
+                          </ErrorBoundary>
+                        }
+                      />
 
-                <Route
-                  path="/tutorials/:id"
-                  element={
-                    <ErrorBoundary>
-                      <Header />
-                      <TutorialDetail />
-                      <Footer />
-                    </ErrorBoundary>
-                  }
-                />
+                      {/* Individual tutorial page with dynamic ID parameter */}
+                      <Route
+                        path="/tutorials/:id"
+                        element={
+                          <ErrorBoundary>
+                            <Header />
+                            <TutorialDetail />
+                            <Footer />
+                          </ErrorBoundary>
+                        }
+                      />
 
-                <Route
-                  path="/pages/:pageSlug/posts/:postSlug"
-                  element={
-                    <ErrorBoundary>
-                      <Header />
-                      <PostDetail />
-                      <Footer />
-                    </ErrorBoundary>
-                  }
-                />
+                      {/* Blog post detail page with nested route parameters */}
+                      <Route
+                        path="/pages/:pageSlug/posts/:postSlug"
+                        element={
+                          <ErrorBoundary>
+                            <Header />
+                            <PostDetail />
+                            <Footer />
+                          </ErrorBoundary>
+                        }
+                      />
 
-                <Route
-                  path="/pages/:slug"
-                  element={
-                    <ErrorBoundary>
-                      <Header />
-                      <DynamicPage />
-                      <Footer />
-                    </ErrorBoundary>
-                  }
-                />
-                
-                {/* Login Route (no Header/Footer) */}
-                <Route path="/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
-                
-                {/* Protected Admin Route (no Header/Footer from main layout) */}
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute>
-                      <ErrorBoundary>
-                        <AdminDashboard />
-                      </ErrorBoundary>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="*"
-                  element={
-                    <ErrorBoundary>
-                      <Header />
-                      <Home />
-                      <Footer />
-                    </ErrorBoundary>
-                  }
-                />
-                </Routes>
-              </div>
+                      {/* Dynamic CMS page route */}
+                      <Route
+                        path="/pages/:slug"
+                        element={
+                          <ErrorBoundary>
+                            <Header />
+                            <DynamicPage />
+                            <Footer />
+                          </ErrorBoundary>
+                        }
+                      />
+
+                      {/* Login Route - standalone page without header/footer */}
+                      <Route path="/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
+
+                      {/* Protected Admin Route - requires authentication, no header/footer */}
+                      <Route
+                        path="/admin"
+                        element={
+                          <ProtectedRoute>
+                            <ErrorBoundary>
+                              <AdminDashboard />
+                            </ErrorBoundary>
+                          </ProtectedRoute>
+                        }
+                      />
+
+                      {/* Catch-all route for 404 handling - redirects to home */}
+                      <Route
+                        path="*"
+                        element={
+                          <ErrorBoundary>
+                            <Header />
+                            <Home />
+                            <Footer />
+                          </ErrorBoundary>
+                        }
+                      />
+                    </Routes>
+                  </div>
                 </TutorialProvider>
               </ContentProvider>
             </AuthProvider>
