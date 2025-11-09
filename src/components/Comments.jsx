@@ -23,6 +23,15 @@ const Comments = ({ tutorialId }) => {
     loadComments();
   }, [tutorialId]);
 
+  /**
+   * Loads comments for the specified tutorial from the API.
+   *
+   * Fetches all comments associated with the current tutorial and updates
+   * the component state. If the API call fails, logs the error and sets
+   * comments to an empty array.
+   *
+   * @returns {Promise<void>} A promise that resolves when comments are loaded or rejects on error.
+   */
   const loadComments = async () => {
     try {
       const data = await api.listTutorialComments(tutorialId);
@@ -33,6 +42,15 @@ const Comments = ({ tutorialId }) => {
     }
   };
 
+  /**
+   * Handles the submission of a new comment form.
+   *
+   * Validates the form data, submits the comment to the API, and refreshes
+   * the comments list. Only admin users can submit comments.
+   *
+   * @param {React.FormEvent} e - The form submission event.
+   * @returns {Promise<void>} A promise that resolves when the comment is submitted or rejects on error.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newComment.trim() || !isAuthenticated || !isAdmin) return;
@@ -49,6 +67,15 @@ const Comments = ({ tutorialId }) => {
     }
   };
 
+  /**
+   * Handles the deletion of a comment.
+   *
+   * Shows a confirmation dialog, then deletes the specified comment from the API.
+   * Only admin users can delete comments. Refreshes the comments list after successful deletion.
+   *
+   * @param {string} commentId - The ID of the comment to delete.
+   * @returns {Promise<void>} A promise that resolves when the comment is deleted or rejects on error.
+   */
   const handleDelete = async (commentId) => {
     if (!isAdmin) return;
     if (!confirm('Kommentar wirklich löschen?')) return;

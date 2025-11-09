@@ -12,7 +12,16 @@ import PropTypes from 'prop-types';
  */
 const CodeBlock = ({ children, className }) => {
   const [copied, setCopied] = useState(false);
-  
+
+  /**
+   * Copies the code content to the user's clipboard.
+   *
+   * Extracts text content from the children prop, trims whitespace,
+   * and attempts to write it to the clipboard using the Clipboard API.
+   * Shows visual feedback for 2 seconds after successful copy.
+   *
+   * @returns {Promise<void>} A promise that resolves when the copy operation completes or rejects on error.
+   */
   const handleCopy = async () => {
     const code = children?.props?.children || children;
     const textToCopy = typeof code === 'string' ? code : String(code);

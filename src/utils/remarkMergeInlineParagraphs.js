@@ -1,5 +1,14 @@
 import { visit } from 'unist-util-visit'
 
+/**
+ * Set of AST node types that are considered inline content.
+ *
+ * These node types represent text-level elements that can appear
+ * within a paragraph without breaking the inline flow.
+ *
+ * @constant {Set<string>}
+ * @readonly
+ */
 const INLINE_NODE_TYPES = new Set([
   'text',
   'inlineCode',
@@ -15,8 +24,26 @@ const INLINE_NODE_TYPES = new Set([
   'html',
 ])
 
+/**
+ * Regular expression matching letters and numbers including Unicode characters.
+ *
+ * Used to determine if characters should be separated by spaces when
+ * merging paragraphs. Includes Latin alphabet and extended Latin characters.
+ *
+ * @constant {RegExp}
+ * @readonly
+ */
 const LETTER_NUMBER_REGEX = /[A-Za-z0-9\u00C0-\u024F]/
 
+/**
+ * Deep clones an AST node with all its properties and children.
+ *
+ * Creates a recursive copy of a markdown AST node to avoid mutating
+ * the original tree structure during paragraph merging operations.
+ *
+ * @param {*} node - The AST node to clone
+ * @returns {*} A deep copy of the node
+ */
 const cloneNode = (node) => {
   if (!node || typeof node !== 'object') {
     return node
@@ -28,6 +55,12 @@ const cloneNode = (node) => {
   return copy
 }
 
+/**
+ * Creates a new paragraph node with cloned children from an existing paragraph.
+ *
+ * @param {object} paragraph - The paragraph node to clone
+ * @returns {object} A new paragraph node with cloned children
+ */
 const cloneParagraph = (paragraph) => ({
   type: 'paragraph',
   children: Array.isArray(paragraph.children)
@@ -35,6 +68,15 @@ const cloneParagraph = (paragraph) => ({
     : [],
 })
 
+/**
+ * Extracts plain text content from a paragraph node.
+ *
+ * Concatenates text from text nodes and inline code nodes, ignoring
+ * other inline elements like links and images.
+ *
+ * @param {object} paragraph - The paragraph node to extract text from
+ * @returns {string} The concatenated text content
+ */
 const getParagraphText = (paragraph) => {
   if (!paragraph || !Array.isArray(paragraph.children)) {
     return ''
