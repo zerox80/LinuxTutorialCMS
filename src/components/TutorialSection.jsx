@@ -19,28 +19,28 @@ const TutorialSection = () => {
   }, [tutorials])
   return (
     <section
-      className="relative isolate overflow-hidden bg-gradient-to-br from-[#0b1733] via-[#101f3d] to-[#050a1a] py-24 sm:py-28 text-neutral-100"
+      className="relative isolate overflow-hidden bg-slate-950 text-slate-100 py-24 sm:py-28"
       data-section="tutorials"
       id="tutorials"
     >
       <div className="absolute inset-0 -z-10">
         <div
           aria-hidden="true"
-          className="absolute inset-x-0 top-0 h-[420px] bg-gradient-to-b from-primary-500/25 via-primary-500/10 to-transparent blur-3xl"
+          className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-primary-500/15 via-primary-500/5 to-transparent"
         ></div>
         <div
           aria-hidden="true"
-          className="absolute -right-36 top-1/3 h-96 w-96 rounded-full bg-[radial-gradient(circle_at_top,#22d3ee33,transparent)] blur-3xl"
+          className="absolute -right-40 top-1/4 h-80 w-80 rounded-full bg-primary-400/20 blur-3xl"
         ></div>
         <div
           aria-hidden="true"
-          className="absolute -left-32 bottom-0 h-80 w-80 rounded-full bg-[radial-gradient(circle_at_bottom,#a855f733,transparent)] blur-3xl"
+          className="absolute -left-32 bottom-0 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl"
         ></div>
       </div>
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="section-title">{sectionContent.title || 'Tutorial Inhalte'}</h2>
-          <p className="mt-4 text-lg leading-relaxed text-neutral-200 max-w-2xl mx-auto">
+          <h2 className="section-title text-white">{sectionContent.title || 'Tutorial Inhalte'}</h2>
+          <p className="mt-4 text-lg leading-relaxed text-slate-300 max-w-2xl mx-auto">
             {sectionContent.description ||
               'Umfassende Lernmodule für alle Erfahrungsstufen – vom Anfänger bis zum Profi'}
           </p>
@@ -69,11 +69,11 @@ const TutorialSection = () => {
           ))}
         </div>
       )}
-        <div className="mt-20 rounded-3xl border border-white/10 bg-gradient-to-r from-primary-600 via-primary-700 to-[#0f1c45] p-8 text-center text-neutral-50 shadow-card-xl md:p-12">
-          <h3 className="mb-4 text-3xl font-semibold md:text-4xl">
+        <div className="mt-20 rounded-3xl border border-white/10 bg-slate-900/80 p-8 text-center text-slate-100 shadow-card-xl md:p-12">
+          <h3 className="mb-4 text-3xl font-semibold md:text-4xl text-white">
             {sectionContent.heading || 'Bereit anzufangen?'}
           </h3>
-          <p className="mb-8 text-lg text-neutral-100/80">
+          <p className="mb-8 text-lg text-slate-300">
             {sectionContent.ctaDescription ||
               'Wähle ein Thema aus und starte deine Linux-Lernreise noch heute!'}
           </p>
@@ -82,7 +82,7 @@ const TutorialSection = () => {
               onClick={() =>
                 navigateContentTarget(sectionContent?.ctaPrimary?.target, { navigate, location })
               }
-              className="rounded-xl bg-gradient-to-r from-primary-500 to-primary-700 px-8 py-3 font-semibold text-neutral-50 shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:from-primary-400 hover:to-primary-600"
+              className="btn-primary"
               aria-label="Tutorial starten und nach oben scrollen"
             >
               {sectionContent?.ctaPrimary?.label || 'Tutorial starten'}
@@ -91,7 +91,7 @@ const TutorialSection = () => {
               onClick={() =>
                 navigateContentTarget(sectionContent?.ctaSecondary?.target, { navigate, location })
               }
-              className="rounded-xl border border-white/20 bg-white/10 px-8 py-3 font-semibold text-neutral-100 transition-all duration-300 hover:bg-white/20 hover:text-white"
+              className="btn-secondary-inverse"
               aria-label="Mehr über die Tutorials erfahren"
             >
               {sectionContent?.ctaSecondary?.label || 'Mehr erfahren'}

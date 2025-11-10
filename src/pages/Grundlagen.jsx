@@ -101,16 +101,10 @@ const Grundlagen = () => {
             {cta.description || 'Wechsel zur Startseite und wähle das Modul, das am besten zu dir passt, oder tauche direkt in die Praxis- und Advanced-Themen ein, sobald du die Grundlagen sicher beherrschst.'}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href={cta.primary?.href || '/'}
-              className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-            >
+            <a href={cta.primary?.href || '/'} className="btn-primary">
               {cta.primary?.label || 'Zur Startseite'}
             </a>
-            <a
-              href={cta.secondary?.href || '/admin'}
-              className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl border border-primary-600 text-primary-700 font-semibold transition-all duration-300 hover:bg-primary-50"
-            >
+            <a href={cta.secondary?.href || '/admin'} className="btn-secondary">
               {cta.secondary?.label || 'Tutorials verwalten'}
             </a>
           </div>

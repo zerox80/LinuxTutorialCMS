@@ -71,15 +71,38 @@ const Footer = () => {
     const allItems = Array.isArray(navigation?.items) ? navigation.items : []
     return allItems
   }, [staticNavigationItems, dynamicNavigationItems, navigation?.items])
+  const buildTargetHref = useCallback((target) => {
+    if (!target || typeof target !== 'object') {
+      return null
+    }
+    const value = typeof target.value === 'string' ? target.value : target.path || target.href || ''
+    switch (target.type) {
+      case 'section':
+        if (value) {
+          return `#${value.replace(/^#/, '')}`
+        }
+        return '#'
+      case 'route':
+      case 'page':
+        return value || '/'
+      case 'external':
+      case 'href':
+        return sanitizeExternalUrl(value) || null
+      default:
+        return null
+    }
+  }, [])
   const navigationQuickLinks = useMemo(() => {
     const items = effectiveNavigationItems
     return items
       .map((item) => {
         if (!item) return null
         if (item.target) {
+          const href = buildTargetHref(item.target)
           return {
             label: item.label || item.slug || 'Link',
             target: item.target,
+            href,
           }
         }
         if (item.href) {
@@ -97,6 +120,7 @@ const Footer = () => {
           return {
             label: item.label || item.slug || item.path,
             target: { type: 'route', value: item.path },
+            href: item.path,
           }
         }
         if (item.type === 'section') {
@@ -105,55 +129,48 @@ const Footer = () => {
           return {
             label: item.label || 'Link',
             target: { type: 'section', value: sectionValue },
+            href: `#${sectionValue.replace(/^#/, '')}`,
           }
         }
         if (item.slug) {
           return {
             label: item.label || item.slug,
             target: { type: 'route', value: `/pages/${item.slug}` },
+            href: `/pages/${item.slug}`,
           }
         }
         return null
       })
       .filter(Boolean)
-  }, [effectiveNavigationItems])
+  }, [buildTargetHref, effectiveNavigationItems])
   const quickLinks = useMemo(() => {
     return navigationQuickLinks
   }, [navigationQuickLinks])
-  const handleQuickLink = (link) => {
+  const handleQuickLink = (event, link) => {
     // Early return for invalid or missing link data
     if (!link) return
     // Extract navigation data from link object
     const target = link.target
-    const href = sanitizeExternalUrl(link.href || link.url)
-    const path = link.path
-    // Priority 1: Content targets (CMS-driven navigation)
     if (target) {
+      event?.preventDefault?.()
       navigateContentTarget(target, { navigate, location })
       return
     }
-    // Priority 2: External URLs and special protocols
+    const href = sanitizeExternalUrl(link.href || link.url)
     if (href) {
-      // Ensure we're in a browser environment
-      if (typeof window === 'undefined') {
+      const isExternal = href.startsWith('http://') || href.startsWith('https://')
+      const isSpecialProtocol = href.startsWith('mailto:') || href.startsWith('tel:')
+      if (isExternal || isSpecialProtocol) {
+        // Allow default anchor behavior
         return
       }
-      // External HTTP/HTTPS links - open in new tab with security
-      if (href.startsWith('http://') || href.startsWith('https://')) {
-        window.open(href, '_blank', 'noopener,noreferrer')
-        return
-      }
-      // Special protocol links (email, phone) - use current window
-      if (href.startsWith('mailto:') || href.startsWith('tel:')) {
-        window.location.href = href
-        return
-      }
-      // Other relative URLs - navigate in current window
+      event?.preventDefault?.()
       window.location.assign(href)
       return
     }
-    // Priority 3: Internal routes - use React Router
+    const path = link.path
     if (path) {
+      event?.preventDefault?.()
       navigate(path)
       return
     }
@@ -182,16 +199,24 @@ const Footer = () => {
             <h4 className="text-white font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2">
               {quickLinks.length > 0 ? (
-                quickLinks.map((link, index) => (
-                  <li key={link.label || link.target?.value || `quick-${index}`}>
-                    <button
-                      onClick={() => handleQuickLink(link)}
-                      className="hover:text-primary-400 transition-colors duration-200"
-                    >
-                      {link.label || 'Link'}
-                    </button>
-                  </li>
-                ))
+                quickLinks.map((link, index) => {
+                  const href = link.href || '#'
+                  const isExternal = typeof href === 'string' && (href.startsWith('http://') || href.startsWith('https://'))
+                  const isSpecialProtocol = typeof href === 'string' && (href.startsWith('mailto:') || href.startsWith('tel:'))
+                  return (
+                    <li key={link.label || link.target?.value || `quick-${index}`}>
+                      <a
+                        href={href}
+                        onClick={(event) => handleQuickLink(event, link)}
+                        className="hover:text-primary-400 transition-colors duration-200"
+                        target={isExternal ? '_blank' : undefined}
+                        rel={isExternal ? 'noopener noreferrer' : undefined}
+                      >
+                        {link.label || 'Link'}
+                      </a>
+                    </li>
+                  )
+                })
               ) : (
                 <li className="text-sm text-gray-500">Noch keine Quick Links definiert.</li>
               )}
