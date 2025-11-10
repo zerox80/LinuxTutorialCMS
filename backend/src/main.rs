@@ -223,6 +223,9 @@ async fn main() {
     csrf::init_csrf_secret().expect("Failed to initialize CSRF secret");
     tracing::info!("CSRF secret initialized successfully");
 
+    handlers::auth::init_login_attempt_salt().expect("Failed to initialize login attempt salt");
+    tracing::info!("Login attempt salt initialized successfully");
+
     let pool = db::create_pool()
         .await
         .expect("Failed to create database pool");
@@ -260,7 +263,11 @@ async fn main() {
             Method::OPTIONS,
             Method::HEAD,
         ]))
-        .allow_headers(AllowHeaders::list(vec![AUTHORIZATION, CONTENT_TYPE]))
+        .allow_headers(AllowHeaders::list(vec![
+            AUTHORIZATION,
+            CONTENT_TYPE,
+            HeaderName::from_static(csrf::csrf_header_name()),
+        ]))
         .allow_credentials(true);
 
     tracing::info!(origins = ?allowed_origins, "Configured CORS origins");
@@ -340,9 +347,9 @@ async fn main() {
             delete(handlers::comments::delete_comment),
         )
 
-        .route_layer(middleware::from_extractor::<csrf::CsrfGuard>())
-
         .route_layer(middleware::from_fn(auth::auth_middleware))
+
+        .route_layer(middleware::from_extractor::<csrf::CsrfGuard>())
 
         .layer(RequestBodyLimitLayer::new(ADMIN_BODY_LIMIT))
 

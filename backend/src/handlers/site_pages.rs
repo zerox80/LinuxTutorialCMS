@@ -286,8 +286,9 @@ fn map_page(
         )
     })?;
 
+    let sanitized_slug = slug.trim().to_lowercase();
     let sanitized_title = match title.trim() {
-        "" => slug.clone(),
+        "" => sanitized_slug.clone(),
         value => value.to_string(),
     };
 
@@ -304,7 +305,7 @@ fn map_page(
 
     Ok(SitePageResponse {
         id,
-        slug,
+        slug: sanitized_slug,
         title: sanitized_title,
         description: sanitized_description,
         nav_label: sanitized_nav_label,
@@ -480,14 +481,18 @@ pub async fn get_navigation(
 
     let mut items = Vec::with_capacity(pages.len());
     for page in pages {
+        let normalized_slug = page.slug.trim().to_lowercase();
+        if normalized_slug.is_empty() {
+            continue;
+        }
         items.push(NavigationItemResponse {
             id: page.id,
-            slug: page.slug,
+            slug: normalized_slug.clone(),
             label: page
                 .nav_label
                 .clone()
                 .filter(|label| !label.trim().is_empty())
-                .unwrap_or(page.title.clone()),
+                .unwrap_or_else(|| page.title.trim().to_string()),
             order_index: page.order_index,
         });
     }
@@ -557,7 +562,17 @@ pub async fn list_published_page_slugs(
         .await
         .map_err(|err| map_sqlx_error(err, "Navigation"))?;
 
-    let slugs = pages.into_iter().map(|page| page.slug).collect();
+    let slugs = pages
+        .into_iter()
+        .filter_map(|page| {
+            let normalized = page.slug.trim().to_lowercase();
+            if normalized.is_empty() {
+                None
+            } else {
+                Some(normalized)
+            }
+        })
+        .collect();
 
     Ok(Json(slugs))
 }

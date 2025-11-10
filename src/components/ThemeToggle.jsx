@@ -50,8 +50,8 @@ const ThemeToggle = () => {
       className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
       
       // Accessibility label for screen readers
-      // Dynamically describes the action based on current theme
-      aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+      // Includes the word "theme" to align with automated tests and clarity
+      aria-label={`Toggle theme (switch to ${theme === 'dark' ? 'light' : 'dark'} mode)`}
     >
       {/* Conditional rendering based on current theme */}
       {theme === 'dark' ? (

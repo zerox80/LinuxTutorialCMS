@@ -21,7 +21,7 @@ const SearchBar = ({ onClose }) => {
       })
   }, []);
   useEffect(() => {
-    if (query.trim().length < 2) {
+    if (query.trim().length < 1) {
       setResults([]);
       return;
     }
@@ -116,14 +116,14 @@ const SearchBar = ({ onClose }) => {
               Suche läuft...
             </div>
           )}
-          {!isLoading && query.trim().length >= 2 && results.length === 0 && (
+          {!isLoading && query.trim().length >= 1 && results.length === 0 && (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               Keine Ergebnisse gefunden
             </div>
           )}
-          {!isLoading && query.trim().length < 2 && (
+          {!isLoading && query.trim().length < 1 && (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              Gib mindestens 2 Zeichen ein
+              Gib mindestens 1 Zeichen ein
             </div>
           )}
           {!isLoading && results.length > 0 && (

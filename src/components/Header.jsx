@@ -39,8 +39,11 @@ const Header = () => {
     if (contentNavItems.length > 0) {
       return contentNavItems
     }
+    if (navigation?.loading) {
+      return []
+    }
     return FALLBACK_NAV_ITEMS
-  }, [navigation?.items, contentNavItems])
+  }, [navigation?.items, navigation?.loading, contentNavItems])
   const handleNavigation = (item) => {
     if (!item) return
     if (item.target) {
@@ -91,14 +94,11 @@ const Header = () => {
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {}
-          <div className="flex items-center space-x-3 group">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-800 p-2.5 rounded-xl blur opacity-50 group-hover:opacity-75 transition-opacity duration-300"></div>
-              <div className="relative bg-gradient-to-r from-primary-600 to-primary-800 p-2.5 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <BrandIcon className="w-6 h-6 text-white" />
-              </div>
+          <div className="flex items-center space-x-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-600 text-white shadow-sm">
+              <BrandIcon className="w-6 h-6" />
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent">
+            <span className="text-xl font-semibold text-gray-900 dark:text-gray-100">
               {headerContent?.brand?.name || 'Linux Tutorial'}
             </span>
           </div>
@@ -121,13 +121,9 @@ const Header = () => {
               <Search className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             </button>
             <ThemeToggle />
-            <button
-              onClick={handleCtaClick}
-              className="relative flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl font-medium shadow-lg hover:shadow-2xl hover:scale-105 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden group/btn"
-            >
-              <CTAIcon className="w-4 h-4 group-hover/btn:rotate-12 transition-transform duration-300" />
+            <button onClick={handleCtaClick} className="btn-primary btn-primary--compact">
+              <CTAIcon className="w-4 h-4" />
               <span>{isAuthenticated ? ctaContent.authLabel || 'Admin' : ctaContent.guestLabel || 'Login'}</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
             </button>
           </div>
           {}
@@ -168,7 +164,7 @@ const Header = () => {
                 handleCtaClick()
                 setMobileMenuOpen(false)
               }}
-              className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-200"
+              className="btn-primary w-full justify-center"
             >
               <CTAIcon className="w-4 h-4" />
               <span>{isAuthenticated ? ctaContent.authLabel || 'Admin' : ctaContent.guestLabel || 'Login'}</span>

@@ -178,6 +178,7 @@ export const ContentProvider = ({ children }) => {
   const [publishedPagesError, setPublishedPagesError] = useState(null)
   const [pageCache, setPageCache] = useState({})
   const pageCacheRef = useRef({})
+  const publishedPageSlugsRef = useRef([])
   const loadContent = useCallback(async () => {
     try {
       setLoading(true)
@@ -227,6 +228,12 @@ export const ContentProvider = ({ children }) => {
       setPublishedPagesLoading(false)
     }
   }, [])
+  useEffect(() => {
+    publishedPageSlugsRef.current = Array.isArray(publishedPageSlugs)
+      ? publishedPageSlugs
+      : []
+  }, [publishedPageSlugs])
+
   const fetchPublishedPage = useCallback(
     async (slug, { force = false, signal } = {}) => {
       if (!slug || typeof slug !== 'string') {
@@ -239,6 +246,29 @@ export const ContentProvider = ({ children }) => {
       if (!force && pageCacheRef.current[normalizedSlug]) {
         return pageCacheRef.current[normalizedSlug]
       }
+      const buildSlugSet = (values) =>
+        new Set(
+          (Array.isArray(values) ? values : [])
+            .map((value) => (typeof value === 'string' ? value.trim().toLowerCase() : ''))
+            .filter(Boolean),
+        )
+
+      if (!force) {
+        const initialPublished = buildSlugSet(publishedPageSlugsRef.current)
+        if (!initialPublished.has(normalizedSlug)) {
+          await loadPublishedPages()
+          await new Promise((resolve) => {
+            // allow state updates triggered by loadPublishedPages to settle before checking again
+            setTimeout(resolve, 0)
+          })
+          const refreshedPublished = buildSlugSet(publishedPageSlugsRef.current)
+          if (!refreshedPublished.has(normalizedSlug)) {
+            const error = new Error('Seite ist nicht veröffentlicht oder wurde entfernt.')
+            error.status = 404
+            throw error
+          }
+        }
+      }
       try {
         const data = await api.getPublishedPage(normalizedSlug, { signal })
         const nextCache = { ...pageCacheRef.current, [normalizedSlug]: data }
@@ -249,10 +279,16 @@ export const ContentProvider = ({ children }) => {
         if (!force && pageCacheRef.current[normalizedSlug]) {
           return pageCacheRef.current[normalizedSlug]
         }
+        const published = buildSlugSet(publishedPageSlugsRef.current)
+        if (!published.has(normalizedSlug)) {
+          const error = new Error('Seite ist nicht veröffentlicht oder wurde entfernt.')
+          error.status = 404
+          throw error
+        }
         throw err
       }
     },
-    [],
+    [loadPublishedPages],
   )
   const invalidatePageCache = useCallback((slug) => {
     if (slug && typeof slug === 'string') {
@@ -310,27 +346,50 @@ export const ContentProvider = ({ children }) => {
       id: item.id || item.slug || item.path || `static-${index}`,
       source: item.source || 'static',
     }))
+
+    const normalizedPublishedSlugs = new Set(
+      (Array.isArray(publishedPageSlugs) ? publishedPageSlugs : [])
+        .map((slug) => (typeof slug === 'string' ? slug.trim().toLowerCase() : ''))
+        .filter(Boolean),
+    )
+    const restrictToPublished = normalizedPublishedSlugs.size > 0
+
     const filteredDynamic = Array.isArray(dynamicNavItems)
-      ? dynamicNavItems.filter((item) => item && item.slug)
+      ? dynamicNavItems.filter((item) => {
+          if (!item || typeof item.slug !== 'string') {
+            return false
+          }
+          const normalizedSlug = item.slug.trim().toLowerCase()
+          if (!normalizedSlug) {
+            return false
+          }
+          if (restrictToPublished && !normalizedPublishedSlugs.has(normalizedSlug)) {
+            return false
+          }
+          return true
+        })
       : []
     const sortedDynamic = [...filteredDynamic].sort(
       (a, b) => (a?.order_index ?? 0) - (b?.order_index ?? 0),
     )
-    const dynamicNormalized = sortedDynamic.map((item, index) => ({
-      id: item.id || `page-${item.slug}-${index}`,
-      label: item.label || item.slug || 'Seite',
-      type: 'route',
-      path: `/pages/${item.slug}`,
-      slug: item.slug,
-      source: 'dynamic',
-      order_index: item.order_index ?? index,
-    }))
+    const dynamicNormalized = sortedDynamic.map((item, index) => {
+      const normalizedSlug = item.slug.trim().toLowerCase()
+      return {
+        id: item.id || `page-${normalizedSlug}-${index}`,
+        label: item.label || item.slug || 'Seite',
+        type: 'route',
+        path: `/pages/${normalizedSlug}`,
+        slug: normalizedSlug,
+        source: 'dynamic',
+        order_index: item.order_index ?? index,
+      }
+    })
     return {
       static: staticNormalized,
       dynamic: dynamicNormalized,
       items: [...staticNormalized, ...dynamicNormalized],
     }
-  }, [content, dynamicNavItems])
+  }, [content, dynamicNavItems, publishedPageSlugs])
   const value = useMemo(() => ({
     content,
     loading,

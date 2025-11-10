@@ -78,18 +78,27 @@ export const ThemeProvider = ({ children }) => {
    * This ensures theme persists across sessions and respects user preferences.
    */
   const [theme, setTheme] = useState(() => {
-    // Try to get saved theme from localStorage
-    const savedTheme = localStorage.getItem('theme');
-    
-    // If theme was previously saved, use it
-    if (savedTheme) return savedTheme;
-    
-    // Check if user's system prefers dark mode
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';  // Use dark theme if system preference is dark
+    if (typeof window === 'undefined') {
+      return 'light';
     }
-    
-    // Default to light theme if no preference found
+
+    try {
+      const savedTheme = window.localStorage?.getItem('theme');
+      if (savedTheme) {
+        return savedTheme;
+      }
+    } catch (error) {
+      console.warn('Unable to read theme from localStorage:', error);
+    }
+
+    try {
+      if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
+        return 'dark';
+      }
+    } catch (error) {
+      console.warn('System theme preference detection failed:', error);
+    }
+
     return 'light';
   });
   /**
@@ -103,17 +112,25 @@ export const ThemeProvider = ({ children }) => {
    */
   useEffect(() => {
     // Get reference to document root element (<html>)
+    if (typeof window === 'undefined' || !window.document?.documentElement) {
+      return undefined;
+    }
+
     const root = window.document.documentElement;
-    
+
     // Apply or remove 'dark' class based on current theme
     if (theme === 'dark') {
       root.classList.add('dark');     // Add 'dark' class for dark mode styles
     } else {
       root.classList.remove('dark');  // Remove 'dark' class for light mode
     }
-    
+
     // Persist theme preference to localStorage for next session
-    localStorage.setItem('theme', theme);
+    try {
+      window.localStorage?.setItem('theme', theme);
+    } catch (error) {
+      console.warn('Unable to persist theme preference:', error);
+    }
   }, [theme]);  // Re-run effect whenever theme changes
   /**
    * Toggle Theme Function

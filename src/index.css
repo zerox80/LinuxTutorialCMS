@@ -153,22 +153,29 @@
     -webkit-text-fill-color: transparent;
   }
 
-  /* Primary button with gradient background and hover effects */
+  /* Button utility styles for consistent CTA presentation */
+  .btn-base {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+
   .btn-primary {
-    background: linear-gradient(to right, #0284c7, #0369a1);
-    @apply relative px-8 py-4 text-white rounded-xl font-semibold shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden;
+    @apply btn-base px-6 py-3 text-white shadow-md bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 hover:-translate-y-0.5;
   }
 
-  /* Shimmer effect overlay for primary button hover state */
-  .btn-primary::before {
-    content: '';
-    background: linear-gradient(to right, rgba(255, 255, 255, 0.2), transparent);
-    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+  .btn-primary--compact {
+    @apply px-5 py-2.5;
   }
 
-  /* Show shimmer effect on button hover */
-  .btn-primary:hover::before {
-    @apply opacity-100;
+  .btn-secondary {
+    @apply btn-base px-6 py-3 border border-primary-600 text-primary-700 bg-white hover:bg-primary-50;
+  }
+
+  .btn-secondary-inverse {
+    @apply btn-base px-6 py-3 border border-white/40 text-white hover:bg-white/10;
+  }
+
+  .btn-ghost {
+    @apply btn-base px-6 py-3 text-gray-700 hover:text-primary-600 hover:bg-primary-50 dark:text-gray-300 dark:hover:text-primary-300 dark:hover:bg-gray-800/60;
   }
   /* Floating animation class for continuous up and down movement */
   .floating {

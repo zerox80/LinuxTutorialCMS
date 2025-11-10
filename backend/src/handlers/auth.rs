@@ -18,22 +18,39 @@ struct LoginAttempt {
     blocked_until: Option<String>,
 }
 
+static LOGIN_ATTEMPT_SALT: OnceLock<String> = OnceLock::new();
+
+pub fn init_login_attempt_salt() -> Result<(), String> {
+    let raw = env::var("LOGIN_ATTEMPT_SALT")
+        .map_err(|_| "LOGIN_ATTEMPT_SALT environment variable not set".to_string())?;
+    let trimmed = raw.trim();
+
+    if trimmed.len() < 32 {
+        return Err("LOGIN_ATTEMPT_SALT must be at least 32 characters long".to_string());
+    }
+
+    let unique_chars = trimmed.chars().collect::<std::collections::HashSet<_>>().len();
+    if unique_chars < 10 {
+        return Err("LOGIN_ATTEMPT_SALT must contain at least 10 unique characters".to_string());
+    }
+
+    LOGIN_ATTEMPT_SALT
+        .set(trimmed.to_string())
+        .map_err(|_| "LOGIN_ATTEMPT_SALT already initialized".to_string())?;
+
+    Ok(())
+}
+
+fn login_attempt_salt() -> &'static str {
+    LOGIN_ATTEMPT_SALT
+        .get()
+        .expect("LOGIN_ATTEMPT_SALT not initialized. Call init_login_attempt_salt() first.")
+        .as_str()
+}
+
 fn hash_login_identifier(username: &str) -> String {
-    static SALT: OnceLock<String> = OnceLock::new();
-
-    let salt = SALT.get_or_init(|| {
-        env::var("LOGIN_ATTEMPT_SALT").unwrap_or_else(|_| {
-            tracing::error!(
-                "LOGIN_ATTEMPT_SALT environment variable is missing. Set a high-entropy value to enable secure brute-force protection."
-            );
-            panic!(
-                "LOGIN_ATTEMPT_SALT must be set to a random, high-entropy string. See .env.example for guidance."
-            );
-        })
-    });
-
     let mut hasher = Sha256::new();
-    hasher.update(salt.as_bytes());
+    hasher.update(login_attempt_salt().as_bytes());
     hasher.update(username.trim().to_ascii_lowercase().as_bytes());
     format!("{:x}", hasher.finalize())
 }
