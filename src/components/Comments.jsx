@@ -1,21 +1,40 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { MessageSquare, Send, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
 import PropTypes from 'prop-types';
+const VALID_TUTORIAL_ID = /^[a-zA-Z0-9_-]+$/;
+
 const Comments = ({ tutorialId }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [loadError, setLoadError] = useState(null);
   const { isAuthenticated, user } = useAuth();
   const isAdmin = Boolean(user && user.role === 'admin');
-  useEffect(() => {
-    loadComments();
+  const normalizedTutorialId = useMemo(() => {
+    if (typeof tutorialId !== 'string') {
+      return null;
+    }
+    const trimmed = tutorialId.trim();
+    if (!trimmed || trimmed.length > 100 || !VALID_TUTORIAL_ID.test(trimmed)) {
+      return null;
+    }
+    return trimmed;
   }, [tutorialId]);
-  const loadComments = async () => {
+
+  const loadComments = useCallback(async () => {
+    if (!normalizedTutorialId) {
+      setComments([]);
+      setLoadError(new Error('Kommentare für diese Ressource sind deaktiviert.'));
+      return;
+    }
+    setLoadingComments(true);
+    setLoadError(null);
     try {
       // Fetch comments from the API using the tutorial ID
-      const data = await api.listTutorialComments(tutorialId);
+      const data = await api.listTutorialComments(normalizedTutorialId);
       // Ensure we always have an array, even if API returns unexpected data
       setComments(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -23,18 +42,24 @@ const Comments = ({ tutorialId }) => {
       console.error('Failed to load comments:', error);
       // Set empty array to maintain consistent state
       setComments([]);
+      setLoadError(error);
     }
-  };
+    setLoadingComments(false);
+  }, [normalizedTutorialId]);
+
+  useEffect(() => {
+    loadComments();
+  }, [loadComments]);
   const handleSubmit = async (e) => {
     // Prevent default form submission behavior
     e.preventDefault();
     // Validate form data and user permissions
-    if (!newComment.trim() || !isAuthenticated || !isAdmin) return;
+    if (!canManageComments || !newComment.trim()) return;
     // Set loading state to prevent duplicate submissions
     setIsLoading(true);
     try {
       // Submit comment to API
-      await api.createComment(tutorialId, newComment);
+      await api.createComment(normalizedTutorialId, newComment);
       // Clear form for next comment
       setNewComment('');
       // Refresh comments list to show new comment
@@ -49,9 +74,9 @@ const Comments = ({ tutorialId }) => {
   };
   const handleDelete = async (commentId) => {
     // Double-check admin permissions
-    if (!isAdmin) return;
+    if (!canManageComments) return;
     // Show confirmation dialog to prevent accidental deletion
-    if (!confirm('Kommentar wirklich löschen?')) return;
+    if (typeof window !== 'undefined' && !window.confirm('Kommentar wirklich löschen?')) return;
     try {
       // Delete comment from API
       await api.deleteComment(commentId);
@@ -62,6 +87,8 @@ const Comments = ({ tutorialId }) => {
       console.error('Failed to delete comment:', error);
     }
   };
+  const canManageComments = isAdmin && normalizedTutorialId;
+
   return (
     <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
       {}
@@ -70,7 +97,7 @@ const Comments = ({ tutorialId }) => {
         Kommentare ({comments.length})
       </h2>
       {}
-      {isAdmin && (
+      {canManageComments && (
         <form onSubmit={handleSubmit} className="mb-8">
           <textarea
             value={newComment}
@@ -112,6 +139,15 @@ const Comments = ({ tutorialId }) => {
           <p className="text-gray-600 dark:text-gray-400">
             Nur Administratoren können Kommentare hinzufügen oder löschen.
           </p>
+        </div>
+      )}
+      {}
+      {loadingComments && (
+        <div className="mb-6 text-sm text-gray-500 dark:text-gray-400">Kommentare werden geladen…</div>
+      )}
+      {loadError && !loadingComments && (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-200">
+          Kommentare konnten nicht geladen werden.
         </div>
       )}
       {}

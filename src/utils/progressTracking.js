@@ -2,6 +2,7 @@
 const STORAGE_KEY = 'linux_tutorial_cms_progress_v2';
 const BOOKMARKS_KEY = 'linux_tutorial_cms_bookmarks_v2';
 const STORAGE_PREFIX = 'linux_tutorial_cms_';
+const MAX_STORAGE_RETRIES = 2;
 // Performance and security limits
 const MAX_STORAGE_SIZE = 5 * 1024 * 1024; // 5MB limit
 const MAX_TUTORIALS_PER_USER = 1000;
@@ -35,7 +36,7 @@ const safeGetStorage = (key, defaultValue = null) => {
     return defaultValue;
   }
 };
-const safeSetStorage = (key, value) => {
+const safeSetStorage = (key, value, attempt = 0) => {
   try {
     const serialized = JSON.stringify(value);
     // Check size limits
@@ -52,25 +53,47 @@ const safeSetStorage = (key, value) => {
   } catch (error) {
     if (error.name === 'QuotaExceededError') {
       console.warn('Storage quota exceeded, attempting to free space...');
-      attemptStorageCleanup();
-      return safeSetStorage(key, value);
+      const cleaned = attemptStorageCleanup();
+      if (!cleaned || attempt >= MAX_STORAGE_RETRIES) {
+        console.error('Storage cleanup did not free enough space. Aborting write.');
+        return false;
+      }
+      return safeSetStorage(key, value, attempt + 1);
     }
     console.error(`Failed to store ${key} to storage:`, error);
     return false;
   }
 };
 const attemptStorageCleanup = () => {
+  if (!isLocalStorageAvailable()) {
+    return false;
+  }
   try {
-    const keys = Object.keys(localStorage).filter(key => key.startsWith(STORAGE_PREFIX));
-    const totalSize = keys.reduce((size, key) => {
-      return size + (localStorage.getItem(key) || '').length;
-    }, 0);
-    if (totalSize > MAX_STORAGE_SIZE * 0.9) {
-      console.warn('Cleaning up old progress data to free space');
-      // Implementation for cleaning up old data would go here
+    const entries = Object.keys(localStorage)
+      .filter((key) => key.startsWith(STORAGE_PREFIX))
+      .map((key) => ({ key, size: (localStorage.getItem(key) || '').length }))
+      .sort((a, b) => b.size - a.size);
+
+    let totalSize = entries.reduce((size, entry) => size + entry.size, 0);
+    if (totalSize <= MAX_STORAGE_SIZE * 0.9) {
+      return false;
     }
+
+    console.warn('Cleaning up stored progress data to free space');
+    let removed = false;
+    for (const entry of entries) {
+      localStorage.removeItem(entry.key);
+      totalSize -= entry.size;
+      removed = true;
+      if (totalSize <= MAX_STORAGE_SIZE * 0.8) {
+        break;
+      }
+    }
+
+    return removed;
   } catch (error) {
     console.error('Storage cleanup failed:', error);
+    return false;
   }
 };
 const validateTutorialId = (tutorialId) => {
@@ -237,8 +260,7 @@ export const getProgressStatistics = () => {
     // Get recently completed tutorials (last 5)
     const recentlyRead = completedIds
       .sort((a, b) => new Date(progress[b].timestamp) - new Date(progress[a].timestamp))
-      .slice(-5)
-      .reverse();
+      .slice(0, 5);
     return {
       totalTutorials: tutorialIds.length,
       completedTutorials: completedIds.length,

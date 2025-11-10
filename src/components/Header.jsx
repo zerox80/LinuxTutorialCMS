@@ -39,8 +39,11 @@ const Header = () => {
     if (contentNavItems.length > 0) {
       return contentNavItems
     }
+    if (navigation?.loading) {
+      return []
+    }
     return FALLBACK_NAV_ITEMS
-  }, [navigation?.items, contentNavItems])
+  }, [navigation?.items, navigation?.loading, contentNavItems])
   const handleNavigation = (item) => {
     if (!item) return
     if (item.target) {

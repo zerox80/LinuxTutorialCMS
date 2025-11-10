@@ -670,6 +670,17 @@ const PageManager = () => {
   const pagesAbortRef = useRef(null)
   const postsAbortRef = useRef(null)
   const isMountedRef = useRef(true)
+  const normalizedPublishedSlugs = useMemo(() => {
+    if (!Array.isArray(publishedPages?.publishedSlugs)) {
+      return new Set()
+    }
+    return new Set(
+      publishedPages.publishedSlugs
+        .map((slug) => (typeof slug === 'string' ? slug.trim().toLowerCase() : ''))
+        .filter(Boolean),
+    )
+  }, [publishedPages?.publishedSlugs])
+  const publishedSlugList = useMemo(() => Array.from(normalizedPublishedSlugs).sort(), [normalizedPublishedSlugs])
   useEffect(() => {
     isMountedRef.current = true
     return () => {
@@ -891,7 +902,7 @@ const PageManager = () => {
     setPostFormData(null)
   }
   const dynamicPagesInNav = navigation?.dynamic?.length ?? 0
-  const totalPublishedPages = publishedPages?.publishedSlugs?.length ?? 0
+  const totalPublishedPages = publishedSlugList.length
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -952,7 +963,7 @@ const PageManager = () => {
             </div>
           </div>
           <div className="space-y-3">
-            {(publishedPages?.publishedSlugs ?? []).map((slugValue) => (
+            {publishedSlugList.map((slugValue) => (
               <div key={slugValue} className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300">
                 <span>/pages/{slugValue}</span>
               </div>

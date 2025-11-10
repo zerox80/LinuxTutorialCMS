@@ -62,11 +62,17 @@ class ApiClient {
   setToken(token) {
     if (token && typeof token !== 'string') {
       console.warn('Attempted to set invalid JWT token; ignoring')
+      this.token = null
+      return
     }
-    this.token = null
+    this.token = typeof token === 'string' && token.trim() !== '' ? token.trim() : null
   }
   getHeaders() {
-    return {}
+    const headers = {}
+    if (this.token) {
+      headers.Authorization = `Bearer ${this.token}`
+    }
+    return headers
   }
   async request(endpoint, options = {}) {
     const {
