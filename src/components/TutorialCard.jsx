@@ -10,18 +10,7 @@ const TutorialCard = ({ icon: Icon, title, description, topics, color, onSelect,
     scrollToSection('tutorials')
   }
   return (
-    <div
-      className="tutorial-card group cursor-pointer hover:-translate-y-2 animate-fade-in"
-      onClick={handleSelect}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          handleSelect()
-        }
-      }}
-    >
+    <article className="tutorial-card group animate-fade-in">
       <div
         className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity duration-700 -z-10 blur-2xl`}
         aria-hidden="true"
@@ -68,7 +57,7 @@ const TutorialCard = ({ icon: Icon, title, description, topics, color, onSelect,
         </span>
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/button:translate-x-full transition-transform duration-1000" aria-hidden="true"></div>
       </button>
-    </div>
+    </article>
   )
 }
 
