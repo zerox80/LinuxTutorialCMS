@@ -154,12 +154,8 @@
   }
 
   /* Button utility styles for consistent CTA presentation */
-  .btn-base {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 disabled:opacity-60 disabled:cursor-not-allowed;
-  }
-
   .btn-primary {
-    @apply btn-base px-6 py-3 text-white shadow-md bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 hover:-translate-y-0.5;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 disabled:opacity-60 disabled:cursor-not-allowed px-6 py-3 text-white shadow-md bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 hover:-translate-y-0.5;
   }
 
   .btn-primary--compact {
@@ -167,15 +163,15 @@
   }
 
   .btn-secondary {
-    @apply btn-base px-6 py-3 border border-primary-600 text-primary-700 bg-white hover:bg-primary-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 disabled:opacity-60 disabled:cursor-not-allowed px-6 py-3 border border-primary-600 text-primary-700 bg-white hover:bg-primary-50;
   }
 
   .btn-secondary-inverse {
-    @apply btn-base px-6 py-3 border border-white/40 text-white hover:bg-white/10;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 disabled:opacity-60 disabled:cursor-not-allowed px-6 py-3 border border-white/40 text-white hover:bg-white/10;
   }
 
   .btn-ghost {
-    @apply btn-base px-6 py-3 text-gray-700 hover:text-primary-600 hover:bg-primary-50 dark:text-gray-300 dark:hover:text-primary-300 dark:hover:bg-gray-800/60;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 disabled:opacity-60 disabled:cursor-not-allowed px-6 py-3 text-gray-700 hover:text-primary-600 hover:bg-primary-50 dark:text-gray-300 dark:hover:text-primary-300 dark:hover:bg-gray-800/60;
   }
   /* Floating animation class for continuous up and down movement */
   .floating {

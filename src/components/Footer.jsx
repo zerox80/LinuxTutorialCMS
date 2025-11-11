@@ -92,9 +92,53 @@ const Footer = () => {
         return null
     }
   }, [])
-  const navigationQuickLinks = useMemo(() => {
-    const items = effectiveNavigationItems
-    return items
+  const quickLinks = useMemo(() => {
+    const contentLinks = Array.isArray(footerContent?.quickLinks) ? footerContent.quickLinks : []
+    const normalizedContentLinks = contentLinks
+      .map((link) => {
+        if (!link) return null
+        if (link.target) {
+          const href = buildTargetHref(link.target)
+          return {
+            label: link.label || link.target?.value || 'Link',
+            target: link.target,
+            href,
+          }
+        }
+        if (link.href) {
+          const safeHref = sanitizeExternalUrl(link.href)
+          if (!safeHref) {
+            console.warn('Blocked unsafe footer quick link:', link.href)
+            return null
+          }
+          return {
+            label: link.label || link.href,
+            href: safeHref,
+          }
+        }
+        if (link.path) {
+          return {
+            label: link.label || link.path,
+            target: { type: 'route', value: link.path },
+            href: link.path,
+          }
+        }
+        if (link.slug) {
+          const slug = link.slug.trim().replace(/^\//, '')
+          if (!slug) return null
+          return {
+            label: link.label || slug,
+            target: { type: 'route', value: `/pages/${slug}` },
+            href: `/pages/${slug}`,
+          }
+        }
+        return null
+      })
+      .filter(Boolean)
+    if (normalizedContentLinks.length > 0) {
+      return normalizedContentLinks
+    }
+    return effectiveNavigationItems
       .map((item) => {
         if (!item) return null
         if (item.target) {
@@ -142,10 +186,7 @@ const Footer = () => {
         return null
       })
       .filter(Boolean)
-  }, [buildTargetHref, effectiveNavigationItems])
-  const quickLinks = useMemo(() => {
-    return navigationQuickLinks
-  }, [navigationQuickLinks])
+  }, [buildTargetHref, effectiveNavigationItems, footerContent?.quickLinks])
   const handleQuickLink = (event, link) => {
     // Early return for invalid or missing link data
     if (!link) return

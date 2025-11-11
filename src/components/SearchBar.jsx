@@ -10,8 +10,11 @@ const SearchBar = ({ onClose }) => {
   const [selectedTopic, setSelectedTopic] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef(null);
+  const dialogRef = useRef(null);
+  const previouslyFocusedElement = useRef(null);
   const navigate = useNavigate();
   useEffect(() => {
+    previouslyFocusedElement.current = document.activeElement;
     inputRef.current?.focus();
     api.request('/search/topics', { cacheBust: false })
       .then((data) => setTopics(Array.isArray(data) ? data : []))
@@ -20,6 +23,51 @@ const SearchBar = ({ onClose }) => {
         setTopics([])
       })
   }, []);
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        if (onClose) {
+          onClose();
+        }
+        return;
+      }
+      if (event.key === 'Tab' && dialogRef.current) {
+        const focusableSelectors = [
+          'a[href]:not([tabindex="-1"])',
+          'button:not([disabled]):not([tabindex="-1"])',
+          'textarea:not([disabled]):not([tabindex="-1"])',
+          'input:not([disabled]):not([tabindex="-1"])',
+          'select:not([disabled]):not([tabindex="-1"])',
+          '[tabindex]:not([tabindex="-1"])',
+        ].join(',');
+        const focusable = Array.from(dialogRef.current.querySelectorAll(focusableSelectors)).filter(
+          (element) =>
+            !element.hasAttribute('disabled') &&
+            element.getAttribute('aria-hidden') !== 'true' &&
+            (element.offsetWidth > 0 || element.offsetHeight > 0 || element.getClientRects().length > 0),
+        );
+        if (!focusable.length) {
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const activeElement = document.activeElement;
+        if (!event.shiftKey && activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        } else if (event.shiftKey && activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      previouslyFocusedElement.current?.focus?.();
+    };
+  }, [onClose]);
   useEffect(() => {
     if (query.trim().length < 1) {
       setResults([]);
@@ -49,16 +97,28 @@ const SearchBar = ({ onClose }) => {
     navigate(`/tutorials/${id}`);
     if (onClose) onClose();
   };
-  const handleKeyDown = (e) => {
-    if (e.key === 'Escape') {
-      if (onClose) onClose();
-    }
-  };
   return (
-    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-start justify-center pt-20 px-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+    <div
+      className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-start justify-center pt-20 px-4"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && onClose) {
+          onClose();
+        }
+      }}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="search-dialog-title"
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col"
+      >
         {}
         <div className="p-4 border-b dark:border-gray-700">
+          <h2 id="search-dialog-title" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Tutorialsuche
+          </h2>
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
@@ -66,7 +126,6 @@ const SearchBar = ({ onClose }) => {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
               placeholder="Tutorial suchen..."
               className="w-full pl-12 pr-12 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-gray-100"
             />
@@ -74,6 +133,7 @@ const SearchBar = ({ onClose }) => {
               <button
                 onClick={onClose}
                 className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                aria-label="Suche schließen"
               >
                 <X className="w-5 h-5 text-gray-500" />
               </button>
