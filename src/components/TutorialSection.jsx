@@ -39,7 +39,7 @@ const TutorialSection = () => {
       </div>
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="section-title text-white">{sectionContent.title || 'Tutorial Inhalte'}</h2>
+          <h2 className="section-title">{sectionContent.title || 'Tutorial Inhalte'}</h2>
           <p className="mt-4 text-lg leading-relaxed text-slate-300 max-w-2xl mx-auto">
             {sectionContent.description ||
               'Umfassende Lernmodule für alle Erfahrungsstufen – vom Anfänger bis zum Profi'}
