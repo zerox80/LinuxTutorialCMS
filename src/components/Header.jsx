@@ -80,6 +80,7 @@ const Header = () => {
         return
       }
       scrollToSection(sectionId)
+      return
     }
   }
   const getNavHref = (item) => {
