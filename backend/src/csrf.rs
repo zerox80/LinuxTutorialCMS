@@ -257,14 +257,22 @@ where
             return Ok(Self);
         }
 
-        // Verify user is authenticated
-        let Some(claims) = parts.extensions.get::<auth::Claims>() else {
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                Json(ErrorResponse {
-                    error: "Missing authentication context".to_string(),
-                }),
-            ));
+        // Ensure user is authenticated by checking existing claims or lazily extracting them
+        let claims = if let Some(existing) = parts.extensions.get::<auth::Claims>() {
+            existing.clone()
+        } else {
+            let claims = auth::Claims::from_request_parts(parts, _state)
+                .await
+                .map_err(|(status, message)| {
+                    (
+                        status,
+                        Json(ErrorResponse {
+                            error: message,
+                        }),
+                    )
+                })?;
+            parts.extensions.insert(claims.clone());
+            claims
         };
 
         // Extract CSRF token from HTTP header

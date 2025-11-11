@@ -1,7 +1,5 @@
 #[cfg(test)]
 mod search_tests {
-    use super::*;
-
     #[tokio::test]
     async fn test_search_query_validation() {
         // Test empty query
