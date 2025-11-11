@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Terminal, Heart } from 'lucide-react'
 import { useContent } from '../context/ContentContext'
