@@ -37,7 +37,7 @@ jobs:
     
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: playwright-report
         path: playwright-report/
@@ -117,13 +117,13 @@ jobs:
       run: cargo build --release
     
     - name: Upload frontend artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: frontend-dist
         path: dist/
     
     - name: Upload backend artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: backend-binary
         path: backend/target/release/linux-tutorial-backend
