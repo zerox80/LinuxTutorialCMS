@@ -93,7 +93,7 @@
     "highlight.js": "^11.10.0",
     "katex": "^0.16.25",
     "unist-util-visit": "^5.0.0",
-    "lucide-react": "^0.552.0",
+    "lucide-react": "^0.553.0",
     "i18next": "^23.11.5",
     "react-i18next": "^15.1.5",
     "prop-types": "^15.8.1"
