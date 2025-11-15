@@ -1,4 +1,39 @@
-
+//! Cross-Site Request Forgery (CSRF) Protection Module
+//!
+//! This module provides CSRF protection for state-changing HTTP operations.
+//! It implements a double-submit cookie pattern with additional security features.
+//!
+//! # Security Features
+//! - HMAC-SHA256 signed tokens (prevents forgery)
+//! - Per-user token binding (prevents token theft across accounts)
+//! - Time-based expiration (6-hour TTL)
+//! - Random nonce for uniqueness
+//! - Version support for token format evolution
+//! - Constant-time signature comparison (prevents timing attacks)
+//! - Double-submit cookie pattern (cookie + header validation)
+//!
+//! # Token Format
+//! `v1|base64url(username)|expiry|nonce|base64url(signature)`
+//!
+//! # Usage
+//! Tokens are automatically validated by the CsrfGuard extractor for
+//! state-changing HTTP methods (POST, PUT, DELETE, PATCH).
+//!
+//! ## Initialization
+//! ```rust,no_run
+//! use linux_tutorial_cms::csrf;
+//! csrf::init_csrf_secret().expect("Failed to initialize CSRF secret");
+//! ```
+//!
+//! ## Protection
+//! ```rust,no_run
+//! use axum::{Router, routing::post, middleware};
+//! use linux_tutorial_cms::csrf::CsrfGuard;
+//!
+//! let app = Router::new()
+//!     .route("/api/resource", post(handler))
+//!     .route_layer(middleware::from_extractor::<CsrfGuard>());
+//! ```
 
 use axum::{
     extract::FromRequestParts,
@@ -20,22 +55,57 @@ use uuid::Uuid;
 
 use crate::{auth, models::ErrorResponse};
 
+/// HMAC-SHA256 type alias for token signing
 type HmacSha256 = Hmac<Sha256>;
 
+/// Environment variable name for the CSRF secret
 const CSRF_SECRET_ENV: &str = "CSRF_SECRET";
 
+/// Name of the CSRF cookie
 const CSRF_COOKIE_NAME: &str = "ltcms_csrf";
 
+/// Name of the CSRF HTTP header
 const CSRF_HEADER_NAME: &str = "x-csrf-token";
 
+/// CSRF token time-to-live in seconds (6 hours)
 const CSRF_TOKEN_TTL_SECONDS: i64 = 6 * 60 * 60;
 
+/// Minimum length for CSRF secret (256 bits recommended)
 const CSRF_MIN_SECRET_LENGTH: usize = 32;
 
+/// Current CSRF token format version
 const CSRF_VERSION: &str = "v1";
 
+/// Global storage for the CSRF secret key
 static CSRF_SECRET: OnceLock<Vec<u8>> = OnceLock::new();
 
+/// Initializes the CSRF secret from the environment variable.
+///
+/// This function must be called once at application startup before any
+/// CSRF operations. It validates the secret for security and stores it
+/// in global state.
+///
+/// # Security Validation
+/// The secret is checked for:
+/// - Presence (not missing)
+/// - Minimum length (32 bytes for adequate entropy)
+/// - Character diversity (at least 10 unique characters)
+///
+/// # Returns
+/// - `Ok(())` if the secret was successfully initialized
+/// - `Err(String)` with a descriptive error message if validation fails
+///
+/// # Errors
+/// - CSRF_SECRET environment variable not set
+/// - Secret is too short (< 32 characters)
+/// - Secret has insufficient entropy (< 10 unique characters)
+/// - Secret was already initialized (can only be called once)
+///
+/// # Example
+/// ```rust,no_run
+/// use linux_tutorial_cms::csrf;
+/// csrf::init_csrf_secret().expect("Failed to initialize CSRF secret");
+/// ```
 pub fn init_csrf_secret() -> Result<(), String> {
     // Load secret from environment variable
     let secret = env::var(CSRF_SECRET_ENV)
@@ -65,6 +135,13 @@ pub fn init_csrf_secret() -> Result<(), String> {
     Ok(())
 }
 
+/// Retrieves the CSRF secret from global state.
+///
+/// # Panics
+/// Panics if init_csrf_secret() has not been called yet.
+///
+/// # Returns
+/// A reference to the CSRF secret bytes.
 fn get_secret() -> &'static [u8] {
     CSRF_SECRET
         .get()
@@ -72,6 +149,38 @@ fn get_secret() -> &'static [u8] {
         .as_slice()
 }
 
+/// Issues a new CSRF token for a user.
+///
+/// Creates a cryptographically signed token bound to the user's identity.
+/// The token is valid for 6 hours and includes a random nonce for uniqueness.
+///
+/// # Arguments
+/// * `username` - The username to bind the token to
+///
+/// # Returns
+/// - `Ok(String)` - The complete CSRF token (v1 format)
+/// - `Err(String)` - If token generation fails
+///
+/// # Token Structure
+/// The token consists of:
+/// 1. Version identifier ("v1")
+/// 2. Base64URL-encoded username
+/// 3. Unix timestamp expiration
+/// 4. Random UUID nonce
+/// 5. Base64URL-encoded HMAC-SHA256 signature
+///
+/// All components are pipe-separated.
+///
+/// # Security
+/// - HMAC signature prevents token forgery
+/// - Username binding prevents token theft across accounts
+/// - Nonce prevents token reuse
+/// - Expiration limits token lifetime
+///
+/// # Errors
+/// - Username is empty
+/// - Failed to compute expiration timestamp
+/// - HMAC initialization fails
 pub fn issue_csrf_token(username: &str) -> Result<String, String> {
     // Validate input
     if username.is_empty() {
@@ -104,6 +213,36 @@ pub fn issue_csrf_token(username: &str) -> Result<String, String> {
     Ok(format!("{versioned_payload}|{signature}"))
 }
 
+/// Validates a CSRF token against an expected username.
+///
+/// This performs comprehensive validation including:
+/// - Token format and structure
+/// - Version compatibility
+/// - Username binding
+/// - Expiration check
+/// - Signature verification (constant-time)
+///
+/// # Arguments
+/// * `token` - The CSRF token to validate
+/// * `expected_username` - The username the token should be bound to
+///
+/// # Returns
+/// - `Ok(())` if the token is valid for the user
+/// - `Err(String)` with a descriptive error message if validation fails
+///
+/// # Security
+/// - Constant-time signature comparison (prevents timing attacks)
+/// - Strict format validation (prevents malformed tokens)
+/// - Username binding check (prevents cross-account token use)
+/// - Expiration enforcement (limits token lifetime)
+///
+/// # Errors
+/// - Malformed token structure
+/// - Unsupported version
+/// - Username mismatch
+/// - Token expired
+/// - Invalid signature
+/// - Nonce too short
 fn validate_csrf_token(token: &str, expected_username: &str) -> Result<(), String> {
     // Parse token into components
     let mut parts = token.split('|');
@@ -180,16 +319,39 @@ fn validate_csrf_token(token: &str, expected_username: &str) -> Result<(), Strin
     Ok(())
 }
 
+/// Performs constant-time equality comparison on byte slices.
+///
+/// This prevents timing side-channel attacks by ensuring the comparison
+/// takes the same time regardless of where differences occur.
+///
+/// # Arguments
+/// * `a` - First byte slice
+/// * `b` - Second byte slice
+///
+/// # Returns
+/// `true` if the slices are equal, `false` otherwise
+///
+/// # Security
+/// Uses the `subtle` crate for constant-time comparison, preventing
+/// attackers from learning about signature bytes through timing analysis.
 fn subtle_equals(a: &[u8], b: &[u8]) -> bool {
     use subtle::ConstantTimeEq;
     a.ct_eq(b).into()
 }
 
+/// Appends a CSRF token cookie to the response headers.
+///
+/// # Arguments
+/// * `headers` - Mutable reference to the response HeaderMap
+/// * `token` - The CSRF token to include in the cookie
+///
+/// # Error Handling
+/// Logs an error if cookie serialization fails (should never happen)
 pub fn append_csrf_cookie(headers: &mut HeaderMap, token: &str) {
-
+    // Build cookie with security flags
     let cookie = build_csrf_cookie(token);
-    
 
+    // Append to Set-Cookie header
     if let Ok(value) = HeaderValue::from_str(&cookie.to_string()) {
         headers.append(SET_COOKIE, value);
     } else {
@@ -197,11 +359,18 @@ pub fn append_csrf_cookie(headers: &mut HeaderMap, token: &str) {
     }
 }
 
+/// Appends a cookie that removes the CSRF cookie (for logout).
+///
+/// # Arguments
+/// * `headers` - Mutable reference to the response HeaderMap
+///
+/// # Error Handling
+/// Logs an error if cookie serialization fails (should never happen)
 pub fn append_csrf_removal(headers: &mut HeaderMap) {
-
+    // Build removal cookie (expired)
     let cookie = build_csrf_removal();
-    
 
+    // Append to Set-Cookie header
     if let Ok(value) = HeaderValue::from_str(&cookie.to_string()) {
         headers.append(SET_COOKIE, value);
     } else {
@@ -209,14 +378,29 @@ pub fn append_csrf_removal(headers: &mut HeaderMap) {
     }
 }
 
+/// Builds a CSRF cookie with appropriate security flags.
+///
+/// # Arguments
+/// * `token` - The CSRF token to store in the cookie
+///
+/// # Returns
+/// A Cookie configured for CSRF protection
+///
+/// # Security Flags
+/// - SameSite=Strict: Prevents cross-site cookie sending (strict CSRF protection)
+/// - HttpOnly=false: Allows JavaScript read access (needed for header submission)
+/// - Secure: HTTPS-only (when AUTH_COOKIE_SECURE is not false)
+/// - Path=/: Available to all routes
+/// - Max-Age: 6 hours (matches token expiration)
 fn build_csrf_cookie(token: &str) -> Cookie<'static> {
-
+    // Build cookie with security settings
     let mut builder = Cookie::build((CSRF_COOKIE_NAME, token.to_owned()))
         .path("/")
         .same_site(SameSite::Strict)
         .max_age(TimeDuration::seconds(CSRF_TOKEN_TTL_SECONDS))
-        .http_only(false);
+        .http_only(false); // Must be false for JavaScript to read and submit in header
 
+    // Add Secure flag in production (HTTPS only)
     if auth::cookies_should_be_secure() {
         builder = builder.secure(true);
     }
@@ -224,8 +408,18 @@ fn build_csrf_cookie(token: &str) -> Cookie<'static> {
     builder.build()
 }
 
+/// Builds a cookie that removes the CSRF cookie.
+///
+/// # Returns
+/// A Cookie configured to remove the CSRF cookie
+///
+/// # Mechanism
+/// - Empty value
+/// - Expiration set to Unix epoch (Jan 1, 1970)
+/// - Max-age of 0
+/// - Same path and security flags as the CSRF cookie
 fn build_csrf_removal() -> Cookie<'static> {
-
+    // Build cookie with expiration in the past to trigger removal
     let mut builder = Cookie::build((CSRF_COOKIE_NAME, ""))
         .path("/")
         .same_site(SameSite::Strict)
@@ -233,6 +427,7 @@ fn build_csrf_removal() -> Cookie<'static> {
         .max_age(TimeDuration::seconds(0))
         .http_only(false);
 
+    // Match security settings of CSRF cookie
     if auth::cookies_should_be_secure() {
         builder = builder.secure(true);
     }
@@ -240,6 +435,41 @@ fn build_csrf_removal() -> Cookie<'static> {
     builder.build()
 }
 
+/// AXUM extractor for CSRF protection.
+///
+/// This extractor validates CSRF tokens for state-changing HTTP methods.
+/// Safe methods (GET, HEAD, OPTIONS, TRACE) are automatically allowed.
+///
+/// # Validation Process
+/// 1. Skip validation for safe HTTP methods
+/// 2. Ensure user is authenticated (extract Claims)
+/// 3. Extract token from x-csrf-token header
+/// 4. Extract token from cookie
+/// 5. Verify header and cookie tokens match (double-submit pattern)
+/// 6. Validate token signature and binding to user
+///
+/// # Usage
+/// ```rust,no_run
+/// use axum::{Router, routing::post, middleware};
+/// use linux_tutorial_cms::csrf::CsrfGuard;
+///
+/// let app = Router::new()
+///     .route("/api/resource", post(handler))
+///     .route_layer(middleware::from_extractor::<CsrfGuard>());
+/// ```
+///
+/// # Security
+/// - Double-submit cookie pattern (cookie + header)
+/// - Per-user token binding
+/// - HMAC signature verification
+/// - Expiration enforcement
+///
+/// # Errors
+/// Returns 403 Forbidden if:
+/// - CSRF token header is missing
+/// - CSRF cookie is missing
+/// - Header and cookie tokens don't match
+/// - Token validation fails (expired, wrong user, invalid signature)
 pub struct CsrfGuard;
 
 impl<S> FromRequestParts<S> for CsrfGuard
@@ -318,10 +548,18 @@ where
     }
 }
 
+/// Returns the name of the CSRF cookie.
+///
+/// # Returns
+/// The constant CSRF cookie name: "ltcms_csrf"
 pub fn csrf_cookie_name() -> &'static str {
     CSRF_COOKIE_NAME
 }
 
+/// Returns the name of the CSRF HTTP header.
+///
+/// # Returns
+/// The constant CSRF header name: "x-csrf-token"
 pub fn csrf_header_name() -> &'static str {
     CSRF_HEADER_NAME
 }

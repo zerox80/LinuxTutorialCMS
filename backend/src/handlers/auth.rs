@@ -1,4 +1,26 @@
-
+//! Authentication HTTP Handlers
+//!
+//! This module contains HTTP handlers for authentication-related endpoints.
+//! It implements secure login, logout, and user identity verification.
+//!
+//! # Security Features
+//! - Login rate limiting with progressive lockout
+//! - Timing-attack resistant password verification
+//! - Salted hash-based login attempt tracking
+//! - Constant-time dummy hash verification
+//! - Input validation
+//! - CSRF token issuance on login
+//! - Secure cookie management
+//!
+//! # Endpoints
+//! - POST /api/auth/login: Authenticate user and issue tokens
+//! - GET /api/auth/me: Get current user information
+//! - POST /api/auth/logout: Invalidate session
+//!
+//! # Rate Limiting
+//! Failed login attempts trigger progressive lockout:
+//! - 3 failures: 10-second lockout
+//! - 5+ failures: 60-second lockout
 
 use crate::{auth, csrf, db::DbPool, models::*};
 use axum::{
@@ -11,15 +33,36 @@ use sha2::{Digest, Sha256};
 use sqlx::{self, FromRow};
 use std::{env, sync::OnceLock, time::Duration};
 
+/// Database record for tracking login attempts.
+///
+/// Stores per-user failure count and lockout expiration.
 #[derive(Debug, FromRow, Clone)]
 struct LoginAttempt {
+    /// Number of consecutive failed login attempts
     fail_count: i64,
 
+    /// RFC3339 timestamp when the lockout expires (NULL if not blocked)
     blocked_until: Option<String>,
 }
 
+/// Global salt for hashing login attempt identifiers.
+/// Initialized once at startup via init_login_attempt_salt().
 static LOGIN_ATTEMPT_SALT: OnceLock<String> = OnceLock::new();
 
+/// Initializes the login attempt salt from environment.
+///
+/// This salt is used to hash usernames before storing them in the
+/// login_attempts table, preventing username enumeration attacks.
+///
+/// # Returns
+/// - `Ok(())` if initialization succeeds
+/// - `Err(String)` with error message if validation fails
+///
+/// # Errors
+/// - LOGIN_ATTEMPT_SALT environment variable not set
+/// - Salt is too short (< 32 characters)
+/// - Salt has insufficient entropy (< 10 unique characters)
+/// - Salt was already initialized
 pub fn init_login_attempt_salt() -> Result<(), String> {
     let raw = env::var("LOGIN_ATTEMPT_SALT")
         .map_err(|_| "LOGIN_ATTEMPT_SALT environment variable not set".to_string())?;
@@ -41,6 +84,10 @@ pub fn init_login_attempt_salt() -> Result<(), String> {
     Ok(())
 }
 
+/// Retrieves the initialized login attempt salt.
+///
+/// # Panics
+/// Panics if init_login_attempt_salt() has not been called yet.
 fn login_attempt_salt() -> &'static str {
     LOGIN_ATTEMPT_SALT
         .get()
@@ -48,6 +95,21 @@ fn login_attempt_salt() -> &'static str {
         .as_str()
 }
 
+/// Hashes a username for login attempt tracking.
+///
+/// Creates a salted SHA-256 hash of the normalized username.
+/// This prevents username enumeration by obscuring which accounts exist.
+///
+/// # Arguments
+/// * `username` - The username to hash
+///
+/// # Returns
+/// Hex-encoded SHA-256 hash
+///
+/// # Security
+/// - Username is trimmed and lowercased for normalization
+/// - Salt prevents rainbow table attacks
+/// - Hash prevents direct username storage
 fn hash_login_identifier(username: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(login_attempt_salt().as_bytes());
@@ -55,6 +117,14 @@ fn hash_login_identifier(username: &str) -> String {
     format!("{:x}", hasher.finalize())
 }
 
+/// Parses an optional RFC3339 timestamp string into a UTC DateTime.
+///
+/// # Arguments
+/// * `value` - Optional RFC3339 timestamp string
+///
+/// # Returns
+/// - `Some(DateTime<Utc>)` if parsing succeeds
+/// - `None` if value is None or parsing fails
 fn parse_rfc3339_opt(value: &Option<String>) -> Option<DateTime<Utc>> {
     value
         .as_ref()
@@ -62,6 +132,17 @@ fn parse_rfc3339_opt(value: &Option<String>) -> Option<DateTime<Utc>> {
         .map(|dt| dt.with_timezone(&Utc))
 }
 
+/// Returns a precomputed dummy bcrypt hash for timing-attack resistance.
+///
+/// This hash is used during failed login attempts to ensure password
+/// verification takes constant time regardless of whether the user exists.
+///
+/// # Returns
+/// A static bcrypt hash string
+///
+/// # Security
+/// Using a dummy hash when the user doesn't exist prevents timing attacks
+/// that could enumerate valid usernames by measuring response times.
 fn dummy_bcrypt_hash() -> &'static str {
     static DUMMY_HASH: OnceLock<String> = OnceLock::new();
 
@@ -74,6 +155,19 @@ fn dummy_bcrypt_hash() -> &'static str {
     })
 }
 
+/// Validates a username meets security and format requirements.
+///
+/// # Arguments
+/// * `username` - The username to validate
+///
+/// # Returns
+/// - `Ok(())` if valid
+/// - `Err(String)` with error message if invalid
+///
+/// # Validation Rules
+/// - Not empty
+/// - Length ≤ 50 characters
+/// - Only alphanumeric, underscore, hyphen, and period allowed
 fn validate_username(username: &str) -> Result<(), String> {
     if username.is_empty() {
         return Err("Username cannot be empty".to_string());
@@ -91,6 +185,18 @@ fn validate_username(username: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// Validates a password meets security and format requirements.
+///
+/// # Arguments
+/// * `password` - The password to validate
+///
+/// # Returns
+/// - `Ok(())` if valid
+/// - `Err(String)` with error message if invalid
+///
+/// # Validation Rules
+/// - Not empty
+/// - Length ≤ 128 characters (prevents DoS via bcrypt)
 fn validate_password(password: &str) -> Result<(), String> {
     if password.is_empty() {
         return Err("Password cannot be empty".to_string());
@@ -101,6 +207,48 @@ fn validate_password(password: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// HTTP handler for user login.
+///
+/// Authenticates a user and issues JWT and CSRF tokens.
+/// Implements progressive rate limiting and timing-attack resistance.
+///
+/// # Endpoint
+/// POST /api/auth/login
+///
+/// # Request
+/// JSON body with LoginRequest:
+/// ```json
+/// {
+///   "username": "admin",
+///   "password": "secret"
+/// }
+/// ```
+///
+/// # Response
+/// On success (200 OK):
+/// - Sets auth cookie (ltcms_session)
+/// - Sets CSRF cookie (ltcms_csrf)
+/// - Returns LoginResponse with JWT token and user info
+///
+/// # Errors
+/// - 400 Bad Request: Invalid username/password format
+/// - 401 Unauthorized: Invalid credentials
+/// - 429 Too Many Requests: Account temporarily locked
+/// - 500 Internal Server Error: Database or token generation failure
+///
+/// # Security Features
+/// - Input validation (length, character set)
+/// - Progressive lockout (3 failures → 10s, 5+ failures → 60s)
+/// - Timing-attack resistance (constant-time verification)
+/// - Random jitter (100-300ms) to prevent timing analysis
+/// - Username enumeration protection (hashed login tracking)
+/// - Automatic lockout reset on successful login
+///
+/// # Rate Limiting
+/// After failed attempts:
+/// - 3 failures: 10-second lockout
+/// - 5+ failures: 60-second lockout
+/// - Lockout countdown shown to user
 pub async fn login(
     State(pool): State<DbPool>,
     Json(payload): Json<LoginRequest>,
@@ -279,6 +427,34 @@ pub async fn login(
     ))
 }
 
+/// HTTP handler for retrieving current user information.
+///
+/// Returns the authenticated user's identity from their JWT token.
+/// Requires a valid authentication token (cookie or Authorization header).
+///
+/// # Endpoint
+/// GET /api/auth/me
+///
+/// # Authentication
+/// Requires valid JWT token via:
+/// - Cookie: ltcms_session
+/// - Header: Authorization: Bearer <token>
+///
+/// # Response
+/// On success (200 OK):
+/// ```json
+/// {
+///   "username": "admin",
+///   "role": "admin"
+/// }
+/// ```
+///
+/// # Errors
+/// - 401 Unauthorized: Missing or invalid token
+///
+/// # Security
+/// User identity is extracted from the validated JWT token,
+/// not from request parameters, preventing impersonation.
 pub async fn me(
     claims: auth::Claims,
 ) -> Result<Json<UserResponse>, (StatusCode, Json<ErrorResponse>)> {
@@ -288,6 +464,33 @@ pub async fn me(
     }))
 }
 
+/// HTTP handler for user logout.
+///
+/// Invalidates the user's session by removing auth and CSRF cookies.
+/// Requires CSRF token validation to prevent logout CSRF attacks.
+///
+/// # Endpoint
+/// POST /api/auth/logout
+///
+/// # Authentication
+/// Requires:
+/// - Valid JWT token (cookie or header)
+/// - Valid CSRF token (header and cookie must match)
+///
+/// # Response
+/// On success (204 No Content):
+/// - Sets auth cookie expiration to past (removes session)
+/// - Sets CSRF cookie expiration to past (removes token)
+/// - Empty response body
+///
+/// # Errors
+/// - 401 Unauthorized: Missing or invalid JWT token
+/// - 403 Forbidden: Missing or invalid CSRF token
+///
+/// # Security
+/// - CSRF protection prevents attackers from forcing logout
+/// - Logs logout event for audit trail
+/// - Client must clear local storage/state separately
 pub async fn logout(_csrf: csrf::CsrfGuard, claims: auth::Claims) -> (StatusCode, HeaderMap) {
     let mut headers = HeaderMap::new();
     auth::append_auth_cookie(&mut headers, auth::build_cookie_removal());
