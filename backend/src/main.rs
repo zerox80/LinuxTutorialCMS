@@ -41,12 +41,29 @@ const REFERRER_POLICY: HeaderName = HeaderName::from_static("referrer-policy");
 const X_XSS_PROTECTION: HeaderName = HeaderName::from_static("x-xss-protection");
 
 // Forwarded header constants for proxy handling
+// Standard forwarded header used by RFC 7239
 const FORWARDED_HEADER: HeaderName = HeaderName::from_static("forwarded");
+// Header containing the originating client IP address
 const X_FORWARDED_FOR_HEADER: HeaderName = HeaderName::from_static("x-forwarded-for");
+// Header indicating the protocol used by the client (http/https)
 const X_FORWARDED_PROTO_HEADER: HeaderName = HeaderName::from_static("x-forwarded-proto");
+// Header containing the original host requested by the client
 const X_FORWARDED_HOST_HEADER: HeaderName = HeaderName::from_static("x-forwarded-host");
+// Header containing the real IP address of the client
 const X_REAL_IP_HEADER: HeaderName = HeaderName::from_static("x-real-ip");
 
+/// Parses a boolean value from an environment variable with support for various formats.
+///
+/// # Arguments
+/// * `key` - The environment variable name to parse
+/// * `default` - The default value to return if the variable is not set or invalid
+///
+/// # Returns
+/// The parsed boolean value, or the default if parsing fails
+///
+/// # Supported formats
+/// - true: "1", "true", "yes", "on" (case-insensitive)
+/// - false: "0", "false", "no", "off" (case-insensitive)
 fn parse_env_bool(key: &str, default: bool) -> bool {
     env::var(key)
         .ok()
@@ -63,6 +80,21 @@ fn parse_env_bool(key: &str, default: bool) -> bool {
         .unwrap_or(default)
 }
 
+/// Middleware to strip potentially spoofable forwarded headers from incoming requests.
+///
+/// This middleware removes all proxy-related headers that could be spoofed by clients
+/// to bypass security measures like rate limiting or IP-based access control.
+///
+/// # Security considerations
+/// When TRUST_PROXY_IP_HEADERS is disabled, this middleware ensures that only the
+/// direct connection IP is trusted, preventing clients from faking their IP address.
+///
+/// # Headers removed
+/// - Forwarded (RFC 7239)
+/// - X-Forwarded-For
+/// - X-Forwarded-Proto
+/// - X-Forwarded-Host
+/// - X-Real-IP
 async fn strip_untrusted_forwarded_headers(mut request: Request, next: Next) -> Response {
     {
         let headers = request.headers_mut();
@@ -78,6 +110,25 @@ async fn strip_untrusted_forwarded_headers(mut request: Request, next: Next) -> 
     next.run(request).await
 }
 
+/// Middleware to add security headers to all HTTP responses.
+///
+/// This middleware implements defense-in-depth security by adding multiple
+/// protective headers to every response. It handles:
+/// - Cache control based on endpoint sensitivity
+/// - Content Security Policy (CSP)
+/// - HSTS for HTTPS connections
+/// - Anti-clickjacking protections
+/// - Privacy and permissions policies
+///
+/// # Security headers added
+/// - Cache-Control: Prevents caching of sensitive data
+/// - Content-Security-Policy: Mitigates XSS attacks
+/// - Strict-Transport-Security: Enforces HTTPS (when applicable)
+/// - X-Content-Type-Options: Prevents MIME sniffing
+/// - X-Frame-Options: Prevents clickjacking
+/// - Referrer-Policy: Protects user privacy
+/// - Permissions-Policy: Disables dangerous browser features
+/// - X-XSS-Protection: Disabled in favor of CSP
 async fn security_headers(request: Request, next: Next) -> Response {
     use axum::http::Method;
 
@@ -170,6 +221,25 @@ const ADMIN_BODY_LIMIT: usize = 8 * 1024 * 1024;  // 8MB for admin content uploa
 // In production, FRONTEND_ORIGINS environment variable must be set
 const DEV_DEFAULT_FRONTEND_ORIGINS: &[&str] = &["http://localhost:5173", "http://localhost:3000"];
 
+/// Parses and validates a list of allowed CORS origins.
+///
+/// This function takes an iterator of origin strings and converts them into
+/// validated HeaderValue objects suitable for use in CORS configuration.
+///
+/// # Arguments
+/// * `origins` - An iterator of origin strings to parse and validate
+///
+/// # Returns
+/// A vector of validated HeaderValue objects representing allowed origins
+///
+/// # Validation rules
+/// - Empty strings are ignored
+/// - Origins must start with http:// or https://
+/// - Origins must be valid URLs according to the url crate
+/// - Origins must be convertible to valid HTTP header values
+///
+/// # Warnings
+/// Invalid origins are logged as warnings and excluded from the result.
 fn parse_allowed_origins<'a, I>(origins: I) -> Vec<HeaderValue>
 where
     I: IntoIterator<Item = &'a str>,
@@ -210,11 +280,38 @@ where
         .collect()
 }
 
+/// Main application entry point.
+///
+/// This function initializes and starts the web server with all necessary
+/// middleware, routes, and security configurations.
+///
+/// # Initialization steps
+/// 1. Load environment variables from .env file
+/// 2. Initialize logging with tracing
+/// 3. Initialize JWT secret for authentication
+/// 4. Initialize CSRF token secret
+/// 5. Initialize login attempt salt for rate limiting
+/// 6. Create database connection pool
+/// 7. Configure CORS with allowed origins
+/// 8. Set up rate limiting for different endpoint types
+/// 9. Configure routes and middleware layers
+/// 10. Start the HTTP server
+///
+/// # Panics
+/// The function will panic if:
+/// - JWT secret initialization fails
+/// - CSRF secret initialization fails
+/// - Login attempt salt initialization fails
+/// - Database pool creation fails
+/// - FRONTEND_ORIGINS is invalid or missing in production
+/// - PORT environment variable is invalid
+/// - Server fails to bind to the specified port
 #[tokio::main]
 async fn main() {
-
+    // Load environment variables from .env file (if present)
     dotenv().ok();
 
+    // Initialize structured logging
     tracing_subscriber::fmt::init();
 
     auth::init_jwt_secret().expect("Failed to initialize JWT secret");
@@ -463,14 +560,32 @@ async fn main() {
     tracing::info!("Server shutdown complete");
 }
 
+/// Waits for a shutdown signal and initiates graceful shutdown.
+///
+/// This function listens for termination signals to allow the server to shut down
+/// gracefully, completing in-flight requests before stopping.
+///
+/// # Signals handled
+/// - Ctrl+C (SIGINT): Handles user interruption from terminal
+/// - SIGTERM: Handles termination signal from process managers (Unix only)
+///
+/// On non-Unix systems, only Ctrl+C is handled as SIGTERM is Unix-specific.
+///
+/// # Graceful shutdown
+/// When a signal is received, the server:
+/// 1. Stops accepting new connections
+/// 2. Waits for existing requests to complete
+/// 3. Closes database connections
+/// 4. Exits cleanly
 async fn shutdown_signal() {
-
+    // Handle Ctrl+C signal (works on all platforms)
     let ctrl_c = async {
         signal::ctrl_c()
             .await
             .expect("Failed to install Ctrl+C handler");
     };
 
+    // Handle SIGTERM on Unix systems (used by Docker, systemd, etc.)
     #[cfg(unix)]
     let terminate = async {
         signal::unix::signal(signal::unix::SignalKind::terminate())
@@ -479,9 +594,11 @@ async fn shutdown_signal() {
             .await;
     };
 
+    // On non-Unix systems, SIGTERM doesn't exist, so use a pending future
     #[cfg(not(unix))]
     let terminate = std::future::pending::<()>();
 
+    // Wait for either Ctrl+C or SIGTERM
     tokio::select! {
         _ = ctrl_c => {
             tracing::info!("Received Ctrl+C signal");
