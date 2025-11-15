@@ -1,4 +1,30 @@
-
+//! Search HTTP Handlers
+//!
+//! This module provides full-text search capabilities for tutorials.
+//! It uses SQLite's FTS5 (Full-Text Search 5) for fast and efficient searching.
+//!
+//! # Endpoints
+//! - GET /api/search/tutorials: Search tutorials by keyword (public)
+//! - GET /api/search/topics: Get all unique topics (public)
+//!
+//! # Search Features
+//! - Full-text search across title, description, content, and topics
+//! - Topic-based filtering (optional)
+//! - Pagination support (default 20 results, configurable)
+//! - Ranked results (FTS5 BM25 ranking algorithm)
+//! - Query sanitization to prevent FTS5 syntax errors
+//!
+//! # Query Processing
+//! - Splits query into tokens
+//! - Removes FTS5 special characters (* " :)
+//! - Validates minimum word length (3 characters)
+//! - Limits maximum tokens (20) to prevent DoS
+//! - Applies FTS5 prefix matching for better UX
+//!
+//! # Performance
+//! - FTS5 index provides sub-second search on large datasets
+//! - Automatic index updates via triggers on tutorial changes
+//! - Result limit prevents excessive data transfer
 
 use crate::{db::DbPool, models::*};
 use axum::{

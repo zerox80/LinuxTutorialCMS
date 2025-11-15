@@ -1,4 +1,29 @@
-
+//! Tutorial Management HTTP Handlers
+//!
+//! This module contains HTTP handlers for CRUD operations on tutorials.
+//! Tutorials are the main content type of the application, representing
+//! Linux learning modules with topics, icons, and markdown content.
+//!
+//! # Endpoints
+//! - GET /api/tutorials: List all tutorials
+//! - GET /api/tutorials/{id}: Get specific tutorial by ID
+//! - POST /api/tutorials: Create new tutorial (admin only, CSRF protected)
+//! - PUT /api/tutorials/{id}: Update tutorial (admin only, CSRF protected)
+//! - DELETE /api/tutorials/{id}: Delete tutorial (admin only, CSRF protected)
+//!
+//! # Data Validation
+//! - Tutorial IDs: Alphanumeric and hyphens only, max 100 characters
+//! - Title: 1-200 characters
+//! - Description: 1-1000 characters
+//! - Content: Max 100,000 characters (markdown)
+//! - Icons: Whitelist of allowed Lucide icon names
+//! - Colors: Tailwind gradient classes only
+//!
+//! # Features
+//! - Full-text search integration (automatic FTS5 indexing)
+//! - Topic-based organization
+//! - Version tracking for content updates
+//! - Soft validation to preserve data integrity
 
 use crate::{auth, db::DbPool, models::*};
 use axum::{

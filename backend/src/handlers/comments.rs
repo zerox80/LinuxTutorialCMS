@@ -1,4 +1,24 @@
-
+//! Comment Management HTTP Handlers
+//!
+//! This module handles comment operations on tutorials.
+//! Comments allow users (when authenticated) to provide feedback and discussion.
+//!
+//! # Endpoints
+//! - GET /api/tutorials/{id}/comments: List comments for a tutorial (public, paginated)
+//! - POST /api/tutorials/{id}/comments: Create comment (admin only, CSRF protected)
+//! - DELETE /api/comments/{id}: Delete comment (admin only, CSRF protected)
+//!
+//! # Features
+//! - Pagination support (default 50 comments, configurable via query params)
+//! - Author attribution from JWT claims
+//! - Content length validation (1-2000 characters)
+//! - Foreign key cascade deletion (comments deleted with tutorial)
+//!
+//! # Security
+//! - Comments require authentication and CSRF protection
+//! - Author name extracted from JWT token (prevents impersonation)
+//! - Content length limits prevent abuse
+//! - Tutorial ID validation prevents injection
 
 use crate::{auth, db::DbPool, handlers::tutorials::validate_tutorial_id, models::*};
 use axum::{
