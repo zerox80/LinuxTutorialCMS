@@ -1,4 +1,45 @@
-
+//! Database Module
+//!
+//! This module handles all database operations for the Linux Tutorial CMS.
+//! It provides a SQLite-based persistence layer with connection pooling,
+//! migrations, and full-text search capabilities.
+//!
+//! # Architecture
+//! - SQLite database with WAL mode for better concurrent access
+//! - Connection pooling (1-5 connections) for efficient resource usage
+//! - Automatic schema migrations on startup
+//! - FTS5 virtual table for fast full-text search
+//! - Foreign key enforcement and cascading deletes
+//!
+//! # Database Schema
+//! ## Core Tables
+//! - `users`: User accounts with bcrypt-hashed passwords
+//! - `login_attempts`: Rate limiting for failed login attempts
+//! - `tutorials`: Tutorial content with versioning
+//! - `tutorial_topics`: Many-to-many relationship for tutorial topics
+//! - `comments`: User comments on tutorials
+//! - `app_metadata`: Application-level key-value store
+//!
+//! ## Site Content Tables
+//! - `site_pages`: Custom pages with flexible JSON layouts
+//! - `site_posts`: Blog posts associated with pages
+//! - `site_content`: Configurable site content sections
+//!
+//! ## Search Infrastructure
+//! - `tutorials_fts`: FTS5 virtual table for full-text search
+//! - Automatic triggers to keep FTS5 index in sync
+//!
+//! # Security Features
+//! - Foreign key constraints prevent orphaned records
+//! - Transaction-based operations for data integrity
+//! - Slug validation to prevent injection attacks
+//! - bcrypt password hashing for admin accounts
+//!
+//! # Performance Features
+//! - WAL mode enables concurrent reads during writes
+//! - Indexes on frequently queried columns
+//! - Connection pooling reduces connection overhead
+//! - FTS5 index for sub-second search performance
 
 use regex::Regex;
 use serde_json::{json, Value};
@@ -10,17 +51,56 @@ use std::env;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
+/// Type alias for the SQLite connection pool.
+/// Used throughout the application for database access.
 pub type DbPool = SqlitePool;
 
+/// Creates and initializes the database connection pool.
+///
+/// This is the main entry point for database initialization. It:
+/// 1. Loads database URL from environment (defaults to ./database.db)
+/// 2. Ensures the database directory exists
+/// 3. Configures SQLite connection options
+/// 4. Creates connection pool (1-5 connections)
+/// 5. Runs all migrations
+///
+/// # Database Configuration
+/// - **WAL Mode**: Write-Ahead Logging for better concurrency
+/// - **Foreign Keys**: Enabled for referential integrity
+/// - **Synchronous**: Normal mode (balanced safety/performance)
+/// - **Busy Timeout**: 60 seconds to handle lock contention
+/// - **Auto-create**: Database file created if missing
+///
+/// # Connection Pool
+/// - Min connections: 1 (always ready)
+/// - Max connections: 5 (prevents resource exhaustion)
+/// - Acquire timeout: 30 seconds
+/// - No idle timeout (connections persist)
+/// - No max lifetime (connections don't expire)
+///
+/// # Returns
+/// - `Ok(DbPool)` on success
+/// - `Err(sqlx::Error)` if initialization fails
+///
+/// # Errors
+/// - Invalid DATABASE_URL format
+/// - Database directory creation failure
+/// - Connection establishment failure
+/// - Migration failure
+///
+/// # Environment Variables
+/// - `DATABASE_URL`: SQLite database path (default: "sqlite:./database.db")
 pub async fn create_pool() -> Result<DbPool, sqlx::Error> {
-
+    // Load database URL from environment or use default
     let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| {
         tracing::warn!("DATABASE_URL not set, defaulting to sqlite:./database.db");
         "sqlite:./database.db".to_string()
     });
 
+    // Ensure parent directory exists
     ensure_sqlite_directory(&database_url)?;
 
+    // Configure SQLite connection options
     let connect_options = SqliteConnectOptions::from_str(&database_url)?
         .create_if_missing(true)
         .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
@@ -28,6 +108,7 @@ pub async fn create_pool() -> Result<DbPool, sqlx::Error> {
         .foreign_keys(true)
         .busy_timeout(std::time::Duration::from_secs(60));
 
+    // Create connection pool
     let pool = SqlitePoolOptions::new()
         .max_connections(5)
         .min_connections(1)
@@ -37,12 +118,24 @@ pub async fn create_pool() -> Result<DbPool, sqlx::Error> {
         .connect_with(connect_options)
         .await?;
 
+    // Run all database migrations
     run_migrations(&pool).await?;
 
     tracing::info!("Database pool created successfully");
     Ok(pool)
 }
 
+/// Returns the compiled slug validation regex pattern.
+///
+/// The regex enforces URL-safe slug format:
+/// - Lowercase letters (a-z)
+/// - Numbers (0-9)
+/// - Hyphens (-) as separators (not leading/trailing/consecutive)
+///
+/// Pattern: `^[a-z0-9]+(?:-[a-z0-9]+)*$`
+///
+/// # Returns
+/// A static reference to the compiled Regex
 fn slug_regex() -> &'static Regex {
     use std::sync::OnceLock;
 
@@ -50,6 +143,40 @@ fn slug_regex() -> &'static Regex {
     SLUG_RE.get_or_init(|| Regex::new(r"^[a-z0-9]+(?:-[a-z0-9]+)*$").expect("valid slug regex"))
 }
 
+/// Validates a slug for use in URLs.
+///
+/// Ensures slugs are safe, readable, and SEO-friendly.
+///
+/// # Validation Rules
+/// - Length ≤ 100 characters
+/// - Only lowercase letters (a-z)
+/// - Only numbers (0-9)
+/// - Hyphens (-) as word separators
+/// - No leading, trailing, or consecutive hyphens
+///
+/// # Valid Examples
+/// - "hello-world"
+/// - "tutorial-1"
+/// - "linux-basics-2024"
+///
+/// # Invalid Examples
+/// - "Hello-World" (uppercase)
+/// - "-hello" (leading hyphen)
+/// - "hello--world" (consecutive hyphens)
+/// - "hello_world" (underscore)
+///
+/// # Arguments
+/// * `slug` - The slug string to validate
+///
+/// # Returns
+/// - `Ok(())` if slug is valid
+/// - `Err(sqlx::Error)` with descriptive message if invalid
+///
+/// # Security
+/// Slug validation prevents:
+/// - Path traversal attacks (no slashes or dots)
+/// - Special character injection
+/// - Unicode confusion attacks
 pub fn validate_slug(slug: &str) -> Result<(), sqlx::Error> {
     const MAX_SLUG_LENGTH: usize = 100;
 
@@ -949,9 +1076,53 @@ fn sqlite_file_path(database_url: &str) -> Option<PathBuf> {
     Some(PathBuf::from(normalized))
 }
 
+/// Runs all database migrations and initial data seeding.
+///
+/// This function is automatically called during database pool creation.
+/// It ensures the database schema is up-to-date and populates initial data.
+///
+/// # Migration Steps
+/// 1. **Core Schema**: Create core tables (users, tutorials, comments, login_attempts)
+/// 2. **Site Schema**: Create site-related tables (pages, posts, content)
+/// 3. **FTS Index**: Create and populate full-text search index
+/// 4. **Default Content**: Seed default site content (hero, footer, etc.)
+/// 5. **Admin User**: Create admin account from environment variables
+/// 6. **Default Tutorials**: Optionally seed sample tutorials
+///
+/// # Admin User Creation
+/// If `ADMIN_USERNAME` and `ADMIN_PASSWORD` are set:
+/// - Password must be ≥ 12 characters (NIST recommendation)
+/// - User created with role "admin"
+/// - Existing users are not overwritten (preserves runtime changes)
+/// - Password hash created with bcrypt
+///
+/// # Default Tutorials
+/// If `ENABLE_DEFAULT_TUTORIALS` is not "false":
+/// - Inserts 8 sample tutorials on first run
+/// - Skipped if tutorials already exist
+/// - Marked as seeded in app_metadata
+///
+/// # Arguments
+/// * `pool` - The database connection pool
+///
+/// # Returns
+/// - `Ok(())` if all migrations succeed
+/// - `Err(sqlx::Error)` if any migration fails
+///
+/// # Errors
+/// - Schema creation failure
+/// - Admin password too weak (< 12 characters)
+/// - bcrypt hashing failure
+/// - Transaction rollback on any error
+///
+/// # Environment Variables
+/// - `ADMIN_USERNAME`: Admin account username (optional)
+/// - `ADMIN_PASSWORD`: Admin account password (optional, min 12 chars)
+/// - `ENABLE_DEFAULT_TUTORIALS`: "false" to disable tutorial seeding (default: true)
 pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     let mut tx = pool.begin().await?;
 
+    // Apply core schema migrations (users, tutorials, comments, etc.)
     if let Err(err) = apply_core_migrations(&mut tx).await {
         tx.rollback().await?;
         return Err(err);
@@ -959,14 +1130,17 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
 
     tx.commit().await?;
 
+    // Create site-related schema (pages, posts, content)
     ensure_site_page_schema(pool).await?;
 
+    // Seed default site content (hero, footer, etc.)
     {
         let mut tx = pool.begin().await?;
         seed_site_content_tx(&mut tx).await?;
         tx.commit().await?;
     }
 
+    // Create admin user from environment variables
     let admin_username = env::var("ADMIN_USERNAME").ok();
     let admin_password = env::var("ADMIN_PASSWORD").ok();
 
