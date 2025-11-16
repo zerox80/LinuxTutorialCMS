@@ -18,14 +18,14 @@ const defaultHeroJson = JSON.stringify(
 const defaultHeroTitle = normalizeTitle(JSON.parse(defaultHeroJson).title, '')
 const defaultLayoutConfig = {
   aboutSection: {
-    title: '�ober diese Seite',
+    title: 'Über diese Seite',
   },
   postsSection: {
-    title: 'Beitr��ge',
-    emptyTitle: 'Keine Beitr��ge vorhanden',
-    emptyMessage: 'Sobald fǬr diese Seite Beitr��ge ver��ffentlicht werden, erscheinen sie hier.',
-    countLabelSingular: '{count} ver��ffentlichter Beitrag',
-    countLabelPlural: '{count} ver��ffentlichte Beitr��ge',
+    title: 'Beiträge',
+    emptyTitle: 'Keine Beiträge vorhanden',
+    emptyMessage: 'Sobald für diese Seite Beiträge veröffentlicht werden, erscheinen sie hier.',
+    countLabelSingular: '{count} veröffentlichter Beitrag',
+    countLabelPlural: '{count} veröffentlichte Beiträge',
   },
 }
 const defaultLayoutJson = JSON.stringify(defaultLayoutConfig, null, 2)

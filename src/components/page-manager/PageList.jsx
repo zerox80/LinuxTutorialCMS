@@ -6,7 +6,7 @@ const PageList = ({ pages, loading, selectedPageId, onSelect, onEdit, onDelete }
     return (
       <div className="space-y-4">
         <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center text-gray-500 dark:border-gray-700 dark:bg-slate-900 dark:text-gray-400">
-          Seiten werden geladen�?�
+          Seiten werden geladen...
         </div>
       </div>
     )
@@ -16,7 +16,7 @@ const PageList = ({ pages, loading, selectedPageId, onSelect, onEdit, onDelete }
     return (
       <div className="space-y-4">
         <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center text-gray-600 dark:border-gray-600 dark:bg-slate-900/50 dark:text-gray-300">
-          Noch keine Seiten vorhanden. Erstelle deine erste Seite, um Beitr��ge zu ver��ffentlichen.
+          Noch keine Seiten vorhanden. Erstelle deine erste Seite, um Beiträge zu veröffentlichen.
         </div>
       </div>
     )
@@ -47,7 +47,7 @@ const PageList = ({ pages, loading, selectedPageId, onSelect, onEdit, onDelete }
                   ) : (
                     <EyeOff className="h-3.5 w-3.5" />
                   )}
-                  {page.is_published ? 'Ver��ffentlicht' : 'Entwurf'}
+                  {page.is_published ? 'Veröffentlicht' : 'Entwurf'}
                 </span>
                 {page.show_in_nav && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-blue-700">
@@ -73,7 +73,7 @@ const PageList = ({ pages, loading, selectedPageId, onSelect, onEdit, onDelete }
                       : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800'
                   }`}
                 >
-                  <Layers className="h-4 w-4" /> Beitr��ge ansehen
+                  <Layers className="h-4 w-4" /> Beiträge ansehen
                 </button>
                 <button
                   onClick={() => onEdit(page)}
@@ -85,7 +85,7 @@ const PageList = ({ pages, loading, selectedPageId, onSelect, onEdit, onDelete }
                   onClick={() => onDelete(page)}
                   className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50 dark:border-red-900/40 dark:text-red-200 dark:hover:bg-red-900/30"
                 >
-                  <Trash2 className="h-4 w-4" /> L��schen
+                  <Trash2 className="h-4 w-4" /> Löschen
                 </button>
               </div>
             </div>
