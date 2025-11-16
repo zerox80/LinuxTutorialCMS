@@ -18,7 +18,7 @@ import {
 } from 'lucide-react'
 import TutorialForm from '../components/TutorialForm'       // Tutorial creation/editing form
 import SiteContentEditor from '../components/SiteContentEditor' // Static site content editor
-import PageManager from '../components/PageManager'         // Dynamic page and post management
+import PageManager from '../components/page-manager'        // Dynamic page and post management
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('tutorials')     // Currently active tab ('tutorials', 'content', 'pages')
   const [showForm, setShowForm] = useState(false)
