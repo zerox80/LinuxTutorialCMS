@@ -50,6 +50,7 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
     }
     return initialData?.title ?? defaultHeroTitle
   })
+  const [heroTitleDirty, setHeroTitleDirty] = useState(false)
   const [error, setError] = useState(null)
   const formSanitizedSlug = useMemo(() => sanitizeSlug(slug), [slug])
   const slugHasInput = slug.trim().length > 0
@@ -69,9 +70,14 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
       const trimmedHeroTitle = heroTitle.trim()
       const trimmedSlug = slug.trim()
       const sanitizedSlug = sanitizeSlug(trimmedSlug)
-      if (trimmedHeroTitle) {
-        heroPayload.title = trimmedHeroTitle
-      } else if (!heroPayload.title) {
+      if (heroTitleDirty) {
+        if (trimmedHeroTitle) {
+          heroPayload.title = trimmedHeroTitle
+        } else {
+          delete heroPayload.title
+        }
+      }
+      if (!heroPayload.title) {
         heroPayload.title = trimmedTitle
       }
       if (!trimmedTitle) {
@@ -83,6 +89,7 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
       if (!isValidSlug(sanitizedSlug)) {
         throw new Error('Slug ist ungültig.')
       }
+      setSlug(sanitizedSlug)
       const payload = {
         title: trimmedTitle,
         slug: sanitizedSlug,
@@ -95,7 +102,6 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
         layout: parseJsonField(layout, 'Layout JSON'),
       }
       await onSubmit(payload)
-      setSlug(sanitizedSlug)
     } catch (err) {
       setError(err)
     }
@@ -202,6 +208,7 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
             onChange={(event) => {
               const { value } = event.target
               setHeroTitle(value)
+              setHeroTitleDirty(true)
               const trimmedValue = value.trim()
               setHero((currentHero) => {
                 try {
@@ -257,10 +264,12 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
                 setHero(value)
                 try {
                   const parsed = JSON.parse(value)
-                  const derivedTitle = normalizeTitle(parsed?.title ?? parsed, '').trim()
-                  setHeroTitle((previous) =>
-                    derivedTitle !== previous ? derivedTitle : previous,
-                  )
+                  if (!heroTitleDirty) {
+                    const derivedTitle = normalizeTitle(parsed?.title ?? parsed, '').trim()
+                    setHeroTitle((previous) =>
+                      derivedTitle !== previous ? derivedTitle : previous,
+                    )
+                  }
                 } catch (err) {
                 }
               }}

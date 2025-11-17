@@ -4,6 +4,30 @@ import { AlertCircle, FileText, RefreshCw, X } from 'lucide-react'
 import { sanitizeSlug, isValidSlug } from '../../utils/slug'
 import { sanitizeInteger } from './formUtils'
 
+const formatDateTimeLocal = (value) => {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return ''
+  }
+  const pad = (unit) => String(unit).padStart(2, '0')
+  const year = date.getFullYear()
+  const month = pad(date.getMonth() + 1)
+  const day = pad(date.getDate())
+  const hours = pad(date.getHours())
+  const minutes = pad(date.getMinutes())
+  return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
+const parseDateTimeLocal = (value) => {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return ''
+  }
+  return date.toISOString()
+}
+
 const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
   const [title, setTitle] = useState(initialData?.title ?? '')
   const [slug, setSlug] = useState(initialData?.slug ?? '')
@@ -13,6 +37,7 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
   const [isPublished, setIsPublished] = useState(Boolean(initialData?.is_published))
   const [publishedAt, setPublishedAt] = useState(initialData?.published_at ?? '')
   const [error, setError] = useState(null)
+  const publishedAtInputValue = useMemo(() => formatDateTimeLocal(publishedAt), [publishedAt])
   const sanitizedPostSlug = useMemo(() => sanitizeSlug(slug), [slug])
   const postSlugHasInput = slug.trim().length > 0
   const postSlugInvalid = postSlugHasInput && !sanitizedPostSlug
@@ -38,6 +63,7 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
       if (!isValidSlug(sanitizedSlug)) {
         throw new Error('Slug ist ungültig.')
       }
+      setSlug(sanitizedSlug)
       const payload = {
         title: title.trim(),
         slug: sanitizedSlug,
@@ -45,10 +71,9 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
         content_markdown: content,
         order_index: sanitizeInteger(orderIndex),
         is_published: isPublished,
-        published_at: publishedAt.trim() ? publishedAt : null,
+        published_at: isPublished && publishedAt ? publishedAt : null,
       }
       await onSubmit(payload)
-      setSlug(sanitizedSlug)
     } catch (err) {
       setError(err)
     }
@@ -131,8 +156,8 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
             <input
               type="datetime-local"
               className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              value={publishedAt || ''}
-              onChange={(event) => setPublishedAt(event.target.value)}
+              value={publishedAtInputValue}
+              onChange={(event) => setPublishedAt(parseDateTimeLocal(event.target.value))}
               disabled={!isPublished}
             />
           </label>
@@ -162,7 +187,13 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
             type="checkbox"
             className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-900"
             checked={isPublished}
-            onChange={(event) => setIsPublished(event.target.checked)}
+            onChange={(event) => {
+              const nextValue = event.target.checked
+              setIsPublished(nextValue)
+              if (!nextValue) {
+                setPublishedAt('')
+              }
+            }}
           />
           Veröffentlicht
         </label>

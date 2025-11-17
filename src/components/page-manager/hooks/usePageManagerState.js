@@ -17,6 +17,7 @@ const usePageManagerState = () => {
   const [postsLoading, setPostsLoading] = useState(false)
   const [postsError, setPostsError] = useState(null)
   const postsRequestRef = useRef(0)
+  const lastPostsPageIdRef = useRef(null)
   const [postFormMode, setPostFormMode] = useState(null)
   const [postFormData, setPostFormData] = useState(null)
   const [postFormSubmitting, setPostFormSubmitting] = useState(false)
@@ -105,6 +106,7 @@ const usePageManagerState = () => {
           postsAbortRef.current.abort()
           postsAbortRef.current = null
         }
+        lastPostsPageIdRef.current = null
         setPosts([])
         setPostsLoading(false)
         setPostsError(null)
@@ -115,6 +117,10 @@ const usePageManagerState = () => {
         postsAbortRef.current.abort()
       }
       postsAbortRef.current = controller
+      if (lastPostsPageIdRef.current !== pageId) {
+        setPosts([])
+      }
+      lastPostsPageIdRef.current = pageId
       const requestId = postsRequestRef.current + 1
       postsRequestRef.current = requestId
       setPostsLoading(true)
