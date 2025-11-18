@@ -521,7 +521,7 @@ async fn main() {
 
         // Serve index.html with server-side injection for root and fallback
         .route("/", get(handlers::frontend_proxy::serve_index))
-        .route("/*path", get(handlers::frontend_proxy::serve_index))
+        .route("/{*path}", get(handlers::frontend_proxy::serve_index))
 
         .with_state(pool)
         .layer(middleware::from_fn(security_headers))
