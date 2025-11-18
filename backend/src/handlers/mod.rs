@@ -157,3 +157,4 @@ pub mod comments;     // Comment system management
 pub mod site_content; // Dynamic site content sections
 pub mod site_pages;   // Static page management
 pub mod site_posts;   // Blog post management
+pub mod frontend_proxy; // Frontend proxy for server-side injection
