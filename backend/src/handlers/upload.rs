@@ -78,7 +78,8 @@ pub async fn upload_image(
             }
 
             let new_filename = format!("{}.{}", Uuid::new_v4(), ext);
-            let mut upload_path = PathBuf::from("uploads");
+            let upload_dir = std::env::var("UPLOAD_DIR").unwrap_or_else(|_| "uploads".to_string());
+            let mut upload_path = PathBuf::from(upload_dir);
             
             // Ensure uploads directory exists (should be handled in main, but good safety)
             if !upload_path.exists() {

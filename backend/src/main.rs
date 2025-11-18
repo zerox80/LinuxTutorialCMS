@@ -329,8 +329,9 @@ async fn main() {
         .expect("Failed to create database pool");
 
     // Ensure uploads directory exists
-    if !std::path::Path::new("uploads").exists() {
-        tokio::fs::create_dir_all("uploads")
+    let upload_dir = env::var("UPLOAD_DIR").unwrap_or_else(|_| "uploads".to_string());
+    if !std::path::Path::new(&upload_dir).exists() {
+        tokio::fs::create_dir_all(&upload_dir)
             .await
             .expect("Failed to create uploads directory");
     }
@@ -514,7 +515,7 @@ async fn main() {
             "/api/public/published-pages",
             get(handlers::site_pages::list_published_page_slugs),
         )
-        .nest_service("/uploads", ServeDir::new("uploads"))
+        .nest_service("/uploads", ServeDir::new(upload_dir))
 
         .route("/api/health", get(|| async { "OK" }))
 

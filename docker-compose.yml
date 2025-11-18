@@ -69,6 +69,7 @@ services:
 
       # Security settings
       - AUTH_COOKIE_SECURE=${AUTH_COOKIE_SECURE:-true}  # HTTPS-only cookies in production
+      - UPLOAD_DIR=/data/uploads
 
     # Data persistence
     volumes:
