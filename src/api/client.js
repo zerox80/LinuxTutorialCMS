@@ -390,5 +390,14 @@ class ApiClient {
   async listPublishedPages(options = {}) {
     return this.request('/public/published-pages', options)
   }
+  async uploadImage(file, options = {}) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return this.request('/upload', {
+      method: 'POST',
+      body: formData,
+      ...options,
+    })
+  }
 }
 export const api = new ApiClient()
