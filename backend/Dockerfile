@@ -61,7 +61,7 @@ RUN apt-get update && apt-get install -y \
 # Copy Cargo configuration files first to leverage Docker layer caching
 # This ensures dependencies are only rebuilt when Cargo.toml changes
 # Improves build performance significantly in CI/CD pipelines
-COPY Cargo.toml Cargo.lock* ./
+COPY Cargo.toml ./
 
 # Ensure reproducible builds with Cargo.lock
 # Generate Cargo.lock if it doesn't exist for dependency pinning
