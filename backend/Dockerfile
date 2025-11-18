@@ -37,7 +37,7 @@
 
 # Use latest stable Rust for building
 # Provides access to latest Rust features and optimizations
-FROM rust:latest AS builder
+FROM rust:1.82-bookworm AS builder
 
 # Set working directory for all subsequent commands
 WORKDIR /app

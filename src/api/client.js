@@ -17,7 +17,7 @@ export const getApiBaseUrl = () => {
       }
     }
   }
-  return 'http://localhost:8489/api'
+  return typeof window !== 'undefined' ? '/api' : 'http://localhost:8489/api'
 }
 const API_BASE_URL = getApiBaseUrl()
 const isBinaryBody = (body) => {
@@ -280,12 +280,17 @@ class ApiClient {
       ...options,
     })
   }
-  async listTutorialComments(tutorialId, options = {}) {
+  async listTutorialComments(tutorialId, { limit, offset, ...options } = {}) {
     if (!tutorialId) {
       throw new Error('tutorialId is required')
     }
     const encodedTutorialId = encodeURIComponent(tutorialId)
-    return this.request(`/tutorials/${encodedTutorialId}/comments`, options)
+    const params = new URLSearchParams()
+    if (limit !== undefined) params.append('limit', limit)
+    if (offset !== undefined) params.append('offset', offset)
+    const queryString = params.toString()
+    const endpoint = `/tutorials/${encodedTutorialId}/comments${queryString ? `?${queryString}` : ''}`
+    return this.request(endpoint, options)
   }
   async createComment(tutorialId, content, options = {}) {
     if (!tutorialId) {

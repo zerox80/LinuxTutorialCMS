@@ -181,14 +181,8 @@ pub async fn create_comment(
     Path(tutorial_id): Path<String>,
     Json(payload): Json<CreateCommentRequest>,
 ) -> Result<Json<Comment>, (StatusCode, Json<ErrorResponse>)> {
-    if claims.role != "admin" {
-        return Err((
-            StatusCode::FORBIDDEN,
-            Json(ErrorResponse {
-                error: "Insufficient permissions".to_string(),
-            }),
-        ));
-    }
+    // Allow any authenticated user to comment
+    // if claims.role != "admin" { ... } check removed
 
     if let Err(e) = validate_tutorial_id(&tutorial_id) {
         return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));

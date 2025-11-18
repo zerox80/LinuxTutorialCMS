@@ -57,7 +57,7 @@ fn sanitize_fts_query(raw: &str) -> Result<String, String> {
             // Keep only safe characters for FTS5 queries
             let sanitized: String = token
                 .chars()
-                .filter(|c| c.is_ascii_alphanumeric() || matches!(c, '*' | '-' | '_'))
+                .filter(|c| c.is_ascii_alphanumeric() || matches!(c, '*' | '-' | '_' | '.' | '+' | '#' | '@'))
                 .collect();
             if sanitized.is_empty() {
                 None
@@ -71,7 +71,18 @@ fn sanitize_fts_query(raw: &str) -> Result<String, String> {
     if tokens.is_empty() {
         Err("Search query must contain at least one searchable character".to_string())
     } else {
-        Ok(tokens.join(" "))
+        // Join tokens with AND (implicit in FTS5)
+        // Append * to the last token for prefix matching
+        let mut query_parts = Vec::new();
+        for (i, token) in tokens.iter().enumerate() {
+            if i == tokens.len() - 1 {
+                // Last token: add prefix matching
+                query_parts.push(format!("\"{}\"*", token));
+            } else {
+                query_parts.push(format!("\"{}\"", token));
+            }
+        }
+        Ok(query_parts.join(" "))
     }
 }
 
