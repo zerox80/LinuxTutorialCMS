@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
 import PropTypes from 'prop-types';
 
-const VALID_TUTORIAL_ID = /^[a-zA-Z0-9_-]+$/;
+const VALID_TUTORIAL_ID = /^[a-zA-Z0-9_.-]+$/;
 const COMMENTS_PER_PAGE = 20;
 
 const Comments = ({ tutorialId }) => {

@@ -57,7 +57,7 @@ fn sanitize_fts_query(raw: &str) -> Result<String, String> {
             // Keep only safe characters for FTS5 queries
             let sanitized: String = token
                 .chars()
-                .filter(|c| c.is_ascii_alphanumeric() || matches!(c, '*' | '-' | '_' | '.' | '+' | '#' | '@'))
+                .filter(|c| c.is_ascii_alphanumeric() || matches!(c, '*' | '-' | '_' | '.' | '+' | '#' | '@' | '/' | ':' | '(' | ')' | '[' | ']'))
                 .collect();
             if sanitized.is_empty() {
                 None

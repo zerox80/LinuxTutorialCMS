@@ -17,6 +17,9 @@ export const getApiBaseUrl = () => {
       }
     }
   }
+  if (typeof process !== 'undefined' && process.env && process.env.API_BASE_URL) {
+    return process.env.API_BASE_URL.replace(/\/+$/, '')
+  }
   return typeof window !== 'undefined' ? '/api' : 'http://localhost:8489/api'
 }
 const API_BASE_URL = getApiBaseUrl()
@@ -189,7 +192,7 @@ class ApiClient {
       }
       const contentType = response.headers.get('content-type') || ''
       let payload
-      if (contentType.includes('application/json')) {
+      if (contentType.toLowerCase().includes('application/json')) {
         try {
           payload = await response.json()
         } catch (parseError) {

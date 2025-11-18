@@ -43,7 +43,7 @@ pub(crate) fn validate_tutorial_id(id: &str) -> Result<(), String> {
     }
 
     // Ensure only safe characters for database and URL usage
-    if !id.chars().all(|c| c.is_alphanumeric() || c == '-') {
+    if !id.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == '.') {
         return Err("Tutorial ID contains invalid characters".to_string());
     }
     Ok(())
@@ -308,7 +308,38 @@ pub async fn create_tutorial(
         return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
     }
 
-    let id = Uuid::new_v4().to_string();
+    let id = if let Some(custom_id) = &payload.id {
+        let trimmed = custom_id.trim();
+        if let Err(e) = validate_tutorial_id(trimmed) {
+            return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
+        }
+        // Check for collision
+        let exists: Option<(i64,)> = sqlx::query_as("SELECT 1 FROM tutorials WHERE id = ?")
+            .bind(trimmed)
+            .fetch_optional(&pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("Database error checking ID existence: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse {
+                        error: "Failed to create tutorial".to_string(),
+                    }),
+                )
+            })?;
+            
+        if exists.is_some() {
+             return Err((
+                StatusCode::CONFLICT,
+                Json(ErrorResponse {
+                    error: "Tutorial ID already exists".to_string(),
+                }),
+            ));
+        }
+        trimmed.to_string()
+    } else {
+        Uuid::new_v4().to_string()
+    };
     let sanitized_topics = sanitize_topics(&payload.topics)
         .map_err(|e| (StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })))?;
     let topics_json = serde_json::to_string(&sanitized_topics).map_err(|e| {

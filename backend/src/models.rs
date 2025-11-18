@@ -74,8 +74,10 @@ pub struct CreateTutorialRequest {
     pub color: String,
 
     pub topics: Vec<String>,
-
+    
     pub content: String,
+
+    pub id: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
