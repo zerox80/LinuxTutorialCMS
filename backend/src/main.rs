@@ -519,16 +519,14 @@ async fn main() {
 
         .route("/api/health", get(|| async { "OK" }))
 
-        .with_state(pool.clone())
+        // Serve index.html with server-side injection for root and fallback
+        .route("/", get(handlers::frontend_proxy::serve_index))
+        .route("/*path", get(handlers::frontend_proxy::serve_index))
+
+        .with_state(pool)
         .layer(middleware::from_fn(security_headers))
         .layer(cors)
         .layer(RequestBodyLimitLayer::new(PUBLIC_BODY_LIMIT));
-
-    // Serve index.html with server-side injection for root and fallback
-    // This must be added AFTER API routes to ensure they take precedence
-    app = app.route("/", get(handlers::frontend_proxy::serve_index))
-             .route("/*path", get(handlers::frontend_proxy::serve_index))
-             .with_state(pool);
 
     if !trust_proxy_ip_headers {
         app = app.layer(middleware::from_fn(strip_untrusted_forwarded_headers));

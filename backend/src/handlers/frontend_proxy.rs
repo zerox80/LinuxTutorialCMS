@@ -4,7 +4,7 @@ use axum::{
 };
 use reqwest::Client;
 use std::env;
-use crate::{db, models::SiteContent};
+use crate::db;
 
 // Default frontend URL (internal Docker network)
 const DEFAULT_FRONTEND_URL: &str = "http://frontend";
