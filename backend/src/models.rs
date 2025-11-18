@@ -191,6 +191,11 @@ pub struct ErrorResponse {
     pub error: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UploadResponse {
+    pub url: String,
+}
+
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct SiteContent {
     pub section: String,

@@ -148,7 +148,9 @@ pub mod auth;      // Authentication and authorization
 pub mod search;    // Full-text search functionality
 
 // Content Management Handlers
-pub mod tutorials;    // Tutorial CRUD operations
+pub mod tutorials;
+pub mod upload;
+    // Tutorial CRUD operations
 pub mod comments;     // Comment system management
 
 // Site Content Handlers

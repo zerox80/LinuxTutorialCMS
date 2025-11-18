@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import PropTypes from 'prop-types'
-import { AlertCircle, FileText, RefreshCw, X } from 'lucide-react'
+import { AlertCircle, FileText, RefreshCw, X, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { sanitizeSlug, isValidSlug } from '../../utils/slug'
 import { sanitizeInteger } from './formUtils'
+import { useAuth } from '../../context/AuthContext'
 
 const formatDateTimeLocal = (value) => {
   if (!value) return ''
@@ -29,6 +30,7 @@ const parseDateTimeLocal = (value) => {
 }
 
 const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
+  const { token } = useAuth()
   const [title, setTitle] = useState(initialData?.title ?? '')
   const [slug, setSlug] = useState(initialData?.slug ?? '')
   const [excerpt, setExcerpt] = useState(initialData?.excerpt ?? '')
@@ -37,6 +39,7 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
   const [isPublished, setIsPublished] = useState(Boolean(initialData?.is_published))
   const [publishedAt, setPublishedAt] = useState(initialData?.published_at ?? '')
   const [error, setError] = useState(null)
+  const [uploading, setUploading] = useState(false)
   const publishedAtInputValue = useMemo(() => formatDateTimeLocal(publishedAt), [publishedAt])
   const sanitizedPostSlug = useMemo(() => sanitizeSlug(slug), [slug])
   const postSlugHasInput = slug.trim().length > 0
@@ -78,6 +81,45 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
       setError(err)
     }
   }
+
+  const handleImageUpload = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    setError(null)
+
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const response = await fetch('http://localhost:8489/api/upload', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Upload failed')
+      }
+
+      const data = await response.json()
+      const imageUrl = `http://localhost:8489${data.url}`
+      const markdownImage = `\n![${file.name}](${imageUrl})\n`
+
+      setContent((prev) => prev + markdownImage)
+    } catch (err) {
+      setError(err)
+    } finally {
+      setUploading(false)
+      // Reset file input
+      event.target.value = ''
+    }
+  }
+
   return (
     <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto dark:bg-slate-900">
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-800">
@@ -181,6 +223,22 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
             onChange={(event) => setContent(event.target.value)}
             required
           />
+          <div className="mt-2">
+            <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+              {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+              <span>Bild hochladen & einfügen</span>
+              <input
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={uploading}
+              />
+            </label>
+            <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
+              Das Bild wird hochgeladen und der Markdown-Code automatisch am Ende des Inhalts eingefügt.
+            </p>
+          </div>
         </label>
         <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-slate-200">
           <input

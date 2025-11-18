@@ -1,0 +1,118 @@
+
+use crate::{
+    auth,
+    models::{ErrorResponse, UploadResponse},
+};
+use axum::{
+    extract::{Multipart, State},
+    http::StatusCode,
+    Json,
+};
+use std::path::PathBuf;
+use tokio::fs;
+use uuid::Uuid;
+
+const MAX_FILE_SIZE: usize = 10 * 1024 * 1024; // 10MB
+const ALLOWED_EXTENSIONS: &[&str] = &["jpg", "jpeg", "png", "gif", "webp", "svg"];
+
+pub async fn upload_image(
+    claims: auth::Claims,
+    mut multipart: Multipart,
+) -> Result<Json<UploadResponse>, (StatusCode, Json<ErrorResponse>)> {
+    // Ensure user is admin
+    if claims.role != "admin" {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse {
+                error: "Insufficient permissions".to_string(),
+            }),
+        ));
+    }
+
+    while let Some(field) = multipart.next_field().await.map_err(|err| {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse {
+                error: format!("Failed to process multipart field: {}", err),
+            }),
+        )
+    })? {
+        let name = field.name().unwrap_or("").to_string();
+        
+        if name == "file" {
+            let file_name = field.file_name().unwrap_or("unknown").to_string();
+            let content_type = field.content_type().unwrap_or("application/octet-stream").to_string();
+            
+            // Simple extension validation
+            let ext = std::path::Path::new(&file_name)
+                .extension()
+                .and_then(|os_str| os_str.to_str())
+                .unwrap_or("")
+                .to_lowercase();
+
+            if !ALLOWED_EXTENSIONS.contains(&ext.as_str()) {
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    Json(ErrorResponse {
+                        error: format!("Invalid file extension. Allowed: {:?}", ALLOWED_EXTENSIONS),
+                    }),
+                ));
+            }
+
+            let data = field.bytes().await.map_err(|err| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse {
+                        error: format!("Failed to read file data: {}", err),
+                    }),
+                )
+            })?;
+
+            if data.len() > MAX_FILE_SIZE {
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    Json(ErrorResponse {
+                        error: format!("File too large. Max size: {} bytes", MAX_FILE_SIZE),
+                    }),
+                ));
+            }
+
+            let new_filename = format!("{}.{}", Uuid::new_v4(), ext);
+            let mut upload_path = PathBuf::from("uploads");
+            
+            // Ensure uploads directory exists (should be handled in main, but good safety)
+            if !upload_path.exists() {
+                fs::create_dir_all(&upload_path).await.map_err(|err| {
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ErrorResponse {
+                            error: format!("Failed to create uploads directory: {}", err),
+                        }),
+                    )
+                })?;
+            }
+            
+            upload_path.push(&new_filename);
+
+            fs::write(&upload_path, data).await.map_err(|err| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse {
+                        error: format!("Failed to save file: {}", err),
+                    }),
+                )
+            })?;
+
+            let url = format!("/uploads/{}", new_filename);
+            
+            return Ok(Json(UploadResponse { url }));
+        }
+    }
+
+    Err((
+        StatusCode::BAD_REQUEST,
+        Json(ErrorResponse {
+            error: "No file found in request".to_string(),
+        }),
+    ))
+}

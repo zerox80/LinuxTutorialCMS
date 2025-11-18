@@ -33,6 +33,7 @@ use tower_governor::key_extractor::SmartIpKeyExtractor;
 use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
 use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
 use tower_http::limit::RequestBodyLimitLayer;
+use tower_http::services::ServeDir;
 use tracing_subscriber;
 
 // Custom HTTP header constants for security policies
@@ -327,6 +328,13 @@ async fn main() {
         .await
         .expect("Failed to create database pool");
 
+    // Ensure uploads directory exists
+    if !std::path::Path::new("uploads").exists() {
+        tokio::fs::create_dir_all("uploads")
+            .await
+            .expect("Failed to create uploads directory");
+    }
+
     let allowed_origins: Vec<HeaderValue> = match env::var("FRONTEND_ORIGINS") {
         Ok(value) => {
 
@@ -443,6 +451,10 @@ async fn main() {
             "/api/comments/{id}",
             delete(handlers::comments::delete_comment),
         )
+        .route(
+            "/api/upload",
+            post(handlers::upload::upload_image),
+        )
 
         .route_layer(middleware::from_extractor::<csrf::CsrfGuard>())
 
@@ -502,6 +514,7 @@ async fn main() {
             "/api/public/published-pages",
             get(handlers::site_pages::list_published_page_slugs),
         )
+        .nest_service("/uploads", ServeDir::new("uploads"))
 
         .route("/api/health", get(|| async { "OK" }))
 
