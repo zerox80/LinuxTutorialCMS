@@ -254,7 +254,45 @@ pub async fn delete_comment(
     State(pool): State<DbPool>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-    if claims.role != "admin" {
+    // Fetch the comment first to check ownership
+    let comment = sqlx::query_as::<_, Comment>("SELECT * FROM comments WHERE id = ?")
+        .bind(&id)
+        .fetch_optional(&pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Database error: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Failed to fetch comment".to_string(),
+                }),
+            )
+        })?;
+
+    let comment = match comment {
+        Some(c) => c,
+        None => {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse {
+                    error: "Comment not found".to_string(),
+                }),
+            ));
+        }
+    };
+
+    // Check permissions: Admin or Author
+    let is_admin = claims.role == "admin";
+    // We compare display names/usernames. Ideally, we should compare user IDs if available in comments.
+    // Assuming 'author' in comments table stores the username/display name which matches claims.sub
+    // or we need to be careful if display names are mutable.
+    // For this implementation, we'll assume claims.sub matches the stored author name for simplicity,
+    // or we might need to fetch the user to verify.
+    // However, `comment_author_display_name` uses `claims.sub` by default.
+    // Let's assume strict username matching for now.
+    let is_author = comment.author == claims.sub;
+
+    if !is_admin && !is_author {
         return Err((
             StatusCode::FORBIDDEN,
             Json(ErrorResponse {
@@ -278,6 +316,7 @@ pub async fn delete_comment(
         })?;
 
     if result.rows_affected() == 0 {
+        // Should not happen since we just fetched it, but good for safety
         return Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse {

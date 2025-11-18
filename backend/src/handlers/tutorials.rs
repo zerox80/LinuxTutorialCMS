@@ -65,6 +65,9 @@ fn validate_tutorial_data(title: &str, description: &str, content: &str) -> Resu
         return Err("Description too long (max 1000 characters)".to_string());
     }
     let content_trimmed = content.trim();
+    if content_trimmed.is_empty() {
+        return Err("Content cannot be empty".to_string());
+    }
     if content_trimmed.len() > 100_000 {
         return Err("Content too long (max 100,000 characters)".to_string());
     }
@@ -194,12 +197,13 @@ fn default_tutorial_limit() -> i64 {
 pub async fn list_tutorials(
     State(pool): State<DbPool>,
     Query(params): Query<TutorialListQuery>,
-) -> Result<Json<Vec<TutorialResponse>>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<Vec<TutorialSummaryResponse>>, (StatusCode, Json<ErrorResponse>)> {
     let limit = params.limit.clamp(1, 100);
     let offset = params.offset.max(0);
 
+    // Optimized query: Exclude 'content' column to reduce payload size
     let tutorials = sqlx::query_as::<_, Tutorial>(
-        "SELECT id, title, description, icon, color, topics, content, version, created_at, updated_at \
+        "SELECT id, title, description, icon, color, topics, '' as content, version, created_at, updated_at \
          FROM tutorials ORDER BY created_at ASC LIMIT ? OFFSET ?"
     )
         .bind(limit)
@@ -218,7 +222,7 @@ pub async fn list_tutorials(
 
     let mut responses = Vec::with_capacity(tutorials.len());
     for tutorial in tutorials {
-        let response: TutorialResponse = tutorial.try_into().map_err(|err: String| {
+        let response: TutorialSummaryResponse = tutorial.try_into().map_err(|err: String| {
             tracing::error!("Tutorial data corruption detected: {}", err);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,

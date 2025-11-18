@@ -16,8 +16,8 @@ const TutorialForm = ({ tutorial, onClose }) => {
   const [formError, setFormError] = useState('')
   useEffect(() => {
     if (tutorial) {
-      const validTopics = Array.isArray(tutorial.topics) 
-        ? tutorial.topics.filter(t => t && t.trim() !== '') 
+      const validTopics = Array.isArray(tutorial.topics)
+        ? tutorial.topics.filter(t => t && t.trim() !== '')
         : []
       setFormData({
         title: tutorial.title || '',
@@ -85,6 +85,10 @@ const TutorialForm = ({ tutorial, onClose }) => {
       setFormError('Füge mindestens ein Thema hinzu.')
       return
     }
+    if (!cleanedData.content.trim()) {
+      setFormError('Der Inhalt darf nicht leer sein.')
+      return
+    }
     setFormError('')
     setSubmitting(true)
     try {
@@ -129,7 +133,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
   }
   return (
     <div className="p-8 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100">
-      {}
+      { }
       <div className="flex justify-between items-center mb-6">
         <h2 id="modal-title" className="text-2xl font-bold text-gray-800 dark:text-slate-100">
           {tutorial ? 'Tutorial bearbeiten' : 'Neues Tutorial erstellen'}
@@ -141,7 +145,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
           <X className="w-6 h-6 text-gray-600 dark:text-slate-300" />
         </button>
       </div>
-      {}
+      { }
       <form onSubmit={handleSubmit} className="space-y-6">
         {formError && (
           <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300" role="alert">
@@ -149,7 +153,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
             <span className="text-sm">{formError}</span>
           </div>
         )}
-        {}
+        { }
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
             Titel *
@@ -165,7 +169,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
           />
           <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">{formData.title.length}/200 Zeichen</p>
         </div>
-        {}
+        { }
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
             Beschreibung *
@@ -181,7 +185,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
           />
           <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">{formData.description.length}/1000 Zeichen</p>
         </div>
-        {}
+        { }
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
@@ -216,7 +220,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
             </select>
           </div>
         </div>
-        {}
+        { }
         <div>
           <div className="flex justify-between items-center mb-2">
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-300">
@@ -255,7 +259,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
             ))}
           </div>
         </div>
-        {}
+        { }
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
             Inhalt (Markdown unterstützt)
@@ -270,7 +274,7 @@ const TutorialForm = ({ tutorial, onClose }) => {
           />
           <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">{formData.content.length}/100000 Zeichen</p>
         </div>
-        {}
+        { }
         <div className="flex space-x-4 pt-4 border-t border-gray-200 dark:border-slate-800">
           <button
             type="submit"

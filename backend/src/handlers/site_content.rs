@@ -98,13 +98,18 @@ fn validate_header_structure(content: &Value) -> Result<(), &'static str> {
         .get("navItems")
         .and_then(|items| items.as_array())
         .map(|items| {
-            items
-                .iter()
-                .all(|item| item.get("id").is_some() && item.get("label").is_some())
+            items.iter().all(|item| {
+                let has_id_label = item.get("id").is_some() && item.get("label").is_some();
+                // Ensure at least one target property exists
+                let has_target = item.get("slug").is_some()
+                    || item.get("href").is_some()
+                    || item.get("path").is_some();
+                has_id_label && has_target
+            })
         })
         .unwrap_or(false)
     {
-        return Err("Each navigation item must include 'id' and 'label'");
+        return Err("Each navigation item must include 'id', 'label', and a target ('slug', 'href', or 'path')");
     }
     Ok(())
 }
