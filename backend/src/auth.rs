@@ -25,6 +25,7 @@ use axum::{
         request::Parts,
         HeaderMap, HeaderValue, StatusCode,
     },
+    Json,
 };
 use axum_extra::extract::cookie::{Cookie, CookieJar, SameSite};
 use chrono::{Duration, Utc};
@@ -566,18 +567,26 @@ fn parse_bearer_token(value: &str) -> Option<String> {
 pub async fn auth_middleware(
     mut request: axum::extract::Request,
     next: axum::middleware::Next,
-) -> Result<axum::response::Response, (StatusCode, String)> {
+) -> Result<axum::response::Response, (StatusCode, Json<crate::models::ErrorResponse>)> {
     // Extract token from request
     let token = extract_token(request.headers()).ok_or_else(|| {
         (
             StatusCode::UNAUTHORIZED,
-            "Missing authentication token".to_string(),
+            Json(crate::models::ErrorResponse {
+                error: "Missing authentication token".to_string(),
+            }),
         )
     })?;
 
     // Verify token and extract claims
-    let claims = verify_jwt(&token)
-        .map_err(|e| (StatusCode::UNAUTHORIZED, format!("Invalid token: {}", e)))?;
+    let claims = verify_jwt(&token).map_err(|e| {
+        (
+            StatusCode::UNAUTHORIZED,
+            Json(crate::models::ErrorResponse {
+                error: format!("Invalid token: {}", e),
+            }),
+        )
+    })?;
 
     // Add claims to request extensions for downstream handlers
     request.extensions_mut().insert(claims);
