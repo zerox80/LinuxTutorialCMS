@@ -37,7 +37,7 @@
 
 # Use latest stable Rust for building
 # Provides access to latest Rust features and optimizations
-FROM rust:1.82-bookworm AS builder
+FROM rust:1.83-bookworm AS builder
 
 # Set working directory for all subsequent commands
 WORKDIR /app
@@ -61,7 +61,7 @@ RUN apt-get update && apt-get install -y \
 # Copy Cargo configuration files first to leverage Docker layer caching
 # This ensures dependencies are only rebuilt when Cargo.toml changes
 # Improves build performance significantly in CI/CD pipelines
-COPY Cargo.toml ./
+COPY Cargo.toml Cargo.lock* ./
 
 # Ensure reproducible builds with Cargo.lock
 # Generate Cargo.lock if it doesn't exist for dependency pinning
