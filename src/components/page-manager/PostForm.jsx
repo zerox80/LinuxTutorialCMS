@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef } from 'react'
 import PropTypes from 'prop-types'
 import { AlertCircle, FileText, RefreshCw, X, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { sanitizeSlug, isValidSlug } from '../../utils/slug'
@@ -31,6 +31,7 @@ const parseDateTimeLocal = (value) => {
 
 const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
   const { token } = useAuth()
+  const textareaRef = useRef(null)
   const [title, setTitle] = useState(initialData?.title ?? '')
   const [slug, setSlug] = useState(initialData?.slug ?? '')
   const [excerpt, setExcerpt] = useState(initialData?.excerpt ?? '')
@@ -93,7 +94,7 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
     formData.append('file', file)
 
     try {
-      const response = await fetch('http://localhost:8489/api/upload', {
+      const response = await fetch('/api/upload', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -107,10 +108,28 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
       }
 
       const data = await response.json()
-      const imageUrl = `http://localhost:8489${data.url}`
+      const imageUrl = data.url
       const markdownImage = `\n![${file.name}](${imageUrl})\n`
 
-      setContent((prev) => prev + markdownImage)
+      const textarea = textareaRef.current
+      if (textarea) {
+        const start = textarea.selectionStart
+        const end = textarea.selectionEnd
+        const text = content
+        const newText = text.substring(0, start) + markdownImage + text.substring(end)
+        setContent(newText)
+
+        // Restore cursor position after the inserted image
+        // We need to wait for the render cycle, but since we control state, 
+        // we can't easily set cursor immediately without a layout effect or similar.
+        // For now, just inserting is the main goal.
+        setTimeout(() => {
+          textarea.focus()
+          textarea.selectionStart = textarea.selectionEnd = start + markdownImage.length
+        }, 0)
+      } else {
+        setContent((prev) => prev + markdownImage)
+      }
     } catch (err) {
       setError(err)
     } finally {
@@ -217,6 +236,7 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
         <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
           Inhalt (Markdown)
           <textarea
+            ref={textareaRef}
             className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-mono focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
             rows={12}
             value={content}
@@ -236,7 +256,7 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
               />
             </label>
             <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
-              Das Bild wird hochgeladen und der Markdown-Code automatisch am Ende des Inhalts eingefügt.
+              Das Bild wird hochgeladen und der Markdown-Code an der Cursor-Position eingefügt.
             </p>
           </div>
         </label>
