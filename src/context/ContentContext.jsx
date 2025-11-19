@@ -57,6 +57,10 @@ export const DEFAULT_CONTENT = {
       { label: 'Community', value: 'Active' },
     ],
   },
+  cta_section: {
+    title: 'Wissen teilen & erweitern',
+    description: 'Bleib auf dem Laufenden mit den neuesten Entwicklungen in der IT-Welt.',
+  },
   site_meta: {
     title: 'IT Wissensportal - Security, Programming & Admin',
     description: 'Dein Portal für IT Security, Programmierung und Administration.',
@@ -111,28 +115,7 @@ export const DEFAULT_CONTENT = {
       signature: 'Made for IT Professionals',
     },
   },
-  grundlagen_page: {
-    hero: {
-      badge: 'Wissensbasis',
-      title: 'Grundlagen & Konzepte',
-      description:
-        'Fundiertes Wissen für IT-Einsteiger und Fortgeschrittene.',
-      icon: 'BookOpen',
-    },
-    highlights: [],
-    modules: {
-      title: 'Themenbereiche',
-      description: 'Strukturierte Inhalte zu verschiedenen IT-Disziplinen.',
-      items: [],
-      summary: [],
-    },
-    cta: {
-      title: 'Mehr erfahren?',
-      description: 'Entdecke unsere detaillierten Blog-Beiträge.',
-      primary: { label: 'Zum Blog', href: '/blog' },
-      secondary: { label: 'Admin', href: '/admin' },
-    },
-  },
+
 }
 export const CONTENT_SECTIONS = Object.keys(DEFAULT_CONTENT)
 export const ContentProvider = ({ children }) => {

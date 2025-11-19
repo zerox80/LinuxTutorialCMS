@@ -10,7 +10,6 @@ import Footer from './components/Footer'
 import ProtectedRoute from './components/ProtectedRoute'
 import GlobalSiteMeta from './components/GlobalSiteMeta'
 import Home from './pages/Home' // Landing/home page
-import Grundlagen from './pages/Grundlagen' // Linux basics page
 import Login from './pages/Login' // User authentication page
 import TutorialDetail from './pages/TutorialDetail' // Individual tutorial view
 import DynamicPage from './pages/DynamicPage' // CMS-driven dynamic pages
@@ -44,16 +43,6 @@ function App() {
                           <ErrorBoundary>
                             <Header />
                             <Home />
-                            <Footer />
-                          </ErrorBoundary>
-                        }
-                      />
-                      <Route
-                        path="/grundlagen"
-                        element={
-                          <ErrorBoundary>
-                            <Header />
-                            <Grundlagen />
                             <Footer />
                           </ErrorBoundary>
                         }

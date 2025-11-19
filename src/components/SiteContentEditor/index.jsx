@@ -11,10 +11,10 @@ import { getIconComponent } from '../../utils/iconMap'
 const sectionLabels = {
   hero: 'Hero-Bereich (Startseite)',
   stats: 'Statistiken (Startseite)',
+  cta_section: 'CTA-Bereich (Startseite)',
   tutorial_section: 'Blog-Sektion (Startseite)',
   header: 'Navigation & Header',
   footer: 'Footer',
-  grundlagen_page: 'Grundlagen-Seite',
   site_meta: 'Seitentitel & Beschreibung',
 }
 
@@ -322,6 +322,40 @@ const StatsForm = ({ content, onFieldChange }) => {
 }
 
 StatsForm.propTypes = {
+  content: PropTypes.object,
+  onFieldChange: PropTypes.func.isRequired,
+}
+
+const CtaSectionForm = ({ content, onFieldChange }) => {
+  const cta = content || {}
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">CTA-Bereich (Startseite)</h3>
+      <div className="grid grid-cols-1 gap-4">
+        <div>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Titel</label>
+          <input
+            type="text"
+            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            value={cta.title || ''}
+            onChange={(e) => onFieldChange(['title'], e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Beschreibung</label>
+          <textarea
+            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            rows="2"
+            value={cta.description || ''}
+            onChange={(e) => onFieldChange(['description'], e.target.value)}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+CtaSectionForm.propTypes = {
   content: PropTypes.object,
   onFieldChange: PropTypes.func.isRequired,
 }
@@ -738,45 +772,7 @@ BlogSectionForm.propTypes = {
   onFieldChange: PropTypes.func.isRequired,
 }
 
-const GrundlagenForm = ({ content, onFieldChange }) => {
-  const page = content || {}
-  const hero = page.hero || {}
-  return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Grundlagen-Seite</h3>
-      <div className="grid grid-cols-1 gap-4">
-        <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Hero Titel</label>
-          <input
-            type="text"
-            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-            value={hero.title || ''}
-            onChange={(e) => onFieldChange(['hero', 'title'], e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Hero Untertitel</label>
-          <textarea
-            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-            rows="2"
-            value={hero.subtitle || ''}
-            onChange={(e) => onFieldChange(['hero', 'subtitle'], e.target.value)}
-          />
-        </div>
-        <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 dark:bg-slate-800 dark:border-slate-700">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Die Module dieser Seite können aktuell nur über den JSON-Editor (Erweitert) bearbeitet werden.
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
 
-GrundlagenForm.propTypes = {
-  content: PropTypes.object,
-  onFieldChange: PropTypes.func.isRequired,
-}
 
 const HeroPreview = ({ content }) => {
   const HeroIcon = getIconComponent(content.icon, 'Terminal')
@@ -843,6 +839,29 @@ const StatsPreview = ({ content }) => {
 }
 
 StatsPreview.propTypes = {
+  content: PropTypes.object.isRequired,
+}
+
+const CtaSectionPreview = ({ content }) => {
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+      <div className="flex items-center justify-between mb-6">
+        <h4 className="text-lg font-semibold text-gray-900 dark:text-slate-100">CTA Vorschau</h4>
+        <span className="rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
+          Vorschau
+        </span>
+      </div>
+      <div className="rounded-xl bg-slate-950 p-8 text-center">
+        <h2 className="text-2xl font-bold mb-4 text-white">{content.title || 'Wissen teilen & erweitern'}</h2>
+        <p className="text-lg text-slate-400">
+          {content.description || 'Bleib auf dem Laufenden mit den neuesten Entwicklungen in der IT-Welt.'}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+CtaSectionPreview.propTypes = {
   content: PropTypes.object.isRequired,
 }
 
@@ -914,6 +933,8 @@ const SectionPreview = ({ section, content }) => {
       return <HeroPreview content={content} />
     case 'stats':
       return <StatsPreview content={content} />
+    case 'cta_section':
+      return <CtaSectionPreview content={content} />
     case 'tutorial_section':
       return <TutorialSectionPreview content={content} />
     case 'site_meta':
@@ -1147,6 +1168,10 @@ const SiteContentEditor = () => {
             <StatsForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
           )}
 
+          {selectedSection === 'cta_section' && (
+            <CtaSectionForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
+          )}
+
           {selectedSection === 'site_meta' && (
             <SiteMetaForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
           )}
@@ -1161,10 +1186,6 @@ const SiteContentEditor = () => {
 
           {selectedSection === 'tutorial_section' && (
             <BlogSectionForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
-          )}
-
-          {selectedSection === 'grundlagen_page' && (
-            <GrundlagenForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
           )}
 
           {/* JSON Editor (Toggleable) */}

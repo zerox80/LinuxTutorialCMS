@@ -116,9 +116,9 @@ const LandingPage = () => {
             <section className="py-24 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-slate-900 to-slate-950" />
                 <div className="relative max-w-4xl mx-auto px-4 text-center">
-                    <h2 className="text-4xl font-bold mb-6 text-white">Wissen teilen & erweitern</h2>
+                    <h2 className="text-4xl font-bold mb-6 text-white">{getSection('cta_section')?.title || 'Wissen teilen & erweitern'}</h2>
                     <p className="text-xl text-slate-400 mb-10">
-                        Bleib auf dem Laufenden mit den neuesten Entwicklungen in der IT-Welt.
+                        {getSection('cta_section')?.description || 'Bleib auf dem Laufenden mit den neuesten Entwicklungen in der IT-Welt.'}
                     </p>
                 </div>
             </section>
