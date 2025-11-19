@@ -1,6 +1,25 @@
 import html2pdf from 'html2pdf.js'
 
 /**
+ * Helper to convert any CSS color string to RGB format using the browser's native color parsing.
+ * This handles oklch, oklab, hsl, etc. by letting the browser compute the rgb value.
+ */
+const convertColorToRgb = (colorString) => {
+    if (!colorString || colorString === 'transparent' || colorString === 'inherit') return colorString;
+
+    // Create a temporary element to compute the color
+    const div = document.createElement('div');
+    div.style.color = colorString;
+    div.style.display = 'none';
+    document.body.appendChild(div);
+
+    const computedColor = window.getComputedStyle(div).color;
+    document.body.removeChild(div);
+
+    return computedColor;
+}
+
+/**
  * Generates a PDF from a React element (DOM node).
  * @param {HTMLElement} element - The DOM element to render.
  * @param {string} filename - The output filename.
@@ -31,9 +50,6 @@ export const generatePdf = async (element, filename) => {
         const cleanElement = (el) => {
             // Remove dark mode specific classes
             if (el.classList) {
-                // Remove bg-slate-*, text-slate-*, etc. that might be dark mode specific
-                // Actually, it's safer to just FORCE light mode styles
-
                 // Remove shadow and border classes that look bad in print
                 el.classList.remove('shadow-xl', 'shadow-2xl', 'shadow-lg', 'shadow-md', 'shadow-sm')
                 el.classList.remove('border', 'border-gray-200', 'border-slate-700', 'dark:border-slate-700')
@@ -58,19 +74,36 @@ export const generatePdf = async (element, filename) => {
                 }
             }
 
+            // SANITIZE COLORS: Convert all computed colors to RGB to avoid 'oklch' errors
+            const computedStyle = window.getComputedStyle(el);
+
+            // We explicitly check and convert specific properties that might contain oklch
+            const propertiesToCheck = ['color', 'backgroundColor', 'borderColor', 'borderTopColor', 'borderBottomColor', 'borderLeftColor', 'borderRightColor'];
+
+            propertiesToCheck.forEach(prop => {
+                const val = computedStyle[prop];
+                if (val && (val.includes('oklch') || val.includes('oklab'))) {
+                    // Convert to RGB
+                    el.style[prop] = convertColorToRgb(val);
+                }
+            });
+
             // Recursively clean children
             for (let i = 0; i < el.children.length; i++) {
                 cleanElement(el.children[i])
             }
         }
 
+        // We need to append the clone to the container BEFORE cleaning/computing styles
+        // because window.getComputedStyle requires the element to be in the DOM.
+        container.appendChild(clone);
+
+        // Now clean and sanitize colors
         cleanElement(clone)
 
         // Add padding to the clone itself to act as page margins inside the container
         clone.style.padding = '40px'
         clone.style.backgroundColor = '#ffffff'
-
-        container.appendChild(clone)
 
         // 4. Configure html2pdf
         const opt = {
