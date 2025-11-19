@@ -302,7 +302,7 @@ class ApiClient {
   async createComment(tutorialId, content) {
     return this.request(`/tutorials/${tutorialId}/comments`, {
       method: 'POST',
-      body: JSON.stringify({ content }),
+      body: { content },
     })
   }
 
@@ -314,7 +314,7 @@ class ApiClient {
   async createPostComment(postId, content, author = null) {
     return this.request(`/posts/${postId}/comments`, {
       method: 'POST',
-      body: JSON.stringify({ content, author }),
+      body: { content, author },
     })
   }
 
