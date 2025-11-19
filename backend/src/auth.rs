@@ -33,8 +33,8 @@ use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 use std::env;
+use time::{Duration as TimeDuration, OffsetDateTime};
 
 use crate::db::{self, DbPool};
 
@@ -302,7 +302,7 @@ pub fn build_auth_cookie(token: &str) -> Cookie<'static> {
         .path("/")
         .http_only(true)
         .same_site(SameSite::Lax)
-        .max_age(cookie::time::Duration::seconds(AUTH_COOKIE_TTL_SECONDS));
+        .max_age(TimeDuration::seconds(AUTH_COOKIE_TTL_SECONDS));
 
     // Add Secure flag in production (HTTPS only)
     if cookies_should_be_secure() {
@@ -332,7 +332,7 @@ pub fn build_cookie_removal() -> Cookie<'static> {
         .http_only(true)
         .same_site(SameSite::Lax)
         .expires(OffsetDateTime::UNIX_EPOCH)
-        .max_age(cookie::time::Duration::seconds(0));
+        .max_age(TimeDuration::seconds(0));
 
     // Match security settings of auth cookie
     if cookies_should_be_secure() {
