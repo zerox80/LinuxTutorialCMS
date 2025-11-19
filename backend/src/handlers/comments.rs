@@ -122,7 +122,7 @@ pub async fn list_comments(
             )
         })?;
 
-    if exists.is_none() {
+    if !exists {
         return Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse {

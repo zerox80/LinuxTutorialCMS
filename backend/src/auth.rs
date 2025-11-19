@@ -382,7 +382,7 @@ where
 
         // Check if token is blacklisted
         let pool = DbPool::from_ref(state);
-        if db::is_token_blacklisted(&pool, &token)
+        if repositories::token_blacklist::is_token_blacklisted(&pool, &token)
             .await
             .map_err(|e| {
                 tracing::error!("Database error checking token blacklist: {}", e);
