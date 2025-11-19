@@ -161,7 +161,6 @@ pub async fn list_comments(
 }
 
 pub async fn create_comment(
-    claims: Option<auth::Claims>,
     State(pool): State<DbPool>,
     Path(tutorial_id): Path<String>,
     Json(payload): Json<CreateCommentRequest>,
@@ -183,7 +182,7 @@ pub async fn create_comment(
         return Err((StatusCode::NOT_FOUND, Json(ErrorResponse { error: "Tutorial not found".to_string() })));
     }
 
-    create_comment_internal(pool, Some(tutorial_id), None, payload, claims).await
+    create_comment_internal(pool, Some(tutorial_id), None, payload, None).await
 }
 
 pub async fn list_post_comments(
@@ -228,7 +227,6 @@ pub async fn list_post_comments(
 }
 
 pub async fn create_post_comment(
-    claims: Option<auth::Claims>,
     State(pool): State<DbPool>,
     Path(post_id): Path<String>,
     Json(payload): Json<CreateCommentRequest>,
@@ -246,7 +244,7 @@ pub async fn create_post_comment(
         return Err((StatusCode::NOT_FOUND, Json(ErrorResponse { error: "Post not found".to_string() })));
     }
 
-    create_comment_internal(pool, None, Some(post_id), payload, claims).await
+    create_comment_internal(pool, None, Some(post_id), payload, None).await
 }
 
 async fn create_comment_internal(
