@@ -20,7 +20,7 @@ use axum::http::{
 };
 use axum::{
     extract::{DefaultBodyLimit, Request},
-    middleware::{self, from_extractor, from_fn, Next},
+    middleware::{from_extractor, from_fn, Next},
     response::Response,
     routing::{delete, get, post, put},
     Router,
@@ -321,7 +321,7 @@ async fn main() {
 
         // Serve index.html with server-side injection for root and fallback
         .route("/", get(handlers::frontend_proxy::serve_index))
-        .route("/{*path}", get(handlers::frontend_proxy::serve_index));
+        .route("/{*path}", get(handlers::frontend_proxy::serve_index))
         .layer(axum::middleware::from_fn(security::security_headers))
         .layer(cors_layer)
         .layer(DefaultBodyLimit::max(10 * 1024 * 1024)); // 10MB body limit
