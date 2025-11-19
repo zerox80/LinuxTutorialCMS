@@ -359,4 +359,27 @@
   .animate-gradient {
     animation: gradientShift 8s ease-in-out infinite;
   }
+
+  /* Aurora Background Effect */
+  .aurora-bg {
+    background-image: 
+      radial-gradient(at 100% 0%, hsla(250,100%,70%,.1) 0px, transparent 50%),
+      radial-gradient(at 0% 0%, hsla(210,100%,60%,.1) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(280,100%,70%,.1) 0px, transparent 50%),
+      radial-gradient(at 80% 100%, hsla(200,100%,60%,.1) 0px, transparent 50%),
+      radial-gradient(at 0% 0%, hsla(240,100%,70%,.1) 0px, transparent 50%);
+    background-size: 200% 200%;
+    animation: aurora 20s linear infinite;
+  }
+
+  /* Premium Glass Card */
+  .glass-card-premium {
+    @apply bg-white/5 backdrop-blur-2xl border border-white/10 shadow-glass;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+  }
+
+  .dark .glass-card-premium {
+    @apply bg-slate-900/40 border-white/5;
+    background: linear-gradient(135deg, rgba(30,41,59,0.4) 0%, rgba(15,23,42,0.2) 100%);
+  }
 }

@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Sparkles, Zap, Shield, Globe, Code, Terminal, ChevronRight } from 'lucide-react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { useContent } from '../context/ContentContext'
@@ -11,84 +11,120 @@ const LandingPage = () => {
     const { getSection } = useContent()
     const heroContent = getSection('hero') || {}
     const features = Array.isArray(heroContent.features) ? heroContent.features : []
+    const statsContent = getSection('stats') || {}
+    const statsItems = Array.isArray(statsContent.items) ? statsContent.items : []
+    const [scrolled, setScrolled] = useState(false)
+
+    useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 50)
+        window.addEventListener('scroll', handleScroll)
+        return () => window.removeEventListener('scroll', handleScroll)
+    }, [])
 
     // Helper to resolve icons dynamically
     const resolveIcon = (iconName) => {
         return getIconComponent(iconName, 'Terminal')
     }
 
-    const statsContent = getSection('stats') || {}
-    const statsItems = Array.isArray(statsContent.items) ? statsContent.items : []
-
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-primary-500/30">
+        <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-primary-500/30 overflow-x-hidden">
             <Header />
 
-            {/* Hero Section */}
-            <section className="relative pt-32 pb-20 overflow-hidden">
-                {/* Background Effects */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
-                    <div className="absolute top-20 left-20 w-72 h-72 bg-primary-600/20 rounded-full blur-[100px]" />
-                    <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-600/20 rounded-full blur-[100px]" />
-                </div>
+            {/* Hero Section with Aurora Effect */}
+            <section className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
+                {/* Dynamic Background */}
+                <div className="absolute inset-0 aurora-bg opacity-30 pointer-events-none" />
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay pointer-events-none"></div>
 
-                <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    {heroContent.badgeText && (
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/50 border border-slate-800 backdrop-blur-sm mb-8 animate-fade-in-up">
+                {/* Floating Elements */}
+                <div className="absolute top-1/4 left-10 w-72 h-72 bg-primary-500/20 rounded-full blur-[100px] animate-float pointer-events-none" />
+                <div className="absolute bottom-1/4 right-10 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px] animate-float-delayed-2s pointer-events-none" />
+
+                <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center z-10">
+                    {/* Badge */}
+                    <div className="animate-slide-down opacity-0" style={{ animationFillMode: 'forwards' }}>
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-8 hover:bg-white/10 transition-colors cursor-default">
                             <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
                             </span>
-                            <span className="text-sm font-medium text-slate-300">{heroContent.badgeText}</span>
+                            <span className="text-sm font-medium text-primary-200 tracking-wide uppercase text-xs">
+                                {heroContent.badgeText || 'Next Gen Learning'}
+                            </span>
                         </div>
-                    )}
+                    </div>
 
-                    <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8 bg-gradient-to-b from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-                        {heroContent.title?.line1 || 'Meistere die digitale'} <br />
-                        <span className="bg-gradient-to-r from-primary-400 to-purple-400 bg-clip-text text-transparent">
-                            {heroContent.title?.line2 || 'Zukunft'}
+                    {/* Main Title */}
+                    <h1 className="text-6xl md:text-8xl font-bold tracking-tight mb-8 animate-slide-up opacity-0" style={{ animationDelay: '0.1s', animationFillMode: 'forwards' }}>
+                        <span className="bg-gradient-to-b from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                            {heroContent.title?.line1 || 'Master the'}
+                        </span>
+                        <br />
+                        <span className="bg-gradient-to-r from-primary-400 via-purple-400 to-primary-400 bg-clip-text text-transparent animate-gradient bg-[length:200%_auto]">
+                            {heroContent.title?.line2 || 'Digital Future'}
                         </span>
                     </h1>
 
-                    <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed">
-                        {heroContent.subtitle || 'Dein Einstieg in die Welt der IT.'}
-                        {heroContent.subline && <span className="block mt-2 text-slate-500">{heroContent.subline}</span>}
+                    {/* Subtitle */}
+                    <p className="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto mb-12 leading-relaxed animate-slide-up opacity-0" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>
+                        {heroContent.subtitle || 'Your gateway to elite IT knowledge. Learn, build, and scale with our comprehensive tutorials and guides.'}
                     </p>
 
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    {/* CTA Buttons */}
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-6 animate-slide-up opacity-0" style={{ animationDelay: '0.3s', animationFillMode: 'forwards' }}>
                         <button
                             onClick={() => navigate('/blog')}
-                            className="group relative px-8 py-4 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-primary-600/20 hover:shadow-primary-600/40 flex items-center gap-2"
+                            className="group relative px-8 py-4 bg-white text-slate-950 rounded-full font-bold text-lg transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] flex items-center gap-2"
                         >
-                            {heroContent.primaryCta?.label || 'Jetzt starten'}
+                            {heroContent.primaryCta?.label || 'Start Learning'}
                             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </button>
                         <button
                             onClick={() => document.getElementById('features').scrollIntoView({ behavior: 'smooth' })}
-                            className="px-8 py-4 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl font-semibold transition-all duration-200 border border-slate-800 hover:border-slate-700"
+                            className="group px-8 py-4 bg-white/5 text-white rounded-full font-bold text-lg transition-all duration-300 hover:bg-white/10 border border-white/10 backdrop-blur-sm flex items-center gap-2"
                         >
-                            {heroContent.secondaryCta?.label || 'Mehr erfahren'}
+                            {heroContent.secondaryCta?.label || 'Explore Features'}
+                            <ChevronRight className="w-5 h-5 opacity-50 group-hover:translate-x-1 transition-transform" />
                         </button>
+                    </div>
+
+                    {/* Scroll Indicator */}
+                    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce opacity-50">
+                        <div className="w-6 h-10 rounded-full border-2 border-slate-500 flex items-start justify-center p-1">
+                            <div className="w-1 h-2 bg-slate-500 rounded-full animate-scroll" />
+                        </div>
                     </div>
                 </div>
             </section>
 
-            {/* Features Grid */}
-            <section id="features" className="py-24 bg-slate-900/50 relative">
+            {/* Features Grid with Glassmorphism */}
+            <section id="features" className="py-32 relative">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-20">
+                        <h2 className="text-3xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+                            Why Choose Us?
+                        </h2>
+                        <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+                            Experience a learning platform designed for the modern developer.
+                        </p>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {features.map((feature, index) => {
                             const FeatureIcon = resolveIcon(feature.icon)
                             return (
                                 <div
                                     key={index}
-                                    className="group p-8 rounded-2xl bg-slate-950 border border-slate-800 hover:border-primary-500/30 transition-all duration-300 hover:-translate-y-1"
+                                    className="group glass-card-premium p-8 rounded-3xl hover:-translate-y-2 transition-all duration-500 relative overflow-hidden"
                                 >
-                                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.color || 'from-primary-500/20 to-primary-600/5'} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                                        <FeatureIcon className="w-7 h-7 text-primary-400" />
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color || 'from-primary-500/20 to-primary-600/5'} flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 border border-white/5`}>
+                                        <FeatureIcon className="w-8 h-8 text-primary-400" />
                                     </div>
-                                    <h3 className="text-2xl font-bold mb-4 text-slate-100">{feature.title}</h3>
-                                    <p className="text-slate-400 leading-relaxed">
+
+                                    <h3 className="text-2xl font-bold mb-4 text-white relative z-10">{feature.title}</h3>
+                                    <p className="text-slate-400 leading-relaxed relative z-10">
                                         {feature.description}
                                     </p>
                                 </div>
@@ -98,38 +134,16 @@ const LandingPage = () => {
                 </div>
             </section>
 
-            {/* Blog Section (Hardcoded defaults as requested) */}
-            <section id="tutorials" className="py-24 relative">
+            {/* Stats Section */}
+            <section className="py-20 border-y border-white/5 bg-white/2 backdrop-blur-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center mb-16">
-                        <span className="text-primary-400 font-semibold tracking-wider uppercase text-sm">
-                            Neueste Beiträge
-                        </span>
-                        <h2 className="mt-2 text-3xl md:text-4xl font-bold text-white">
-                            Aktuelle Artikel
-                        </h2>
-                        <p className="mt-4 text-xl text-slate-400 max-w-2xl mx-auto">
-                            Entdecke die neuesten Insights aus der IT-Welt.
-                        </p>
-                    </div>
-                    {/* Note: The actual blog cards are rendered by a separate component or this is just the header section. 
-                        If this page is supposed to list blogs, it needs to fetch them. 
-                        Currently, the Home page (now at /blog) does that. 
-                        This LandingPage seems to be just the landing page. 
-                        If we need to show blog cards here, we need to fetch them. 
-                        For now, I am just fixing the static content structure. 
-                    */}
-                </div>
-            </section>
-
-            {/* Stats / Trust Section */}
-            <section className="py-20 border-y border-slate-800/50 bg-slate-950">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
                         {statsItems.map((stat, i) => (
-                            <div key={i}>
-                                <div className="text-4xl font-bold text-white mb-2">{stat.value}</div>
-                                <div className="text-slate-500 font-medium">{stat.label}</div>
+                            <div key={i} className="group">
+                                <div className="text-5xl md:text-6xl font-bold text-white mb-2 bg-gradient-to-b from-white to-slate-500 bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300">
+                                    {stat.value}
+                                </div>
+                                <div className="text-primary-400 font-medium tracking-wider uppercase text-sm">{stat.label}</div>
                             </div>
                         ))}
                     </div>
@@ -137,13 +151,23 @@ const LandingPage = () => {
             </section>
 
             {/* CTA Section */}
-            <section className="py-24 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-b from-slate-900 to-slate-950" />
-                <div className="relative max-w-4xl mx-auto px-4 text-center">
-                    <h2 className="text-4xl font-bold mb-6 text-white">{getSection('cta_section')?.title || 'Wissen teilen & erweitern'}</h2>
-                    <p className="text-xl text-slate-400 mb-10">
-                        {getSection('cta_section')?.description || 'Bleib auf dem Laufenden mit den neuesten Entwicklungen in der IT-Welt.'}
+            <section className="py-32 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-b from-slate-950 to-primary-950/30" />
+                <div className="absolute inset-0 aurora-bg opacity-20" />
+
+                <div className="relative max-w-5xl mx-auto px-4 text-center">
+                    <h2 className="text-5xl md:text-7xl font-bold mb-8 text-white tracking-tight">
+                        {getSection('cta_section')?.title || 'Ready to Start?'}
+                    </h2>
+                    <p className="text-xl md:text-2xl text-slate-300 mb-12 max-w-3xl mx-auto">
+                        {getSection('cta_section')?.description || 'Join thousands of developers mastering Linux and Modern Web Development today.'}
                     </p>
+                    <button
+                        onClick={() => navigate('/blog')}
+                        className="px-12 py-6 bg-white text-slate-950 rounded-full font-bold text-xl transition-all duration-300 hover:scale-105 hover:shadow-[0_0_60px_-15px_rgba(255,255,255,0.4)]"
+                    >
+                        Get Started Now
+                    </button>
                 </div>
             </section>
 
