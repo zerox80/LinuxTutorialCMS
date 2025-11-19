@@ -1,5 +1,42 @@
 import html2pdf from 'html2pdf.js'
 
+// Create a shared canvas for color conversion
+const canvas = document.createElement('canvas');
+canvas.width = 1;
+canvas.height = 1;
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+/**
+ * Forces any color string to a Hex/RGB format using Canvas.
+ * This is the most robust way to convert oklch/oklab/etc to something html2canvas understands.
+ */
+const forceToHex = (colorString) => {
+    if (!colorString || colorString === 'none' || colorString === 'transparent') return colorString;
+
+    // If it's already safe, return it (optimization)
+    if (!colorString.includes('oklch') && !colorString.includes('oklab') && !colorString.startsWith('color(')) {
+        return colorString;
+    }
+
+    try {
+        ctx.fillStyle = colorString;
+        // If the browser understands the color, it will set it.
+        // If we read it back, we usually get hex or rgb.
+        const value = ctx.fillStyle;
+
+        // If it returns the same oklch string, the browser didn't convert it (unlikely in modern browsers)
+        // or it's just returning the input. In that case, fallback to black or transparent.
+        if (value.includes('oklch') || value.includes('oklab')) {
+            console.warn('Canvas failed to convert color:', colorString);
+            return '#000000'; // Fallback
+        }
+        return value;
+    } catch (e) {
+        console.error('Error converting color:', colorString, e);
+        return '#000000';
+    }
+}
+
 /**
  * Copies computed styles from a source element to a target element.
  * This "bakes" the styles into the element so it looks correct even without stylesheets.
@@ -30,22 +67,33 @@ const copyComputedStyles = (source, target) => {
     ];
 
     properties.forEach(prop => {
-        // We use getPropertyValue to get the resolved value (e.g. 'rgb(0, 0, 0)' instead of 'var(--color)')
-        const value = computed.getPropertyValue(prop);
+        // We use getPropertyValue to get the resolved value
+        let value = computed.getPropertyValue(prop);
+
         if (value && value !== 'none' && value !== 'auto' && value !== 'normal') {
+            // FORCE CONVERT COLORS
+            if (prop.includes('color') || prop.includes('border') || prop.includes('background')) {
+                if (value.includes('oklch') || value.includes('oklab')) {
+                    value = forceToHex(value);
+                }
+            }
             target.style.setProperty(prop, value);
         }
     });
 
-    // Explicitly handle background color if it's transparent, to ensure readability if parents change
+    // Explicitly handle background color if it's transparent
     if (computed.backgroundColor === 'rgba(0, 0, 0, 0)' || computed.backgroundColor === 'transparent') {
         // Don't force white, just leave transparent
     } else {
-        target.style.backgroundColor = computed.backgroundColor;
+        let bg = computed.backgroundColor;
+        if (bg.includes('oklch') || bg.includes('oklab')) bg = forceToHex(bg);
+        target.style.backgroundColor = bg;
     }
 
-    // Explicitly handle color to ensure it's RGB
-    target.style.color = computed.color;
+    // Explicitly handle color
+    let color = computed.color;
+    if (color.includes('oklch') || color.includes('oklab')) color = forceToHex(color);
+    target.style.color = color;
 }
 
 /**
@@ -89,19 +137,15 @@ export const generatePdf = async (element, filename) => {
         doc.close();
 
         // 2. Clone the element
-        // We clone it into the main document first to ensure we can traverse it easily if needed, 
-        // but actually we just clone the node.
         const clone = element.cloneNode(true);
 
         // 3. Copy computed styles from the original element to the clone
-        // This is crucial: we are "baking" the styles into the inline style attributes
-        // so that we don't need the external stylesheets (which contain the problematic oklch).
+        // This includes the FORCE COLOR CONVERSION logic
         cloneWithStyles(element, clone);
 
         // 4. Clean up the clone for print (overrides)
         const cleanElement = (el) => {
             // Remove shadows and borders that look bad in print
-            // We can just overwrite the styles we just copied
             if (el.style.boxShadow) el.style.boxShadow = 'none';
 
             // Force white background for the main container
