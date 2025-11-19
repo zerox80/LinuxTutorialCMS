@@ -325,6 +325,9 @@ backend/public/
 
 # Ignore generated migration files (if applicable)
 # migrations/
+!backend/migrations/*.sql
+!backend/migrations/20241119_add_votes_and_admin_to_comments.sql
+
 
 
 # ==================== Keep These ====================

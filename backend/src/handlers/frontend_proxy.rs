@@ -52,10 +52,13 @@ pub async fn serve_index(State(pool): State<db::DbPool>) -> impl IntoResponse {
     // We target the specific default tags to replace them
     let mut injected_html = html_content;
 
+    let safe_title = html_escape::encode_text(&title);
+    let safe_description = html_escape::encode_text(&description);
+
     // Replace Title
     injected_html = injected_html.replace(
         "<title>Linux Tutorial - Lerne Linux Schritt für Schritt</title>",
-        &format!("<title>{}</title>", title)
+        &format!("<title>{}</title>", safe_title)
     );
 
     // Replace Meta Description
@@ -66,7 +69,7 @@ pub async fn serve_index(State(pool): State<db::DbPool>) -> impl IntoResponse {
     let default_desc = "Lerne Linux von Grund auf - Interaktiv, modern und praxisnah. Umfassende Tutorials für Einsteiger und Fortgeschrittene.";
     injected_html = injected_html.replace(
         &format!("content=\"{}\"", default_desc),
-        &format!("content=\"{}\"", description)
+        &format!("content=\"{}\"", safe_description)
     );
 
     // Also replace OG tags if possible. 
@@ -77,7 +80,7 @@ pub async fn serve_index(State(pool): State<db::DbPool>) -> impl IntoResponse {
     // Replace OG Title
     injected_html = injected_html.replace(
         "content=\"Linux Tutorial - Lerne Linux Schritt für Schritt\"",
-        &format!("content=\"{}\"", title)
+        &format!("content=\"{}\"", safe_title)
     );
 
     // Replace OG Description (reusing the description replacement above might handle this if content matches)
@@ -85,7 +88,7 @@ pub async fn serve_index(State(pool): State<db::DbPool>) -> impl IntoResponse {
     let default_og_desc = "Lerne Linux von Grund auf - Interaktiv, modern und praxisnah.";
     injected_html = injected_html.replace(
         &format!("content=\"{}\"", default_og_desc),
-        &format!("content=\"{}\"", description)
+        &format!("content=\"{}\"", safe_description)
     );
 
     Html(injected_html).into_response()

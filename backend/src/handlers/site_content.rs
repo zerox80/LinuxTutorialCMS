@@ -1,7 +1,6 @@
 
 
-use crate::{
-    auth, db,
+    auth, db, repositories,
     models::{
         ErrorResponse, SiteContentListResponse, SiteContentResponse, UpdateSiteContentRequest,
     },
@@ -164,7 +163,7 @@ fn map_record(
 pub async fn list_site_content(
     State(pool): State<db::DbPool>,
 ) -> Result<Json<SiteContentListResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let records = db::fetch_all_site_content(&pool).await.map_err(|err| {
+    let records = repositories::content::fetch_all_site_content(&pool).await.map_err(|err| {
         tracing::error!("Failed to load site content: {}", err);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -188,7 +187,7 @@ pub async fn get_site_content(
 ) -> Result<Json<SiteContentResponse>, (StatusCode, Json<ErrorResponse>)> {
     validate_section(&section)?;
 
-    let record = db::fetch_site_content_by_section(&pool, &section)
+    let record = repositories::content::fetch_site_content_by_section(&pool, &section)
         .await
         .map_err(|err| {
             tracing::error!("Failed to load site content '{}': {}", section, err);
@@ -230,7 +229,7 @@ pub async fn update_site_content(
     validate_content_size(&payload.content)?;
     validate_content_structure(&section, &payload.content)?;
 
-    let record = db::upsert_site_content(&pool, &section, &payload.content)
+    let record = repositories::content::upsert_site_content(&pool, &section, &payload.content)
         .await
         .map_err(|err| {
             tracing::error!("Failed to update site content '{}': {}", section, err);

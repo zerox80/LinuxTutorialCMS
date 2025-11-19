@@ -26,15 +26,16 @@ use axum::{
         HeaderMap, HeaderValue, StatusCode,
     },
     Json,
+    extract::FromRef,
 };
 use axum_extra::extract::cookie::{Cookie, CookieJar, SameSite};
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 use std::env;
-use std::sync::OnceLock;
-use time::{Duration as TimeDuration, OffsetDateTime};
+
+use crate::db::{self, DbPool};
 
 /// Global storage for the JWT secret key.
 /// Initialized once at application startup via init_jwt_secret().
@@ -357,10 +358,11 @@ pub fn build_cookie_removal() -> Cookie<'static> {
 impl<S> FromRequestParts<S> for Claims
 where
     S: Send + Sync,
+    DbPool: FromRef<S>,
 {
     type Rejection = (StatusCode, String);
 
-    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         // Check if claims already extracted by middleware
         if let Some(claims) = parts.extensions.get::<Claims>() {
             return Ok(claims.clone());
@@ -377,6 +379,21 @@ where
         // Verify and decode the token
         let claims = verify_jwt(&token)
             .map_err(|e| (StatusCode::UNAUTHORIZED, format!("Invalid token: {}", e)))?;
+
+        // Check if token is blacklisted
+        let pool = DbPool::from_ref(state);
+        if db::is_token_blacklisted(&pool, &token)
+            .await
+            .map_err(|e| {
+                tracing::error!("Database error checking token blacklist: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Internal server error".to_string(),
+                )
+            })?
+        {
+            return Err((StatusCode::UNAUTHORIZED, "Token has been revoked".to_string()));
+        }
 
         Ok(claims)
     }
@@ -495,7 +512,7 @@ pub fn cookies_should_be_secure() -> bool {
 ///
 /// # Priority
 /// Authorization header is checked first, falling back to cookies
-fn extract_token(headers: &HeaderMap) -> Option<String> {
+pub fn extract_token(headers: &HeaderMap) -> Option<String> {
     // First check Authorization header
     if let Some(header_value) = headers.get(AUTHORIZATION) {
         if let Ok(value_str) = header_value.to_str() {
@@ -536,60 +553,3 @@ fn parse_bearer_token(value: &str) -> Option<String> {
     None
 }
 
-/// AXUM middleware for protecting routes with authentication.
-///
-/// This middleware validates the JWT token and adds the claims to the
-/// request extensions, making them available to downstream handlers.
-///
-/// # Usage
-/// ```rust,no_run
-/// use axum::{Router, routing::get, middleware};
-/// use linux_tutorial_cms::auth;
-///
-/// let app = Router::new()
-///     .route("/protected", get(handler))
-///     .route_layer(middleware::from_fn(auth::auth_middleware));
-/// ```
-///
-/// # Authentication
-/// Accepts tokens from:
-/// - Authorization: Bearer <token> header
-/// - ltcms_session cookie
-///
-/// # Errors
-/// Returns 401 Unauthorized if:
-/// - No token provided
-/// - Token is invalid or expired
-///
-/// # Request Extensions
-/// On success, inserts Claims into request extensions for easy access
-/// by downstream handlers.
-pub async fn auth_middleware(
-    mut request: axum::extract::Request,
-    next: axum::middleware::Next,
-) -> Result<axum::response::Response, (StatusCode, Json<crate::models::ErrorResponse>)> {
-    // Extract token from request
-    let token = extract_token(request.headers()).ok_or_else(|| {
-        (
-            StatusCode::UNAUTHORIZED,
-            Json(crate::models::ErrorResponse {
-                error: "Missing authentication token".to_string(),
-            }),
-        )
-    })?;
-
-    // Verify token and extract claims
-    let claims = verify_jwt(&token).map_err(|e| {
-        (
-            StatusCode::UNAUTHORIZED,
-            Json(crate::models::ErrorResponse {
-                error: format!("Invalid token: {}", e),
-            }),
-        )
-    })?;
-
-    // Add claims to request extensions for downstream handlers
-    request.extensions_mut().insert(claims);
-
-    Ok(next.run(request).await)
-}

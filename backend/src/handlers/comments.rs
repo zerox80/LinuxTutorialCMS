@@ -20,29 +20,32 @@
 //! - Content length limits prevent abuse
 //! - Tutorial ID validation prevents injection
 
-use crate::{auth, db::DbPool, handlers::tutorials::validate_tutorial_id, models::*};
+use crate::{auth, db::DbPool, handlers::tutorials::validate_tutorial_id, models::*, repositories};
 use axum::{
-    extract::{Path, Query, State},
+    extract::{ConnectInfo, Path, Query, State},
     http::StatusCode,
     Json,
 };
+use std::net::SocketAddr;
 use serde::{Deserialize, Serialize};
 use std::{env, sync::OnceLock};
 
 #[derive(Deserialize)]
 pub struct CreateCommentRequest {
-
     content: String,
+    author: Option<String>, // For guest comments
 }
 
 #[derive(Deserialize)]
 pub struct CommentListQuery {
-
     #[serde(default = "default_comment_limit")]
     limit: i64,
 
     #[serde(default)]
     offset: i64,
+
+    #[serde(default)]
+    sort: Option<String>,
 }
 
 fn default_comment_limit() -> i64 {
@@ -51,39 +54,19 @@ fn default_comment_limit() -> i64 {
 
 #[derive(Serialize, sqlx::FromRow)]
 pub struct Comment {
-
     pub id: String,
-
-    pub tutorial_id: String,
-
+    pub tutorial_id: Option<String>,
+    pub post_id: Option<String>,
     pub author: String,
-
     pub content: String,
-
     pub created_at: String,
+    pub votes: i64,
+    pub is_admin: bool,
 }
 
-fn comment_author_display_name(claims: &auth::Claims) -> String {
-    static DISPLAY_NAME: OnceLock<Option<String>> = OnceLock::new();
 
-    let configured = DISPLAY_NAME.get_or_init(|| {
-        env::var("COMMENT_AUTHOR_DISPLAY_NAME")
-            .ok()
-            .and_then(|value| {
-                let trimmed = value.trim();
-                if trimmed.is_empty() {
-                    None
-                } else {
-                    Some(trimmed.to_string())
-                }
-            })
-    });
 
-    configured
-        .as_ref()
-        .cloned()
-        .unwrap_or_else(|| claims.sub.clone())
-}
+
 
 fn sanitize_comment_content(raw: &str) -> Result<String, (StatusCode, Json<ErrorResponse>)> {
     let trimmed = raw.trim();
@@ -127,9 +110,7 @@ pub async fn list_comments(
         return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
     }
 
-    let exists: Option<(i64,)> = sqlx::query_as("SELECT 1 FROM tutorials WHERE id = ? LIMIT 1")
-        .bind(&tutorial_id)
-        .fetch_optional(&pool)
+    let exists = repositories::tutorials::check_tutorial_exists(&pool, &tutorial_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to verify tutorial existence for comments: {}", e);
@@ -153,100 +134,174 @@ pub async fn list_comments(
     let limit = params.limit.clamp(1, 200);
     let offset = params.offset.max(0);
 
-    let comments = sqlx::query_as::<_, Comment>(
-        "SELECT id, tutorial_id, author, content, created_at \
-         FROM comments WHERE tutorial_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?",
-    )
-    .bind(&tutorial_id)
-    .bind(limit)
-    .bind(offset)
-    .fetch_all(&pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Database error: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse {
-                error: "Failed to fetch comments".to_string(),
-            }),
-        )
-    })?;
+    let comments = repositories::comments::list_comments(&pool, &tutorial_id, limit, offset, params.sort.as_deref())
+        .await
+        .map_err(|e| {
+            tracing::error!("Database error: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Failed to fetch comments".to_string(),
+                }),
+            )
+        })?;
 
     Ok(Json(comments))
 }
 
 pub async fn create_comment(
-    claims: auth::Claims,
+    claims: Option<auth::Claims>,
     State(pool): State<DbPool>,
     Path(tutorial_id): Path<String>,
     Json(payload): Json<CreateCommentRequest>,
 ) -> Result<Json<Comment>, (StatusCode, Json<ErrorResponse>)> {
-    // Allow any authenticated user to comment
-    // if claims.role != "admin" { ... } check removed
-
+    
     if let Err(e) = validate_tutorial_id(&tutorial_id) {
         return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
     }
 
-    let exists: Option<(i64,)> = sqlx::query_as("SELECT 1 FROM tutorials WHERE id = ? LIMIT 1")
-        .bind(&tutorial_id)
-        .fetch_optional(&pool)
+    // Verify tutorial exists
+    let exists = repositories::tutorials::check_tutorial_exists(&pool, &tutorial_id)
         .await
         .map_err(|e| {
-            tracing::error!(
-                "Failed to verify tutorial existence before comment creation: {}",
-                e
-            );
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse {
-                    error: "Failed to create comment".to_string(),
-                }),
-            )
+            tracing::error!("Failed to verify tutorial existence: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse { error: "Failed to create comment".to_string() }))
         })?;
 
-    if exists.is_none() {
-        return Err((
-            StatusCode::NOT_FOUND,
-            Json(ErrorResponse {
-                error: "Tutorial not found".to_string(),
-            }),
-        ));
+    if !exists {
+        return Err((StatusCode::NOT_FOUND, Json(ErrorResponse { error: "Tutorial not found".to_string() })));
     }
 
+    create_comment_internal(pool, Some(tutorial_id), None, payload, claims).await
+}
+
+pub async fn list_post_comments(
+    State(pool): State<DbPool>,
+    Path(post_id): Path<String>,
+    Query(params): Query<CommentListQuery>,
+) -> Result<Json<Vec<Comment>>, (StatusCode, Json<ErrorResponse>)> {
+    // Verify post exists
+    let exists = repositories::posts::check_post_exists(&pool, &post_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to verify post existence: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse { error: "Failed to fetch comments".to_string() }))
+        })?;
+
+    if !exists {
+        return Err((StatusCode::NOT_FOUND, Json(ErrorResponse { error: "Post not found".to_string() })));
+    }
+
+    let limit = params.limit.clamp(1, 200);
+    let offset = params.offset.max(0);
+
+    let comments = repositories::comments::list_post_comments(&pool, &post_id, limit, offset, params.sort.as_deref())
+        .await
+        .map_err(|e| {
+            tracing::error!("Database error: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse { error: "Failed to fetch comments".to_string() }))
+        })?;
+
+    Ok(Json(comments))
+}
+
+pub async fn create_post_comment(
+    claims: Option<auth::Claims>,
+    State(pool): State<DbPool>,
+    Path(post_id): Path<String>,
+    Json(payload): Json<CreateCommentRequest>,
+) -> Result<Json<Comment>, (StatusCode, Json<ErrorResponse>)> {
+    
+    // Verify post exists
+    let exists = repositories::posts::check_post_exists(&pool, &post_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to verify post existence: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse { error: "Failed to create comment".to_string() }))
+        })?;
+
+    if !exists {
+        return Err((StatusCode::NOT_FOUND, Json(ErrorResponse { error: "Post not found".to_string() })));
+    }
+
+    create_comment_internal(pool, None, Some(post_id), payload, claims).await
+}
+
+async fn create_comment_internal(
+    pool: DbPool,
+    tutorial_id: Option<String>,
+    post_id: Option<String>,
+    payload: CreateCommentRequest,
+    claims: Option<auth::Claims>,
+) -> Result<Json<Comment>, (StatusCode, Json<ErrorResponse>)> {
     let comment_content = sanitize_comment_content(&payload.content)?;
-    let author = comment_author_display_name(&claims);
+    
+    let author = if let Some(ref c) = claims {
+        c.sub.clone()
+    } else {
+        // Guest comment
+        match payload.author {
+            Some(name) => {
+                let trimmed = name.trim();
+                if trimmed.len() < 2 || trimmed.len() > 50 {
+                    return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: "Name must be between 2 and 50 characters".to_string() })));
+                }
+                trimmed.to_string()
+            },
+            None => return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: "Name is required for guest comments".to_string() })))
+        }
+    };
+
+    // Rate limiting
+    let last_comment_time = repositories::comments::get_last_comment_time(&pool, &author)
+        .await
+        .map_err(|e| {
+            tracing::error!("Database error checking rate limit: {}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse { error: "Failed to create comment".to_string() }))
+        })?;
+
+    if let Some(created_at_str) = last_comment_time {
+        if let Ok(created_at) = chrono::DateTime::parse_from_rfc3339(&created_at_str) {
+            let now = chrono::Utc::now();
+            let diff = now.signed_duration_since(created_at);
+            if diff.num_seconds() < 60 {
+                return Err((
+                    StatusCode::TOO_MANY_REQUESTS,
+                    Json(ErrorResponse {
+                        error: format!("Please wait {} seconds before posting another comment", 60 - diff.num_seconds()),
+                    }),
+                ));
+            }
+        }
+    }
 
     let id = uuid::Uuid::new_v4().to_string();
     let now = chrono::Utc::now().to_rfc3339();
 
-    sqlx::query(
-        "INSERT INTO comments (id, tutorial_id, author, content, created_at) VALUES (?, ?, ?, ?, ?)"
+    // Determine if author is admin
+    let is_admin = if let Some(ref c) = claims {
+        c.role == "admin"
+    } else {
+        false
+    };
+
+    let comment = repositories::comments::create_comment(
+        &pool,
+        &id,
+        tutorial_id,
+        post_id,
+        &author,
+        &comment_content,
+        &now,
+        is_admin,
     )
-    .bind(&id)
-    .bind(&tutorial_id)
-    .bind(&author)
-    .bind(&comment_content)
-    .bind(&now)
-    .execute(&pool)
     .await
     .map_err(|e| {
         tracing::error!("Database error: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse {
-                error: "Failed to create comment".to_string(),
-            }),
-        )
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse { error: "Failed to create comment".to_string() }))
     })?;
 
-    Ok(Json(Comment {
-        id,
-        tutorial_id,
-        author,
-        content: comment_content,
-        created_at: now,
-    }))
+    Ok(Json(comment))
 }
 
 pub async fn delete_comment(
@@ -255,9 +310,7 @@ pub async fn delete_comment(
     Path(id): Path<String>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     // Fetch the comment first to check ownership
-    let comment = sqlx::query_as::<_, Comment>("SELECT * FROM comments WHERE id = ?")
-        .bind(&id)
-        .fetch_optional(&pool)
+    let comment = repositories::comments::get_comment(&pool, &id)
         .await
         .map_err(|e| {
             tracing::error!("Database error: {}", e);
@@ -301,9 +354,7 @@ pub async fn delete_comment(
         ));
     }
 
-    let result = sqlx::query("DELETE FROM comments WHERE id = ?")
-        .bind(&id)
-        .execute(&pool)
+    let deleted = repositories::comments::delete_comment(&pool, &id)
         .await
         .map_err(|e| {
             tracing::error!("Database error: {}", e);
@@ -315,7 +366,7 @@ pub async fn delete_comment(
             )
         })?;
 
-    if result.rows_affected() == 0 {
+    if !deleted {
         // Should not happen since we just fetched it, but good for safety
         return Err((
             StatusCode::NOT_FOUND,
@@ -326,4 +377,99 @@ pub async fn delete_comment(
     }
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+pub async fn vote_comment(
+    claims: Option<auth::Claims>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    State(pool): State<DbPool>,
+    Path(id): Path<String>,
+) -> Result<Json<Comment>, (StatusCode, Json<ErrorResponse>)> {
+    // Check if comment exists
+    let exists = repositories::comments::check_comment_exists(&pool, &id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Database error: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Failed to vote on comment".to_string(),
+                }),
+            )
+        })?;
+
+    if exists.is_none() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse {
+                error: "Comment not found".to_string(),
+            }),
+        ));
+    }
+
+    // Determine voter ID (User ID if auth, IP if guest)
+    let voter_id = if let Some(c) = claims {
+        format!("user:{}", c.sub)
+    } else {
+        format!("ip:{}", addr.ip())
+    };
+
+    // Check if already voted
+    let has_voted = repositories::comments::check_vote_exists(&pool, &id, &voter_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Database error checking votes: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Failed to check votes".to_string(),
+                }),
+            )
+        })?;
+
+    if has_voted {
+        return Err((
+            StatusCode::CONFLICT,
+            Json(ErrorResponse {
+                error: "You have already voted on this comment".to_string(),
+            }),
+        ));
+    }
+
+    // Record vote and increment votes
+    repositories::comments::add_vote(&pool, &id, &voter_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Database error recording vote: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Failed to record vote".to_string(),
+                }),
+            )
+        })?;
+
+    // Return updated comment
+    // Return updated comment
+    let comment = repositories::comments::get_comment(&pool, &id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Database error: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Failed to fetch updated comment".to_string(),
+                }),
+            )
+        })?
+        .ok_or_else(|| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Comment disappeared after voting".to_string(),
+                }),
+            )
+        })?;
+
+    Ok(Json(comment))
 }

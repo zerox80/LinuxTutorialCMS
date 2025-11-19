@@ -1,7 +1,6 @@
 
 
-use crate::{
-    auth, db,
+    auth, db, repositories,
     models::{
         CreateSitePostRequest, ErrorResponse, SitePostListResponse, SitePostResponse,
         UpdateSitePostRequest,
@@ -181,7 +180,7 @@ pub async fn list_posts_for_page(
             )
         })?;
 
-    let posts = db::list_site_posts_for_page(&pool, &page_id)
+    let posts = repositories::posts::list_site_posts_for_page(&pool, &page_id)
         .await
         .map_err(|err| map_sqlx_error(err, "Site post"))?;
 
@@ -200,7 +199,7 @@ pub async fn get_post(
 ) -> Result<Json<SitePostResponse>, (StatusCode, Json<ErrorResponse>)> {
     ensure_admin(&claims)?;
 
-    let post = db::get_site_post_by_id(&pool, &id)
+    let post = repositories::posts::get_site_post_by_id(&pool, &id)
         .await
         .map_err(|err| map_sqlx_error(err, "Site post"))?
         .ok_or_else(|| {
@@ -233,7 +232,7 @@ pub async fn create_post(
         &payload.content_markdown,
     )?;
 
-    db::get_site_page_by_id(&pool, &page_id)
+    repositories::pages::get_site_page_by_id(&pool, &page_id)
         .await
         .map_err(|err| map_sqlx_error(err, "Site page"))?
         .ok_or_else(|| {
@@ -245,7 +244,7 @@ pub async fn create_post(
             )
         })?;
 
-    let record = db::create_site_post(
+    let record = repositories::posts::create_site_post(
         &pool,
         &page_id,
         CreateSitePostRequest {
@@ -330,7 +329,7 @@ pub async fn update_post(
         *slug = sanitize_slug(slug);
     }
 
-    let record = db::update_site_post(&pool, &id, payload)
+    let record = repositories::posts::update_site_post(&pool, &id, payload)
         .await
         .map_err(|err| map_sqlx_error(err, "Site post"))?;
 
@@ -344,7 +343,7 @@ pub async fn delete_post(
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     ensure_admin(&claims)?;
 
-    db::delete_site_post(&pool, &id)
+    repositories::posts::delete_site_post(&pool, &id)
         .await
         .map_err(|err| map_sqlx_error(err, "Site post"))?;
 

@@ -475,6 +475,7 @@ pub struct CsrfGuard;
 impl<S> FromRequestParts<S> for CsrfGuard
 where
     S: Send + Sync,
+    crate::db::DbPool: axum::extract::FromRef<S>,
 {
     type Rejection = (StatusCode, Json<ErrorResponse>);
 
@@ -488,21 +489,28 @@ where
         }
 
         // Ensure user is authenticated by checking existing claims or lazily extracting them
-        let claims = if let Some(existing) = parts.extensions.get::<auth::Claims>() {
-            existing.clone()
+        // For mixed endpoints (like comments) that allow both auth and guest, we only enforce CSRF
+        // if the user is actually authenticated.
+        let claims_result = if let Some(existing) = parts.extensions.get::<auth::Claims>() {
+            Ok(existing.clone())
         } else {
-            let claims = auth::Claims::from_request_parts(parts, _state)
-                .await
-                .map_err(|(status, message)| {
-                    (
-                        status,
-                        Json(ErrorResponse {
-                            error: message,
-                        }),
-                    )
-                })?;
-            parts.extensions.insert(claims.clone());
-            claims
+            auth::Claims::from_request_parts(parts, _state).await
+        };
+
+        let claims = match claims_result {
+            Ok(claims) => {
+                // User is authenticated, so we MUST enforce CSRF
+                parts.extensions.insert(claims.clone());
+                claims
+            }
+            Err(_) => {
+                // User is NOT authenticated (Guest) or token is invalid.
+                // In this case, we skip CSRF validation because:
+                // 1. Guests don't have a session to protect
+                // 2. Guests don't have a username to bind the token to
+                // 3. Invalid tokens will be handled by the route handler (treated as guest or rejected)
+                return Ok(Self);
+            }
         };
 
         // Extract CSRF token from HTTP header

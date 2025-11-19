@@ -13,7 +13,7 @@ use tokio::fs;
 use uuid::Uuid;
 
 const MAX_FILE_SIZE: usize = 10 * 1024 * 1024; // 10MB
-const ALLOWED_EXTENSIONS: &[&str] = &["jpg", "jpeg", "png", "gif", "webp", "svg"];
+const ALLOWED_EXTENSIONS: &[&str] = &["jpg", "jpeg", "png", "gif", "webp"];
 
 pub async fn upload_image(
     claims: auth::Claims,
@@ -41,7 +41,6 @@ pub async fn upload_image(
         
         if name == "file" {
             let file_name = field.file_name().unwrap_or("unknown").to_string();
-            let content_type = field.content_type().unwrap_or("application/octet-stream").to_string();
             
             // Simple extension validation
             let ext = std::path::Path::new(&file_name)
@@ -77,11 +76,48 @@ pub async fn upload_image(
                 ));
             }
 
+            // Validate file content using magic bytes
+            if let Some(kind) = infer::get(&data) {
+                let mime = kind.mime_type();
+                let detected_ext = kind.extension();
+
+                // Verify the detected extension matches our allowed list
+                if !ALLOWED_EXTENSIONS.contains(&detected_ext) {
+                     return Err((
+                        StatusCode::BAD_REQUEST,
+                        Json(ErrorResponse {
+                            error: format!("File type '{}' not allowed. Detected: {}", detected_ext, mime),
+                        }),
+                    ));
+                }
+
+                // Verify the detected extension matches the file extension (prevent spoofing)
+                // Note: infer might return "jpeg" for "jpg", so we need to be flexible or normalize
+                let normalized_detected = if detected_ext == "jpeg" { "jpg" } else { detected_ext };
+                let normalized_ext = if ext == "jpeg" { "jpg" } else { ext.as_str() };
+
+                if normalized_detected != normalized_ext {
+                     return Err((
+                        StatusCode::BAD_REQUEST,
+                        Json(ErrorResponse {
+                            error: format!("File extension mismatch. Expected '{}', but detected '{}'", ext, detected_ext),
+                        }),
+                    ));
+                }
+            } else {
+                 return Err((
+                    StatusCode::BAD_REQUEST,
+                    Json(ErrorResponse {
+                        error: "Could not determine file type".to_string(),
+                    }),
+                ));
+            }
+
             let new_filename = format!("{}.{}", Uuid::new_v4(), ext);
             let upload_dir = std::env::var("UPLOAD_DIR").unwrap_or_else(|_| "uploads".to_string());
             let mut upload_path = PathBuf::from(upload_dir);
             
-            // Ensure uploads directory exists (should be handled in main, but good safety)
+            // Ensure uploads directory exists
             if !upload_path.exists() {
                 fs::create_dir_all(&upload_path).await.map_err(|err| {
                     (

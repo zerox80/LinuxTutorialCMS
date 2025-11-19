@@ -15,21 +15,20 @@ export const AuthProvider = ({ children }) => {
     
     const checkAuth = async () => {
       try {
-        const userData = await api.me({ signal: controller.signal })
-        
-        if (!controller.signal.aborted) {
-          setIsAuthenticated(true)
-          setUser(userData)
-          setError(null)
-        }
+        const userData = await api.me();
+        setUser(userData);
+        setIsAuthenticated(true);
       } catch (err) {
-        if (!controller.signal.aborted && err?.status !== 401) {
-          console.error('Auth check failed:', err)
-        }
-        
-        if (!controller.signal.aborted) {
-          setIsAuthenticated(false)
-          setUser(null)
+        // If any error occurs (401, network error, 500, etc.), we assume the user is not authenticated
+        // or the session is invalid. This prevents stale "logged in" state.
+        console.error('Auth check failed:', err);
+        setUser(null);
+        setIsAuthenticated(false);
+        // We don't clear the token here automatically to avoid clearing it on transient network errors,
+        // but for the purpose of UI state, we treat them as not authenticated.
+        // However, if it's a 401, the api client might have already cleared it or we should ensure it's cleared.
+        if (err?.status === 401) {
+            api.setToken(null);
         }
       } finally {
         if (!controller.signal.aborted) {

@@ -1,11 +1,14 @@
 
-
 // Module declarations for organizing the backend codebase
 mod auth;     // Authentication and JWT token management
 mod csrf;     // Cross-Site Request Forgery protection
 mod db;       // Database connection and pooling
 mod handlers; // HTTP request handlers organized by feature
 mod models;   // Data structures and database models
+mod middleware; // Middleware modules
+mod repositories; // Repository modules
+
+use crate::middleware::{cors, security};
 
 // HTTP-related imports for building the web server
 use axum::http::{
@@ -65,21 +68,7 @@ const X_REAL_IP_HEADER: HeaderName = HeaderName::from_static("x-real-ip");
 /// # Supported formats
 /// - true: "1", "true", "yes", "on" (case-insensitive)
 /// - false: "0", "false", "no", "off" (case-insensitive)
-fn parse_env_bool(key: &str, default: bool) -> bool {
-    env::var(key)
-        .ok()
-        .and_then(|value| {
-            match value.trim().to_ascii_lowercase().as_str() {
-                "1" | "true" | "yes" | "on" => Some(true),
-                "0" | "false" | "no" | "off" => Some(false),
-                _ => {
-                    tracing::warn!(key = %key, value = %value, "Invalid boolean env value; using default");
-                    None
-                }
-            }
-        })
-        .unwrap_or(default)
-}
+
 
 /// Middleware to strip potentially spoofable forwarded headers from incoming requests.
 ///
@@ -89,128 +78,8 @@ fn parse_env_bool(key: &str, default: bool) -> bool {
 /// # Security considerations
 /// When TRUST_PROXY_IP_HEADERS is disabled, this middleware ensures that only the
 /// direct connection IP is trusted, preventing clients from faking their IP address.
-///
-/// # Headers removed
-/// - Forwarded (RFC 7239)
-/// - X-Forwarded-For
-/// - X-Forwarded-Proto
-/// - X-Forwarded-Host
-/// - X-Real-IP
-async fn strip_untrusted_forwarded_headers(mut request: Request, next: Next) -> Response {
-    {
-        let headers = request.headers_mut();
+// These are now likely handled within the `security` module if they are still needed.
 
-        // Remove all potentially spoofable forwarded headers
-        headers.remove(FORWARDED_HEADER);
-        headers.remove(X_FORWARDED_FOR_HEADER);
-        headers.remove(X_FORWARDED_PROTO_HEADER);
-        headers.remove(X_FORWARDED_HOST_HEADER);
-        headers.remove(X_REAL_IP_HEADER);
-    }
-
-    next.run(request).await
-}
-
-/// Middleware to add security headers to all HTTP responses.
-///
-/// This middleware implements defense-in-depth security by adding multiple
-/// protective headers to every response. It handles:
-/// - Cache control based on endpoint sensitivity
-/// - Content Security Policy (CSP)
-/// - HSTS for HTTPS connections
-/// - Anti-clickjacking protections
-/// - Privacy and permissions policies
-///
-/// # Security headers added
-/// - Cache-Control: Prevents caching of sensitive data
-/// - Content-Security-Policy: Mitigates XSS attacks
-/// - Strict-Transport-Security: Enforces HTTPS (when applicable)
-/// - X-Content-Type-Options: Prevents MIME sniffing
-/// - X-Frame-Options: Prevents clickjacking
-/// - Referrer-Policy: Protects user privacy
-/// - Permissions-Policy: Disables dangerous browser features
-/// - X-XSS-Protection: Disabled in favor of CSP
-async fn security_headers(request: Request, next: Next) -> Response {
-    use axum::http::Method;
-
-    let method = request.method().clone();
-    let path = request.uri().path().to_string();
-
-    // Detect if request is over HTTPS for HSTS header
-    let is_https = request
-        .headers()
-        .get("x-forwarded-proto")
-        .and_then(|v| v.to_str().ok())
-        .map(|v| v == "https")
-        .unwrap_or(false);
-
-    let mut response = next.run(request).await;
-    let headers = response.headers_mut();
-
-    // Configure cache control based on endpoint type
-    // Public endpoints can be cached, sensitive endpoints cannot
-    let cacheable = method == Method::GET
-        && (path == "/api/tutorials"
-            || path.starts_with("/api/tutorials/")
-            || path.starts_with("/api/public/"));
-
-    if cacheable {
-        // Allow caching for public read-only endpoints (5 minutes)
-        headers.insert(
-            CACHE_CONTROL,
-            HeaderValue::from_static("public, max-age=300, stale-while-revalidate=60"),
-        );
-        headers.remove(PRAGMA);
-        headers.remove(EXPIRES);
-    } else {
-        // No caching for sensitive endpoints (auth, admin, etc.)
-        headers.insert(
-            CACHE_CONTROL,
-            HeaderValue::from_static("no-store, no-cache, must-revalidate"),
-        );
-        headers.insert(PRAGMA, HeaderValue::from_static("no-cache"));
-        headers.insert(EXPIRES, HeaderValue::from_static("0"));
-    }
-
-    // Content Security Policy - varies between dev and production
-    let csp = if cfg!(debug_assertions) {
-        // Development CSP - allows unsafe-inline for easier debugging
-        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
-    } else {
-        // Production CSP - stricter, no unsafe-inline
-        "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;"
-    };
-
-    headers.insert(CONTENT_SECURITY_POLICY, HeaderValue::from_static(csp));
-
-    // HSTS - only add if already using HTTPS
-    if is_https {
-        headers.insert(
-            STRICT_TRANSPORT_SECURITY,
-            HeaderValue::from_static("max-age=31536000; includeSubDomains; preload"),
-        );
-    }
-
-    // Anti-MIME-sniffing header
-    headers.insert(X_CONTENT_TYPE_OPTIONS, HeaderValue::from_static("nosniff"));
-
-    // Clickjacking protection
-    headers.insert(X_FRAME_OPTIONS, HeaderValue::from_static("DENY"));
-
-    // Referrer privacy
-    headers.insert(REFERRER_POLICY, HeaderValue::from_static("no-referrer"));
-
-    // Disable browser features that could compromise privacy
-    headers.insert(
-        PERMISSIONS_POLICY,
-        HeaderValue::from_static("geolocation=(), microphone=(), camera=()"),
-    );
-
-    // Legacy XSS filter (disabled in favor of CSP)
-    headers.insert(X_XSS_PROTECTION, HeaderValue::from_static("0"));
-
-    response
-}
 
 // Request body size limits for different endpoint types
 // These prevent DoS attacks through large payloads
@@ -218,68 +87,6 @@ const LOGIN_BODY_LIMIT: usize = 64 * 1024;      // 64KB for login endpoints
 const PUBLIC_BODY_LIMIT: usize = 2 * 1024 * 1024; // 2MB for public endpoints
 const ADMIN_BODY_LIMIT: usize = 8 * 1024 * 1024;  // 8MB for admin content uploads
 
-// Default CORS origins for development environment
-// In production, FRONTEND_ORIGINS environment variable must be set
-const DEV_DEFAULT_FRONTEND_ORIGINS: &[&str] = &["http://localhost:5173", "http://localhost:3000"];
-
-/// Parses and validates a list of allowed CORS origins.
-///
-/// This function takes an iterator of origin strings and converts them into
-/// validated HeaderValue objects suitable for use in CORS configuration.
-///
-/// # Arguments
-/// * `origins` - An iterator of origin strings to parse and validate
-///
-/// # Returns
-/// A vector of validated HeaderValue objects representing allowed origins
-///
-/// # Validation rules
-/// - Empty strings are ignored
-/// - Origins must start with http:// or https://
-/// - Origins must be valid URLs according to the url crate
-/// - Origins must be convertible to valid HTTP header values
-///
-/// # Warnings
-/// Invalid origins are logged as warnings and excluded from the result.
-fn parse_allowed_origins<'a, I>(origins: I) -> Vec<HeaderValue>
-where
-    I: IntoIterator<Item = &'a str>,
-{
-    origins
-        .into_iter()
-        .filter_map(|origin| {
-            let trimmed = origin.trim();
-
-            // Skip empty origins
-            if trimmed.is_empty() {
-                return None;
-            }
-
-            // Only allow HTTP and HTTPS protocols
-            if !trimmed.starts_with("http://") && !trimmed.starts_with("https://") {
-                tracing::warn!(
-                    "Ignoring invalid origin (must start with http:// or https://): '{trimmed}'"
-                );
-                return None;
-            }
-
-            // Validate URL format
-            if let Err(e) = url::Url::parse(trimmed) {
-                tracing::warn!("Ignoring malformed origin URL '{trimmed}': {e}");
-                return None;
-            }
-
-            // Convert to HeaderValue for AXUM CORS
-            match HeaderValue::from_str(trimmed) {
-                Ok(value) => Some(value),
-                Err(err) => {
-                    tracing::warn!("Ignoring invalid origin header value '{trimmed}': {err}");
-                    None
-                }
-            }
-        })
-        .collect()
-}
 
 /// Main application entry point.
 ///
@@ -336,49 +143,37 @@ async fn main() {
             .expect("Failed to create uploads directory");
     }
 
-    let allowed_origins: Vec<HeaderValue> = match env::var("FRONTEND_ORIGINS") {
-        Ok(value) => {
+    // Configure CORS (Cross-Origin Resource Sharing)
+    let cors_origins = env::var("CORS_ALLOWED_ORIGINS")
+        .map(|val| {
+            val.split(',')
+                .map(|s| s.trim().to_string())
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_else(|_| {
+            cors::DEV_DEFAULT_FRONTEND_ORIGINS
+                .iter()
+                .map(|&s| s.to_string())
+                .collect()
+        });
 
-            let parsed = parse_allowed_origins(value.split(','));
-            if parsed.is_empty() {
-                panic!("FRONTEND_ORIGINS provided but no valid origins were found. Configure at least one valid http(s) origin.");
-            }
-            parsed
-        }
-        Err(_) if cfg!(debug_assertions) => {
+    let allowed_origins = cors::parse_allowed_origins(cors_origins.iter().map(|s| s.as_str()));
 
-            tracing::warn!(
-                "FRONTEND_ORIGINS not set; using development defaults: {:?}",
-                DEV_DEFAULT_FRONTEND_ORIGINS
-            );
-            parse_allowed_origins(DEV_DEFAULT_FRONTEND_ORIGINS.iter().copied())
-        }
-        Err(_) => {
-
-            panic!("FRONTEND_ORIGINS environment variable must be set to at least one valid http(s) origin in production.");
-        }
-    };
-
-    let cors = CorsLayer::new()
-        .allow_origin(AllowOrigin::list(allowed_origins.clone()))
-        .allow_methods(AllowMethods::list(vec![
+    let cors_layer = CorsLayer::new()
+        .allow_methods([
             Method::GET,
             Method::POST,
             Method::PUT,
             Method::DELETE,
             Method::OPTIONS,
-            Method::HEAD,
-        ]))
-        .allow_headers(AllowHeaders::list(vec![
-            AUTHORIZATION,
-            CONTENT_TYPE,
-            HeaderName::from_static(csrf::csrf_header_name()),
-        ]))
-        .allow_credentials(true);
+        ])
+        .allow_headers([CONTENT_TYPE, AUTHORIZATION, ACCEPT])
+        .allow_credentials(true)
+        .allow_origin(allowed_origins);
 
-    tracing::info!(origins = ?allowed_origins, "Configured CORS origins");
+    tracing::info!(origins = ?cors_origins, "Configured CORS origins");
 
-    let trust_proxy_ip_headers = parse_env_bool("TRUST_PROXY_IP_HEADERS", false);
+    let trust_proxy_ip_headers = security::parse_env_bool("TRUST_PROXY_IP_HEADERS", false);
     if trust_proxy_ip_headers {
         tracing::info!("Trusting X-Forwarded-* headers for client IP extraction");
     } else {
@@ -459,14 +254,15 @@ async fn main() {
 
         .route_layer(middleware::from_extractor::<csrf::CsrfGuard>())
 
-        .route_layer(middleware::from_fn(auth::auth_middleware))
+        .route_layer(middleware::from_fn(middleware::auth::auth_middleware))
 
         .layer(RequestBodyLimitLayer::new(ADMIN_BODY_LIMIT))
 
         .layer(GovernorLayer::new(admin_rate_limit_config.clone()));
 
+    // Define the application router with all routes and middleware
     let mut app = Router::new()
-
+        // Merge all route modules
         .merge(login_router)
 
         .route("/api/auth/me", get(handlers::auth::me))
@@ -500,6 +296,18 @@ async fn main() {
         .merge(admin_routes)
 
         .route(
+            "/api/posts/{id}/comments",
+            get(handlers::comments::list_post_comments)
+                .post(handlers::comments::create_post_comment)
+                .route_layer(middleware::from_extractor::<csrf::CsrfGuard>())
+                .route_layer(GovernorLayer::new(admin_rate_limit_config.clone())),
+        )
+        .route(
+            "/api/comments/{id}/vote",
+            post(handlers::comments::vote_comment),
+        )
+
+        .route(
             "/api/public/pages/{slug}",
             get(handlers::site_pages::get_published_page_by_slug),
         )
@@ -524,14 +332,18 @@ async fn main() {
         .route("/{*path}", get(handlers::frontend_proxy::serve_index))
 
         .with_state(pool)
-        .layer(middleware::from_fn(security_headers))
-        .layer(cors)
-        .layer(RequestBodyLimitLayer::new(PUBLIC_BODY_LIMIT));
+        .layer(axum::middleware::from_fn(security::security_headers))
+        .layer(cors_layer)
+        .layer(DefaultBodyLimit::max(10 * 1024 * 1024)); // 10MB body limit
 
-    if !trust_proxy_ip_headers {
-        app = app.layer(middleware::from_fn(strip_untrusted_forwarded_headers));
-    }
-
+    // Apply trusted proxy middleware if configured
+    let app = if trust_proxy_ip_headers {
+        app
+    } else {
+        app.layer(axum::middleware::from_fn(
+            security::strip_untrusted_forwarded_headers,
+        ))
+    };
     let port_str = env::var("PORT").unwrap_or_else(|_| "8489".to_string());
     let port: u16 = match port_str.parse() {
         Ok(port) => port,

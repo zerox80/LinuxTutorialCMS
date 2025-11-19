@@ -1,7 +1,6 @@
 
 
-use crate::{
-    auth, db,
+    auth, db, repositories,
     models::{
         CreateSitePageRequest, ErrorResponse, NavigationItemResponse, NavigationResponse,
         SitePageListResponse, SitePageResponse, SitePageWithPostsResponse, SitePostDetailResponse,
@@ -341,7 +340,7 @@ pub async fn list_site_pages(
 ) -> Result<Json<SitePageListResponse>, (StatusCode, Json<ErrorResponse>)> {
     ensure_admin(&claims)?;
 
-    let records = db::list_site_pages(&pool)
+    let records = repositories::pages::list_site_pages(&pool)
         .await
         .map_err(|err| map_sqlx_error(err, "Site page"))?;
 
@@ -360,7 +359,7 @@ pub async fn get_site_page(
 ) -> Result<Json<SitePageResponse>, (StatusCode, Json<ErrorResponse>)> {
     ensure_admin(&claims)?;
 
-    let record = db::get_site_page_by_id(&pool, &id)
+    let record = repositories::pages::get_site_page_by_id(&pool, &id)
         .await
         .map_err(|err| map_sqlx_error(err, "Site page"))?
         .ok_or_else(|| {
@@ -384,7 +383,7 @@ pub async fn create_site_page(
 
     let payload = sanitize_create_payload(payload)?;
 
-    let record = db::create_site_page(&pool, payload)
+    let record = repositories::pages::create_site_page(&pool, payload)
         .await
         .map_err(|err| map_sqlx_error(err, "Site page"))?;
 
@@ -401,7 +400,7 @@ pub async fn update_site_page(
 
     let payload = sanitize_update_payload(payload)?;
 
-    let record = db::update_site_page(&pool, &id, payload)
+    let record = repositories::pages::update_site_page(&pool, &id, payload)
         .await
         .map_err(|err| map_sqlx_error(err, "Site page"))?;
 
@@ -415,7 +414,7 @@ pub async fn delete_site_page(
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
     ensure_admin(&claims)?;
 
-    db::delete_site_page(&pool, &id)
+    repositories::pages::delete_site_page(&pool, &id)
         .await
         .map_err(|err| map_sqlx_error(err, "Site page"))?;
 
@@ -436,7 +435,7 @@ pub async fn get_published_page_by_slug(
         ));
     }
 
-    let page = db::get_site_page_by_slug(&pool, &lookup_slug)
+    let page = repositories::pages::get_site_page_by_slug(&pool, &lookup_slug)
         .await
         .map_err(|err| map_sqlx_error(err, "Site page"))?
         .ok_or_else(|| {
@@ -457,7 +456,7 @@ pub async fn get_published_page_by_slug(
         ));
     }
 
-    let posts = db::list_published_posts_for_page(&pool, &page.id)
+    let posts = repositories::posts::list_published_posts_for_page(&pool, &page.id)
         .await
         .map_err(|err| map_sqlx_error(err, "Posts"))?;
 
@@ -475,7 +474,7 @@ pub async fn get_published_page_by_slug(
 pub async fn get_navigation(
     State(pool): State<db::DbPool>,
 ) -> Result<Json<NavigationResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let pages = db::list_nav_pages(&pool)
+    let pages = repositories::pages::list_nav_pages(&pool)
         .await
         .map_err(|err| map_sqlx_error(err, "Navigation"))?;
 
@@ -516,7 +515,7 @@ pub async fn get_published_post_by_slug(
         ));
     }
 
-    let page = db::get_site_page_by_slug(&pool, &lookup_page_slug)
+    let page = repositories::pages::get_site_page_by_slug(&pool, &lookup_page_slug)
         .await
         .map_err(|err| map_sqlx_error(err, "Site page"))?
         .ok_or_else(|| {
@@ -537,7 +536,7 @@ pub async fn get_published_post_by_slug(
         ));
     }
 
-    let post = db::get_published_post_by_slug(&pool, &page.id, &lookup_post_slug)
+    let post = repositories::posts::get_published_post_by_slug(&pool, &page.id, &lookup_post_slug)
         .await
         .map_err(|err| map_sqlx_error(err, "Post"))?
         .ok_or_else(|| {
@@ -558,7 +557,7 @@ pub async fn get_published_post_by_slug(
 pub async fn list_published_page_slugs(
     State(pool): State<db::DbPool>,
 ) -> Result<Json<Vec<String>>, (StatusCode, Json<ErrorResponse>)> {
-    let pages = db::list_published_pages(&pool)
+    let pages = repositories::pages::list_published_pages(&pool)
         .await
         .map_err(|err| map_sqlx_error(err, "Navigation"))?;
 

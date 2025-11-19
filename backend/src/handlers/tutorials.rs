@@ -25,7 +25,7 @@
 //! - Version tracking for content updates
 //! - Soft validation to preserve data integrity
 
-use crate::{auth, db::DbPool, models::*};
+use crate::{auth, db::DbPool, models::*, repositories};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -202,13 +202,7 @@ pub async fn list_tutorials(
     let offset = params.offset.max(0);
 
     // Optimized query: Exclude 'content' column to reduce payload size
-    let tutorials = sqlx::query_as::<_, Tutorial>(
-        "SELECT id, title, description, icon, color, topics, '' as content, version, created_at, updated_at \
-         FROM tutorials ORDER BY created_at ASC LIMIT ? OFFSET ?"
-    )
-        .bind(limit)
-        .bind(offset)
-        .fetch_all(&pool)
+    let tutorials = repositories::tutorials::list_tutorials(&pool, limit, offset)
         .await
         .map_err(|e| {
             tracing::error!("Database error: {}", e);
@@ -246,9 +240,7 @@ pub async fn get_tutorial(
         return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
     }
 
-    let tutorial = sqlx::query_as::<_, Tutorial>("SELECT * FROM tutorials WHERE id = ?")
-        .bind(&id)
-        .fetch_optional(&pool)
+    let tutorial = repositories::tutorials::get_tutorial(&pool, &id)
         .await
         .map_err(|e| {
             tracing::error!("Database error: {}", e);
@@ -318,9 +310,7 @@ pub async fn create_tutorial(
             return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
         }
         // Check for collision
-        let exists: Option<(i64,)> = sqlx::query_as("SELECT 1 FROM tutorials WHERE id = ?")
-            .bind(trimmed)
-            .fetch_optional(&pool)
+        let exists = repositories::tutorials::check_tutorial_exists(&pool, trimmed)
             .await
             .map_err(|e| {
                 tracing::error!("Database error checking ID existence: {}", e);
@@ -331,8 +321,8 @@ pub async fn create_tutorial(
                     }),
                 )
             })?;
-            
-        if exists.is_some() {
+        
+        if exists {
              return Err((
                 StatusCode::CONFLICT,
                 Json(ErrorResponse {
@@ -355,71 +345,20 @@ pub async fn create_tutorial(
             }),
         )
     })?;
-    let mut tx = pool.begin().await.map_err(|e| {
-        tracing::error!("Failed to begin transaction for tutorial {}: {}", id, e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse {
-                error: "Failed to create tutorial".to_string(),
-            }),
-        )
-    })?;
-
-    sqlx::query(
-        r#"
-        INSERT INTO tutorials (id, title, description, icon, color, topics, content, version)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 1)
-        "#,
+    let tutorial = repositories::tutorials::create_tutorial(
+        &pool,
+        &id,
+        &title,
+        &description,
+        &content,
+        &payload.icon,
+        &payload.color,
+        &topics_json,
+        &sanitized_topics,
     )
-    .bind(&id)
-    .bind(&title)
-    .bind(&description)
-    .bind(&payload.icon)
-    .bind(&payload.color)
-    .bind(&topics_json)
-    .bind(&content)
-    .execute(&mut *tx)
     .await
     .map_err(|e| {
-        tracing::error!("Database error: {}", e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse {
-                error: "Failed to create tutorial".to_string(),
-            }),
-        )
-    })?;
-
-    crate::db::replace_tutorial_topics_tx(&mut tx, &id, &sanitized_topics)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to update tutorial topics: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse {
-                    error: "Failed to create tutorial".to_string(),
-                }),
-            )
-        })?;
-
-    let tutorial = sqlx::query_as::<_, Tutorial>(
-        "SELECT id, title, description, icon, color, topics, content, version, created_at, updated_at FROM tutorials WHERE id = ?"
-    )
-    .bind(&id)
-    .fetch_one(&mut *tx)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to load created tutorial {}: {}", id, e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse {
-                error: "Failed to create tutorial".to_string(),
-            }),
-        )
-    })?;
-
-    tx.commit().await.map_err(|e| {
-        tracing::error!("Failed to commit tutorial transaction for {}: {}", id, e);
+        tracing::error!("Failed to create tutorial {}: {}", id, e);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse {
@@ -472,23 +411,7 @@ pub async fn update_tutorial(
         return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
     }
 
-    let mut tx = pool.begin().await.map_err(|e| {
-        tracing::error!(
-            "Failed to begin transaction for tutorial update {}: {}",
-            id,
-            e
-        );
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse {
-                error: "Failed to update tutorial".to_string(),
-            }),
-        )
-    })?;
-
-    let tutorial = sqlx::query_as::<_, Tutorial>("SELECT * FROM tutorials WHERE id = ?")
-        .bind(&id)
-        .fetch_optional(&mut *tx)
+    let tutorial = repositories::tutorials::get_tutorial(&pool, &id)
         .await
         .map_err(|e| {
             tracing::error!("Database error: {}", e);
@@ -621,83 +544,34 @@ pub async fn update_tutorial(
         }
     };
 
-    let result = sqlx::query(
-        r#"
-        UPDATE tutorials
-        SET title = ?, description = ?, icon = ?, color = ?, topics = ?, content = ?, version = ?, updated_at = datetime('now')
-        WHERE id = ? AND version = ?
-        "#,
+    let updated_tutorial = repositories::tutorials::update_tutorial(
+        &pool,
+        &id,
+        &title,
+        &description,
+        &content,
+        &icon,
+        &color,
+        &topics_json,
+        &topics_vec,
+        tutorial.version,
     )
-    .bind(&title)
-    .bind(&description)
-    .bind(&icon)
-    .bind(&color)
-    .bind(&topics_json)
-    .bind(&content)
-    .bind(new_version)
-    .bind(&id)
-    .bind(tutorial.version)
-    .execute(&mut *tx)
     .await
     .map_err(|e| {
-        tracing::error!("Database error: {}", e);
+        tracing::error!("Failed to update tutorial {}: {}", id, e);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse {
                 error: "Failed to update tutorial".to_string(),
             }),
         )
-    })?;
-
-    if result.rows_affected() == 0 {
-        return Err((
+    })?
+    .ok_or_else(|| {
+        (
             StatusCode::CONFLICT,
             Json(ErrorResponse {
                 error: "Tutorial was modified by another request. Please refresh and try again."
                     .to_string(),
-            }),
-        ));
-    }
-
-    tracing::debug!("Updating tutorial_topics table for tutorial {}", id);
-    crate::db::replace_tutorial_topics_tx(&mut tx, &id, &topics_vec)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to update tutorial topics for {}: {}", id, e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse {
-                    error: "Failed to update tutorial".to_string(),
-                }),
-            )
-        })?;
-
-    let updated_tutorial = sqlx::query_as::<_, Tutorial>(
-        "SELECT id, title, description, icon, color, topics, content, version, created_at, updated_at FROM tutorials WHERE id = ?"
-    )
-    .bind(&id)
-    .fetch_one(&mut *tx)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to load updated tutorial {}: {}", id, e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse {
-                error: "Failed to update tutorial".to_string(),
-            }),
-        )
-    })?;
-
-    tx.commit().await.map_err(|e| {
-        tracing::error!(
-            "Failed to commit tutorial update transaction for {}: {}",
-            id,
-            e
-        );
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse {
-                error: "Failed to update tutorial".to_string(),
             }),
         )
     })?;
@@ -739,9 +613,7 @@ pub async fn delete_tutorial(
         return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
     }
 
-    let result = sqlx::query("DELETE FROM tutorials WHERE id = ?")
-        .bind(&id)
-        .execute(&pool)
+    let deleted = repositories::tutorials::delete_tutorial(&pool, &id)
         .await
         .map_err(|e| {
             tracing::error!("Database error: {}", e);
@@ -753,7 +625,7 @@ pub async fn delete_tutorial(
             )
         })?;
 
-    if result.rows_affected() == 0 {
+    if !deleted {
         return Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse {

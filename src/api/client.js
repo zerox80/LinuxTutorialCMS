@@ -63,12 +63,17 @@ class ApiClient {
     this.token = null
   }
   setToken(token) {
-    if (token && typeof token !== 'string') {
-      console.warn('Attempted to set invalid JWT token; ignoring')
-      this.token = null
-      return
+    if (!token) {
+      this.token = null;
+      return;
     }
-    this.token = typeof token === 'string' && token.trim() !== '' ? token.trim() : null
+
+    if (typeof token === 'string' && token.trim().length > 0) {
+      this.token = token;
+    } else {
+      console.warn('Attempted to set invalid JWT token; ignoring', token);
+      this.token = null;
+    }
   }
   getHeaders() {
     const headers = {}
@@ -295,17 +300,35 @@ class ApiClient {
     const endpoint = `/tutorials/${encodedTutorialId}/comments${queryString ? `?${queryString}` : ''}`
     return this.request(endpoint, options)
   }
-  async createComment(tutorialId, content, options = {}) {
-    if (!tutorialId) {
-      throw new Error('tutorialId is required')
-    }
-    const encodedTutorialId = encodeURIComponent(tutorialId)
-    return this.request(`/tutorials/${encodedTutorialId}/comments`, {
+  async createComment(tutorialId, content) {
+    return this.request(`/tutorials/${tutorialId}/comments`, {
       method: 'POST',
-      body: { content },
-      ...options,
+      body: JSON.stringify({ content }),
     })
   }
+
+  async listPostComments(postId, params = {}) {
+    const query = new URLSearchParams(params).toString()
+    return this.request(`/posts/${postId}/comments?${query}`)
+  }
+
+  async createPostComment(postId, content, author = null) {
+    return this.request(`/posts/${postId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ content, author }),
+    })
+  }
+
+  async voteComment(commentId) {
+    if (!commentId) {
+      throw new Error('commentId is required')
+    }
+    const encodedCommentId = encodeURIComponent(commentId)
+    return this.request(`/comments/${encodedCommentId}/vote`, {
+      method: 'POST',
+    })
+  }
+
   async deleteComment(commentId, options = {}) {
     if (!commentId) {
       throw new Error('commentId is required')

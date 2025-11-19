@@ -22,7 +22,7 @@
 //! - 3 failures: 10-second lockout
 //! - 5+ failures: 60-second lockout
 
-use crate::{auth, csrf, db::DbPool, models::*};
+use crate::{auth, csrf, db::DbPool, models::*, repositories};
 use axum::{
     extract::State,
     http::{HeaderMap, StatusCode},
@@ -33,17 +33,6 @@ use sha2::{Digest, Sha256};
 use sqlx::{self, FromRow};
 use std::{env, sync::OnceLock, time::Duration};
 
-/// Database record for tracking login attempts.
-///
-/// Stores per-user failure count and lockout expiration.
-#[derive(Debug, FromRow, Clone)]
-struct LoginAttempt {
-    /// Number of consecutive failed login attempts
-    fail_count: i64,
-
-    /// RFC3339 timestamp when the lockout expires (NULL if not blocked)
-    blocked_until: Option<String>,
-}
 
 /// Global salt for hashing login attempt identifiers.
 /// Initialized once at startup via init_login_attempt_salt().
@@ -264,29 +253,24 @@ pub async fn login(
 
     let attempt_key = hash_login_identifier(&username);
 
-    let attempt_record = sqlx::query_as::<_, LoginAttempt>(
-        "SELECT fail_count, blocked_until FROM login_attempts WHERE username = ?",
-    )
-    .bind(&attempt_key)
-    .fetch_optional(&pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to load login attempts for {}: {}", username, e);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse {
-                error: "Internal server error".to_string(),
-            }),
-        )
-    })?;
+    let attempt_record = repositories::users::get_login_attempt(&pool, &attempt_key)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to load login attempts for {}: {}", username, e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Internal server error".to_string(),
+                }),
+            )
+        })?;
 
     if let Some(record) = &attempt_record {
         if let Some(blocked_until) = parse_rfc3339_opt(&record.blocked_until) {
             let now = Utc::now();
             if blocked_until > now {
                 let remaining = (blocked_until - now).num_seconds().max(0);
-                let jitter = (chrono::Utc::now().timestamp_subsec_millis() % 200) as u64;
-                tokio::time::sleep(Duration::from_millis(100 + jitter)).await;
+                // Do not sleep here to avoid holding connections (DoS prevention)
                 return Err((
                     StatusCode::TOO_MANY_REQUESTS,
                     Json(ErrorResponse {
@@ -301,9 +285,7 @@ pub async fn login(
         }
     }
 
-    let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE username = ?")
-        .bind(&username)
-        .fetch_optional(&pool)
+    let user = repositories::users::get_user_by_username(&pool, &username)
         .await
         .map_err(|e| {
             tracing::error!("Database error: {}", e);
@@ -340,29 +322,17 @@ pub async fn login(
         let long_block = (now + ChronoDuration::seconds(60)).to_rfc3339();
         let short_block = (now + ChronoDuration::seconds(10)).to_rfc3339();
 
-        sqlx::query(
-            "INSERT INTO login_attempts (username, fail_count, blocked_until) VALUES (?, 1, NULL) \
-             ON CONFLICT(username) DO UPDATE SET fail_count = login_attempts.fail_count + 1, \
-             blocked_until = CASE \
-                 WHEN login_attempts.fail_count + 1 >= 5 THEN ? \
-                 WHEN login_attempts.fail_count + 1 >= 3 THEN ? \
-                 ELSE NULL \
-             END",
-        )
-        .bind(&attempt_key)
-        .bind(&long_block)
-        .bind(&short_block)
-        .execute(&pool)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to record login attempt for hashed key: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse {
-                    error: "Internal server error".to_string(),
-                }),
-            )
-        })?;
+        repositories::users::record_failed_login(&pool, &attempt_key, &long_block, &short_block)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to record login attempt for hashed key: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse {
+                        error: "Internal server error".to_string(),
+                    }),
+                )
+            })?;
 
         return Err((
             StatusCode::UNAUTHORIZED,
@@ -373,11 +343,7 @@ pub async fn login(
     }
 
     if attempt_record.is_some() {
-        if let Err(e) = sqlx::query("DELETE FROM login_attempts WHERE username = ?")
-            .bind(&attempt_key)
-            .execute(&pool)
-            .await
-        {
+        if let Err(e) = repositories::users::clear_login_attempts(&pool, &attempt_key).await {
             tracing::warn!(
                 "Failed to clear login attempts for hashed key after successful login: {}",
                 e
@@ -457,11 +423,25 @@ pub async fn login(
 /// not from request parameters, preventing impersonation.
 pub async fn me(
     claims: auth::Claims,
-) -> Result<Json<UserResponse>, (StatusCode, Json<ErrorResponse>)> {
-    Ok(Json(UserResponse {
-        username: claims.sub,
-        role: claims.role,
-    }))
+) -> Result<(HeaderMap, Json<UserResponse>), (StatusCode, Json<ErrorResponse>)> {
+    let mut headers = HeaderMap::new();
+
+    // Refresh CSRF token to ensure active sessions always have a valid one
+    if let Ok(csrf_token) = csrf::issue_csrf_token(&claims.sub) {
+        csrf::append_csrf_cookie(&mut headers, &csrf_token);
+    } else {
+        tracing::error!("Failed to refresh CSRF token for user {}", claims.sub);
+        // We don't fail the request here, as the user is authenticated,
+        // but subsequent state-changing requests might fail.
+    }
+
+    Ok((
+        headers,
+        Json(UserResponse {
+            username: claims.sub,
+            role: claims.role,
+        }),
+    ))
 }
 
 /// HTTP handler for user logout.
@@ -491,7 +471,19 @@ pub async fn me(
 /// - CSRF protection prevents attackers from forcing logout
 /// - Logs logout event for audit trail
 /// - Client must clear local storage/state separately
-pub async fn logout(_csrf: csrf::CsrfGuard, claims: auth::Claims) -> (StatusCode, HeaderMap) {
+pub async fn logout(
+    State(pool): State<DbPool>,
+    headers: HeaderMap,
+    _csrf: csrf::CsrfGuard,
+    claims: auth::Claims,
+) -> (StatusCode, HeaderMap) {
+    // Extract token to blacklist it
+    if let Some(token) = auth::extract_token(&headers) {
+        if let Err(e) = repositories::token_blacklist::blacklist_token(&pool, &token, claims.exp as i64).await {
+            tracing::error!("Failed to blacklist token on logout: {}", e);
+        }
+    }
+
     let mut headers = HeaderMap::new();
     auth::append_auth_cookie(&mut headers, auth::build_cookie_removal());
     csrf::append_csrf_removal(&mut headers);

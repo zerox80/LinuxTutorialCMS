@@ -111,4 +111,6 @@ pub mod auth;     // Authentication and authorization
 pub mod csrf;     // Cross-Site Request Forgery protection
 pub mod db;       // Database operations and migrations
 pub mod handlers; // HTTP request handlers
+pub mod middleware; // HTTP middleware
 pub mod models;   // Data structures and API models
+pub mod repositories; // Database repositories
