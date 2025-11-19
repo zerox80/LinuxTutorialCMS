@@ -8,7 +8,7 @@ import {
     Terminal,
 } from 'lucide-react'
 import { useTutorials } from '../../context/TutorialContext'
-import TutorialForm from '../TutorialForm'
+import TutorialForm from '../tutorial/TutorialForm'
 
 const TutorialManagement = () => {
     const { tutorials, deleteTutorial, loading, error, refreshTutorials } = useTutorials()
