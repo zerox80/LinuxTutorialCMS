@@ -113,7 +113,7 @@ const PostDetail = () => {
           </div>
         ) : (
           <div className="space-y-8">
-            <article id="post-content" className="bg-white dark:bg-slate-900/90 rounded-3xl shadow-xl border border-gray-200 dark:border-slate-700/60 overflow-hidden">
+            <article id="post-content" className="bg-white dark:bg-slate-900/90 rounded-3xl shadow-xl border border-gray-200 dark:border-slate-700/60 overflow-hidden break-words">
               <div className="px-6 py-8 sm:px-10 sm:py-10 space-y-8">
                 <header className="space-y-4 pb-6 border-b border-gray-200 dark:border-slate-700">
                   {publishedDate && (

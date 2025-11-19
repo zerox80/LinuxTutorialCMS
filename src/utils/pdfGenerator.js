@@ -58,6 +58,7 @@ const copyComputedStyles = (source, target) => {
         // Typography
         'font-family', 'font-size', 'font-weight', 'font-style', 'line-height',
         'text-align', 'text-transform', 'text-decoration', 'letter-spacing', 'white-space', 'color',
+        'word-break', 'word-wrap', 'overflow-wrap', 'hyphens',
 
         // Visuals
         'background-color', 'background-image', 'background-position', 'background-size', 'background-repeat',
@@ -155,6 +156,20 @@ export const generatePdf = async (element, filename) => {
                 el.style.border = 'none';
             }
 
+            // Fix image sizing
+            if (el.tagName === 'IMG') {
+                el.style.maxWidth = '100%';
+                el.style.height = 'auto';
+                el.style.pageBreakInside = 'avoid';
+            }
+
+            // Ensure code blocks wrap
+            if (el.tagName === 'PRE' || el.tagName === 'CODE') {
+                el.style.whiteSpace = 'pre-wrap';
+                el.style.wordBreak = 'break-word';
+                el.style.overflowWrap = 'break-word';
+            }
+
             // Recursively clean
             for (let i = 0; i < el.children.length; i++) {
                 cleanElement(el.children[i]);
@@ -170,6 +185,7 @@ export const generatePdf = async (element, filename) => {
         doc.body.style.padding = '20px';
         doc.body.style.backgroundColor = '#ffffff';
         doc.body.style.fontFamily = 'sans-serif';
+        doc.body.style.textRendering = 'optimizeLegibility';
 
         // 6. Configure html2pdf
         const opt = {
