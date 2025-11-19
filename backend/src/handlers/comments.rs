@@ -398,7 +398,7 @@ pub async fn vote_comment(
             )
         })?;
 
-    if exists.is_none() {
+    if !exists {
         return Err((
             StatusCode::NOT_FOUND,
             Json(ErrorResponse {
@@ -471,5 +471,17 @@ pub async fn vote_comment(
             )
         })?;
 
-    Ok(Json(comment))
+    // Convert models::Comment to handlers::comments::Comment
+    let response_comment = Comment {
+        id: comment.id,
+        tutorial_id: comment.tutorial_id,
+        post_id: comment.post_id,
+        author: comment.author,
+        content: comment.content,
+        created_at: comment.created_at,
+        votes: comment.votes,
+        is_admin: comment.is_admin,
+    };
+
+    Ok(Json(response_comment))
 }

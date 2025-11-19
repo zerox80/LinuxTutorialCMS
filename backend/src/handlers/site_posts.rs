@@ -169,7 +169,7 @@ pub async fn list_posts_for_page(
 ) -> Result<Json<SitePostListResponse>, (StatusCode, Json<ErrorResponse>)> {
     ensure_admin(&claims)?;
 
-    db::get_site_page_by_id(&pool, &page_id)
+    repositories::pages::get_site_page_by_id(&pool, &page_id)
         .await
         .map_err(|err| map_sqlx_error(err, "Site page"))?
         .ok_or_else(|| {
