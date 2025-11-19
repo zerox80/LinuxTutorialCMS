@@ -554,7 +554,7 @@ pub async fn update_tutorial(
         &color,
         &topics_json,
         &topics_vec,
-        tutorial.version.try_into().unwrap_or(1),
+        new_version.try_into().unwrap_or(1),
     )
     .await
     .map_err(|e| {

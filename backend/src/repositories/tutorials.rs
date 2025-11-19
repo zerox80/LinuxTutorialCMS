@@ -1,7 +1,7 @@
 use crate::db::DbPool;
-use crate::models::{CreateTutorialRequest, Tutorial, UpdateTutorialRequest};
+use crate::models::Tutorial;
 use sqlx;
-use std::convert::TryInto;
+
 
 pub async fn list_tutorials(
     pool: &DbPool,

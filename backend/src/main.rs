@@ -13,15 +13,13 @@ use crate::middleware::{cors, security};
 // HTTP-related imports for building the web server
 use axum::http::{
     header::{
-        AUTHORIZATION, CACHE_CONTROL, CONTENT_SECURITY_POLICY, CONTENT_TYPE, EXPIRES, PRAGMA,
-        STRICT_TRANSPORT_SECURITY, X_CONTENT_TYPE_OPTIONS, X_FRAME_OPTIONS, ACCEPT,
+        AUTHORIZATION, CONTENT_TYPE, ACCEPT,
     },
     HeaderName, HeaderValue, Method,
 };
 use axum::{
-    extract::{DefaultBodyLimit, Request},
-    middleware::{from_extractor, from_fn, Next},
-    response::Response,
+    extract::DefaultBodyLimit,
+    middleware::Next,
     routing::{delete, get, post, put},
     Router,
 };
@@ -34,7 +32,7 @@ use std::net::SocketAddr;
 use tokio::signal;
 use tower_governor::key_extractor::SmartIpKeyExtractor;
 use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
-use tower_http::cors::{AllowHeaders, AllowMethods, AllowOrigin, CorsLayer};
+use tower_http::cors::{CorsLayer};
 use tower_http::limit::RequestBodyLimitLayer;
 use tower_http::services::ServeDir;
 use tracing_subscriber;
@@ -250,33 +248,25 @@ async fn main() {
         .route_layer(axum::middleware::from_fn_with_state(pool.clone(), csrf::enforce_csrf))
         .route_layer(axum::middleware::from_fn_with_state(pool.clone(), middleware::auth::auth_middleware))
         .layer(RequestBodyLimitLayer::new(ADMIN_BODY_LIMIT))
-        .layer(GovernorLayer::new(admin_rate_limit_config.clone()));
+        .layer(GovernorLayer::new(admin_rate_limit_config.clone()))
+        .with_state(pool.clone());
 
-    // Define the application router with all routes and middleware
-    let mut app = Router::new()
-        .with_state(pool)
-        // Merge all route modules
-        .merge(login_router)
-
+    let api_routes = Router::new()
         .route("/api/auth/me", get(handlers::auth::me))
-
         .route("/api/tutorials", get(handlers::tutorials::list_tutorials))
         .route(
             "/api/tutorials/{id}",
             get(handlers::tutorials::get_tutorial),
         )
-
         .route(
             "/api/search/tutorials",
             get(handlers::search::search_tutorials),
         )
         .route("/api/search/topics", get(handlers::search::get_all_topics))
-
         .route(
             "/api/tutorials/{id}/comments",
             get(handlers::comments::list_comments),
         )
-
         .route(
             "/api/content",
             get(handlers::site_content::list_site_content),
@@ -285,9 +275,6 @@ async fn main() {
             "/api/content/{section}",
             get(handlers::site_content::get_site_content),
         )
-
-        .merge(admin_routes)
-
         .route(
             "/api/posts/{id}/comments",
             get(handlers::comments::list_post_comments)
@@ -298,7 +285,6 @@ async fn main() {
             "/api/comments/{id}/vote",
             post(handlers::comments::vote_comment),
         )
-
         .route(
             "/api/public/pages/{slug}",
             get(handlers::site_pages::get_published_page_by_slug),
@@ -316,9 +302,14 @@ async fn main() {
             get(handlers::site_pages::list_published_page_slugs),
         )
         .nest_service("/uploads", ServeDir::new(upload_dir))
+        .with_state(pool.clone());
 
+    // Define the application router with all routes and middleware
+    let app = Router::new()
+        .merge(login_router)
+        .merge(admin_routes)
+        .merge(api_routes)
         .route("/api/health", get(|| async { "OK" }))
-
         // Serve index.html with server-side injection for root and fallback
         .route("/", get(handlers::frontend_proxy::serve_index))
         .route("/{*path}", get(handlers::frontend_proxy::serve_index))
