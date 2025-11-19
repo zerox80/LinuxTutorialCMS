@@ -57,7 +57,24 @@ pub fn sanitize_fts_query(raw: &str) -> Result<String, String> {
             // Keep only safe characters for FTS5 queries
             let sanitized: String = token
                 .chars()
-                .filter(|c| c.is_ascii_alphanumeric() || matches!(c, '*' | '-' | '_' | '.' | '+' | '#' | '@' | '/' | ':' | '(' | ')' | '[' | ']'))
+                .filter(|c| {
+                    c.is_ascii_alphanumeric()
+                        || matches!(
+                            c,
+                            '*' | '-'
+                                | '_'
+                                | '.'
+                                | '+'
+                                | '#'
+                                | '@'
+                                | '/'
+                                | ':'
+                                | '('
+                                | ')'
+                                | '['
+                                | ']'
+                        )
+                })
                 .collect();
             if sanitized.is_empty() {
                 None
@@ -104,7 +121,6 @@ pub async fn search_tutorials(
     State(pool): State<DbPool>,
     Query(params): Query<SearchQuery>,
 ) -> Result<Json<Vec<TutorialResponse>>, (StatusCode, Json<ErrorResponse>)> {
-
     if params.q.trim().is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,

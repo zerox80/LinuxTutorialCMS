@@ -1,20 +1,17 @@
-
 // Module declarations for organizing the backend codebase
-pub mod auth;     // Authentication and JWT token management
-pub mod csrf;     // Cross-Site Request Forgery protection
-pub mod db;       // Database connection and pooling
+pub mod auth; // Authentication and JWT token management
+pub mod csrf; // Cross-Site Request Forgery protection
+pub mod db; // Database connection and pooling
 pub mod handlers; // HTTP request handlers organized by feature
-pub mod models;   // Data structures and database models
 pub mod middleware; // Middleware modules
+pub mod models; // Data structures and database models
 pub mod repositories; // Repository modules
 
 use crate::middleware::{cors, security};
 
 // HTTP-related imports for building the web server
 use axum::http::{
-    header::{
-        AUTHORIZATION, CONTENT_TYPE, ACCEPT,
-    },
+    header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
     HeaderName, HeaderValue, Method,
 };
 use axum::{
@@ -32,7 +29,7 @@ use std::net::SocketAddr;
 use tokio::signal;
 use tower_governor::key_extractor::SmartIpKeyExtractor;
 use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
-use tower_http::cors::{CorsLayer};
+use tower_http::cors::CorsLayer;
 use tower_http::limit::RequestBodyLimitLayer;
 use tower_http::services::ServeDir;
 use tracing_subscriber;
@@ -78,13 +75,11 @@ const X_REAL_IP_HEADER: HeaderName = HeaderName::from_static("x-real-ip");
 /// direct connection IP is trusted, preventing clients from faking their IP address.
 // These are now likely handled within the `security` module if they are still needed.
 
-
 // Request body size limits for different endpoint types
 // These prevent DoS attacks through large payloads
-const LOGIN_BODY_LIMIT: usize = 64 * 1024;      // 64KB for login endpoints
+const LOGIN_BODY_LIMIT: usize = 64 * 1024; // 64KB for login endpoints
 const PUBLIC_BODY_LIMIT: usize = 2 * 1024 * 1024; // 2MB for public endpoints
-const ADMIN_BODY_LIMIT: usize = 8 * 1024 * 1024;  // 8MB for admin content uploads
-
+const ADMIN_BODY_LIMIT: usize = 8 * 1024 * 1024; // 8MB for admin content uploads
 
 /// Main application entry point.
 ///
@@ -153,7 +148,7 @@ async fn main() {
                 .iter()
                 .map(|&s| s.to_string())
                 .collect()
-            });
+        });
 
     let allowed_origins = cors::parse_allowed_origins(cors_origins.iter().map(|s| s.as_str()));
 
@@ -240,12 +235,15 @@ async fn main() {
             "/api/comments/{id}",
             delete(handlers::comments::delete_comment),
         )
-        .route(
-            "/api/upload",
-            post(handlers::upload::upload_image),
-        )
-        .route_layer(axum::middleware::from_fn_with_state(pool.clone(), csrf::enforce_csrf))
-        .route_layer(axum::middleware::from_fn_with_state(pool.clone(), middleware::auth::auth_middleware))
+        .route("/api/upload", post(handlers::upload::upload_image))
+        .route_layer(axum::middleware::from_fn_with_state(
+            pool.clone(),
+            csrf::enforce_csrf,
+        ))
+        .route_layer(axum::middleware::from_fn_with_state(
+            pool.clone(),
+            middleware::auth::auth_middleware,
+        ))
         .layer(RequestBodyLimitLayer::new(ADMIN_BODY_LIMIT))
         .layer(GovernorLayer::new(admin_rate_limit_config.clone()));
 

@@ -1,4 +1,3 @@
-
 use crate::{
     auth,
     models::{ErrorResponse, UploadResponse},
@@ -38,10 +37,10 @@ pub async fn upload_image(
         )
     })? {
         let name = field.name().unwrap_or("").to_string();
-        
+
         if name == "file" {
             let file_name = field.file_name().unwrap_or("unknown").to_string();
-            
+
             // Simple extension validation
             let ext = std::path::Path::new(&file_name)
                 .extension()
@@ -83,29 +82,39 @@ pub async fn upload_image(
 
                 // Verify the detected extension matches our allowed list
                 if !ALLOWED_EXTENSIONS.contains(&detected_ext) {
-                     return Err((
+                    return Err((
                         StatusCode::BAD_REQUEST,
                         Json(ErrorResponse {
-                            error: format!("File type '{}' not allowed. Detected: {}", detected_ext, mime),
+                            error: format!(
+                                "File type '{}' not allowed. Detected: {}",
+                                detected_ext, mime
+                            ),
                         }),
                     ));
                 }
 
                 // Verify the detected extension matches the file extension (prevent spoofing)
                 // Note: infer might return "jpeg" for "jpg", so we need to be flexible or normalize
-                let normalized_detected = if detected_ext == "jpeg" { "jpg" } else { detected_ext };
+                let normalized_detected = if detected_ext == "jpeg" {
+                    "jpg"
+                } else {
+                    detected_ext
+                };
                 let normalized_ext = if ext == "jpeg" { "jpg" } else { ext.as_str() };
 
                 if normalized_detected != normalized_ext {
-                     return Err((
+                    return Err((
                         StatusCode::BAD_REQUEST,
                         Json(ErrorResponse {
-                            error: format!("File extension mismatch. Expected '{}', but detected '{}'", ext, detected_ext),
+                            error: format!(
+                                "File extension mismatch. Expected '{}', but detected '{}'",
+                                ext, detected_ext
+                            ),
                         }),
                     ));
                 }
             } else {
-                 return Err((
+                return Err((
                     StatusCode::BAD_REQUEST,
                     Json(ErrorResponse {
                         error: "Could not determine file type".to_string(),
@@ -116,7 +125,7 @@ pub async fn upload_image(
             let new_filename = format!("{}.{}", Uuid::new_v4(), ext);
             let upload_dir = std::env::var("UPLOAD_DIR").unwrap_or_else(|_| "uploads".to_string());
             let mut upload_path = PathBuf::from(upload_dir);
-            
+
             // Ensure uploads directory exists
             if !upload_path.exists() {
                 fs::create_dir_all(&upload_path).await.map_err(|err| {
@@ -128,7 +137,7 @@ pub async fn upload_image(
                     )
                 })?;
             }
-            
+
             upload_path.push(&new_filename);
 
             fs::write(&upload_path, data).await.map_err(|err| {
@@ -141,7 +150,7 @@ pub async fn upload_image(
             })?;
 
             let url = format!("/uploads/{}", new_filename);
-            
+
             return Ok(Json(UploadResponse { url }));
         }
     }

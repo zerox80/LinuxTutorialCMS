@@ -125,14 +125,6 @@ pub async fn create_pool() -> Result<DbPool, sqlx::Error> {
     Ok(pool)
 }
 
-
-
-
-
-
-
-
-
 async fn ensure_site_page_schema(pool: &DbPool) -> Result<(), sqlx::Error> {
     let mut tx = pool.begin().await?;
 
@@ -210,7 +202,6 @@ async fn ensure_site_page_schema(pool: &DbPool) -> Result<(), sqlx::Error> {
 async fn apply_core_migrations(
     tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
 ) -> Result<(), sqlx::Error> {
-
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS users (
@@ -398,8 +389,6 @@ async fn apply_core_migrations(
     Ok(())
 }
 
-
-
 async fn seed_site_content_tx(
     tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
 ) -> Result<(), sqlx::Error> {
@@ -482,14 +471,14 @@ fn default_site_content() -> Vec<(&'static str, serde_json::Value)> {
                     "target": { "type": "section", "value": "home" }
                 },
                 "tutorialCardButton": "Zum Tutorial"
-            })
+            }),
         ),
         (
             "site_meta",
             json!({
                 "title": "Linux Tutorial - Lerne Linux Schritt für Schritt",
                 "description": "Lerne Linux von Grund auf - Interaktiv, modern und praxisnah."
-            })
+            }),
         ),
         (
             "header",
@@ -744,7 +733,6 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
 
     match (admin_username, admin_password) {
         (Some(username), Some(password)) if !username.is_empty() && !password.is_empty() => {
-
             if password.len() < 12 {
                 tracing::error!(
                     "ADMIN_PASSWORD must be at least 12 characters long (NIST recommendation)!"
@@ -775,7 +763,6 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
                     }
                 },
                 None => {
-
                     let password_hash =
                         bcrypt::hash(&password, bcrypt::DEFAULT_COST).map_err(|e| {
                             tracing::error!("Failed to hash admin password: {}", e);
@@ -809,7 +796,6 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     let mut tx = pool.begin().await?;
 
     if seed_enabled {
-
         let already_seeded: Option<(String,)> =
             sqlx::query_as("SELECT value FROM app_metadata WHERE key = 'default_tutorials_seeded'")
                 .fetch_optional(&mut *tx)
@@ -1004,10 +990,6 @@ async fn insert_default_tutorials_tx(
     Ok(())
 }
 
-
-
-
-
 async fn apply_comment_migrations(
     tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
 ) -> Result<(), sqlx::Error> {
@@ -1024,7 +1006,7 @@ async fn apply_comment_migrations(
         sqlx::query("ALTER TABLE comments ADD COLUMN post_id TEXT")
             .execute(&mut **tx)
             .await?;
-        
+
         // Add index for post_id
         sqlx::query("CREATE INDEX IF NOT EXISTS idx_comments_post ON comments(post_id)")
             .execute(&mut **tx)
@@ -1038,17 +1020,18 @@ async fn apply_vote_migration(
     tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
 ) -> Result<(), sqlx::Error> {
     // Create comment_votes table
-    sqlx::query(include_str!("../migrations/20241119_create_comment_votes.sql"))
-        .execute(&mut **tx)
-        .await?;
+    sqlx::query(include_str!(
+        "../migrations/20241119_create_comment_votes.sql"
+    ))
+    .execute(&mut **tx)
+    .await?;
 
     // Add votes column to comments if missing
-    let has_votes: bool = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM pragma_table_info('comments') WHERE name='votes'",
-    )
-    .fetch_one(&mut **tx)
-    .await
-    .map(|count: i64| count > 0)?;
+    let has_votes: bool =
+        sqlx::query_scalar("SELECT COUNT(*) FROM pragma_table_info('comments') WHERE name='votes'")
+            .fetch_one(&mut **tx)
+            .await
+            .map(|count: i64| count > 0)?;
 
     if !has_votes {
         tracing::info!("Adding votes column to comments table");
@@ -1121,10 +1104,10 @@ async fn fix_comment_schema(
     // Actually, apply_comment_migrations adds post_id.
     // Let's check columns in comments_old to be safe, or just assume standard flow.
     // To be safe, we'll select specific columns.
-    
+
     // Note: We need to handle the case where tutorial_id was NOT NULL.
     // If we have data, it's fine.
-    
+
     sqlx::query(
         r#"
         INSERT INTO comments (id, tutorial_id, post_id, author, content, created_at, votes, is_admin)
@@ -1148,11 +1131,9 @@ async fn fix_comment_schema(
         .await?;
 
     // 6. Mark as fixed
-    sqlx::query(
-        "INSERT INTO app_metadata (key, value) VALUES ('comment_schema_fixed_v1', 'true')"
-    )
-    .execute(&mut **tx)
-    .await?;
+    sqlx::query("INSERT INTO app_metadata (key, value) VALUES ('comment_schema_fixed_v1', 'true')")
+        .execute(&mut **tx)
+        .await?;
 
     Ok(())
 }

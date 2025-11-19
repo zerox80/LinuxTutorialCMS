@@ -1,5 +1,3 @@
-
-
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::FromRow;
@@ -74,7 +72,7 @@ pub struct CreateTutorialRequest {
     pub color: String,
 
     pub topics: Vec<String>,
-    
+
     pub content: String,
 
     pub id: Option<String>,
@@ -140,7 +138,9 @@ impl TryFrom<Tutorial> for TutorialResponse {
         let topics: Vec<String> = serde_json::from_str(&tutorial.topics).unwrap_or_else(|e| {
             tracing::error!(
                 "Failed to parse topics JSON for tutorial {}: {}. Topics JSON: '{}'",
-                tutorial.id, e, tutorial.topics
+                tutorial.id,
+                e,
+                tutorial.topics
             );
             Vec::new()
         });
@@ -167,7 +167,9 @@ impl TryFrom<Tutorial> for TutorialSummaryResponse {
         let topics: Vec<String> = serde_json::from_str(&tutorial.topics).unwrap_or_else(|e| {
             tracing::error!(
                 "Failed to parse topics JSON for tutorial {}: {}. Topics JSON: '{}'",
-                tutorial.id, e, tutorial.topics
+                tutorial.id,
+                e,
+                tutorial.topics
             );
             Vec::new()
         });
@@ -253,7 +255,6 @@ pub struct SitePage {
 
 #[derive(Debug, Serialize)]
 pub struct SitePageResponse {
-
     pub id: String,
 
     pub slug: String,
@@ -281,13 +282,11 @@ pub struct SitePageResponse {
 
 #[derive(Debug, Serialize)]
 pub struct SitePageListResponse {
-
     pub items: Vec<SitePageResponse>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct SitePageWithPostsResponse {
-
     pub page: SitePageResponse,
 
     pub posts: Vec<SitePostResponse>,
@@ -295,7 +294,6 @@ pub struct SitePageWithPostsResponse {
 
 #[derive(Debug, Serialize)]
 pub struct SitePostDetailResponse {
-
     pub page: SitePageResponse,
 
     pub post: SitePostResponse,
@@ -303,7 +301,6 @@ pub struct SitePostDetailResponse {
 
 #[derive(Debug, Deserialize)]
 pub struct CreateSitePageRequest {
-
     pub slug: String,
 
     pub title: String,
@@ -329,7 +326,6 @@ pub struct CreateSitePageRequest {
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateSitePageRequest {
-
     pub slug: Option<String>,
 
     pub title: Option<String>,
@@ -351,7 +347,6 @@ pub struct UpdateSitePageRequest {
 
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 pub struct SitePost {
-
     pub id: String,
 
     pub page_id: String,
@@ -377,7 +372,6 @@ pub struct SitePost {
 
 #[derive(Debug, Serialize)]
 pub struct SitePostResponse {
-
     pub id: String,
 
     pub page_id: String,
@@ -403,13 +397,11 @@ pub struct SitePostResponse {
 
 #[derive(Debug, Serialize)]
 pub struct SitePostListResponse {
-
     pub items: Vec<SitePostResponse>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct CreateSitePostRequest {
-
     pub title: String,
 
     pub slug: String,
@@ -428,7 +420,6 @@ pub struct CreateSitePostRequest {
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateSitePostRequest {
-
     pub title: Option<String>,
 
     pub slug: Option<String>,
@@ -446,7 +437,6 @@ pub struct UpdateSitePostRequest {
 
 #[derive(Debug, Serialize)]
 pub struct NavigationItemResponse {
-
     pub id: String,
 
     pub slug: String,
@@ -458,7 +448,6 @@ pub struct NavigationItemResponse {
 
 #[derive(Debug, Serialize)]
 pub struct NavigationResponse {
-
     pub items: Vec<NavigationItemResponse>,
 }
 

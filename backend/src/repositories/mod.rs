@@ -1,9 +1,9 @@
+pub mod app_metadata;
+pub mod comments;
 pub mod common;
 pub mod content;
 pub mod pages;
 pub mod posts;
 pub mod token_blacklist;
 pub mod tutorials;
-pub mod comments;
 pub mod users;
-pub mod app_metadata;

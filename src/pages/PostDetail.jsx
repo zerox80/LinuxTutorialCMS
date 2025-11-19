@@ -12,7 +12,6 @@ const PostDetail = () => {
   const normalizedPageSlug = useMemo(() => normalizeSlug(pageSlug), [pageSlug])
   const normalizedPostSlug = useMemo(() => normalizeSlug(postSlug), [postSlug])
   const [post, setPost] = useState(null)
-  const [page, setPage] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   useEffect(() => {
@@ -34,7 +33,6 @@ const PostDetail = () => {
         if (!foundPost) {
           throw new Error('Beitrag nicht gefunden')
         }
-        setPage(pageData.page)
         setPost(foundPost)
       } catch (err) {
         if (controller.signal.aborted) return

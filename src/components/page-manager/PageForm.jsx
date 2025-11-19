@@ -60,8 +60,7 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
   const formSanitizedSlug = useMemo(() => sanitizeSlug(slug), [slug])
   const slugHasInput = slug.trim().length > 0
   const slugHasInvalidCharacters = slugHasInput && !formSanitizedSlug
-  const slugDiffersAfterSanitize =
-    slugHasInput && formSanitizedSlug && formSanitizedSlug !== slug.trim()
+
 
   // Helper to safely parse JSON state
   const getParsedState = (jsonString, fallback) => {

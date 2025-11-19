@@ -1,5 +1,3 @@
-
-
 /**
  * HTTP Handlers Module
  *
@@ -140,21 +138,20 @@
  * - Caching headers for static content
  * - Async/await for high concurrency
  */
-
 // HTTP Handler Modules - Organized by Domain
 
 // Core System Handlers
-pub mod auth;      // Authentication and authorization
-pub mod search;    // Full-text search functionality
+pub mod auth; // Authentication and authorization
+pub mod search; // Full-text search functionality
 
 // Content Management Handlers
 pub mod tutorials;
 pub mod upload;
-    // Tutorial CRUD operations
-pub mod comments;     // Comment system management
+// Tutorial CRUD operations
+pub mod comments; // Comment system management
 
 // Site Content Handlers
+pub mod frontend_proxy;
 pub mod site_content; // Dynamic site content sections
-pub mod site_pages;   // Static page management
-pub mod site_posts;   // Blog post management
-pub mod frontend_proxy; // Frontend proxy for server-side injection
+pub mod site_pages; // Static page management
+pub mod site_posts; // Blog post management // Frontend proxy for server-side injection

@@ -19,6 +19,7 @@
 //! ```
 
 use axum::{
+    extract::FromRef,
     extract::FromRequestParts,
     http::{
         header::{AUTHORIZATION, SET_COOKIE},
@@ -26,16 +27,15 @@ use axum::{
         HeaderMap, HeaderValue, StatusCode,
     },
     Json,
-    extract::FromRef,
 };
 use axum_extra::extract::cookie::{Cookie, CookieJar, SameSite};
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
-use std::sync::LazyLock;
 use serde::{Deserialize, Serialize};
-use std::sync::OnceLock;
 use std::collections::HashSet;
 use std::env;
+use std::sync::LazyLock;
+use std::sync::OnceLock;
 use time::{Duration as TimeDuration, OffsetDateTime};
 
 use crate::db::{self, DbPool};
@@ -46,9 +46,8 @@ pub static JWT_SECRET: OnceLock<String> = OnceLock::new();
 
 /// Global storage for the JWT decoding key.
 /// Derived from JWT_SECRET once it's initialized.
-pub static DECODING_KEY: LazyLock<DecodingKey> = LazyLock::new(|| {
-    DecodingKey::from_secret(get_jwt_secret().as_bytes())
-});
+pub static DECODING_KEY: LazyLock<DecodingKey> =
+    LazyLock::new(|| DecodingKey::from_secret(get_jwt_secret().as_bytes()));
 
 /// List of known placeholder secrets that must not be used in production.
 /// These are common defaults found in example configurations.
@@ -391,18 +390,22 @@ where
 
         // Check if token is blacklisted
         let pool = DbPool::from_ref(state);
-        let is_blacklisted = crate::repositories::token_blacklist::is_token_blacklisted(&pool, &token)
-            .await
-            .map_err(|e| {
-                tracing::error!("Database error checking token blacklist: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "Internal server error".to_string(),
-                )
-            })?;
+        let is_blacklisted =
+            crate::repositories::token_blacklist::is_token_blacklisted(&pool, &token)
+                .await
+                .map_err(|e| {
+                    tracing::error!("Database error checking token blacklist: {}", e);
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        "Internal server error".to_string(),
+                    )
+                })?;
 
         if is_blacklisted {
-            return Err((StatusCode::UNAUTHORIZED, "Token has been revoked".to_string()));
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                "Token has been revoked".to_string(),
+            ));
         }
 
         Ok(claims)
@@ -563,7 +566,6 @@ fn parse_bearer_token(value: &str) -> Option<String> {
     None
 }
 
-
 /// Optional Claims extractor for endpoints that support both authenticated and anonymous access.
 ///
 /// If a valid token is provided, it extracts the claims.
@@ -596,18 +598,22 @@ where
 
         // Check if token is blacklisted
         let pool = DbPool::from_ref(state);
-        let is_blacklisted = crate::repositories::token_blacklist::is_token_blacklisted(&pool, &token)
-            .await
-            .map_err(|e| {
-                tracing::error!("Database error checking token blacklist: {}", e);
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "Internal server error".to_string(),
-                )
-            })?;
+        let is_blacklisted =
+            crate::repositories::token_blacklist::is_token_blacklisted(&pool, &token)
+                .await
+                .map_err(|e| {
+                    tracing::error!("Database error checking token blacklist: {}", e);
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        "Internal server error".to_string(),
+                    )
+                })?;
 
         if is_blacklisted {
-            return Err((StatusCode::UNAUTHORIZED, "Token has been revoked".to_string()));
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                "Token has been revoked".to_string(),
+            ));
         }
 
         Ok(OptionalClaims(Some(claims)))

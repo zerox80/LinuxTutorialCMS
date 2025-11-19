@@ -1,10 +1,9 @@
-
-
 use crate::{
-    auth, db, repositories,
+    auth, db,
     models::{
         ErrorResponse, SiteContentListResponse, SiteContentResponse, UpdateSiteContentRequest,
     },
+    repositories,
 };
 use axum::{
     extract::{Path, State},
@@ -164,15 +163,17 @@ fn map_record(
 pub async fn list_site_content(
     State(pool): State<db::DbPool>,
 ) -> Result<Json<SiteContentListResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let records = repositories::content::fetch_all_site_content(&pool).await.map_err(|err| {
-        tracing::error!("Failed to load site content: {}", err);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse {
-                error: "Failed to load site content".to_string(),
-            }),
-        )
-    })?;
+    let records = repositories::content::fetch_all_site_content(&pool)
+        .await
+        .map_err(|err| {
+            tracing::error!("Failed to load site content: {}", err);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    error: "Failed to load site content".to_string(),
+                }),
+            )
+        })?;
 
     let mut items = Vec::with_capacity(records.len());
     for record in records {

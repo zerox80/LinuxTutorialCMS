@@ -1,7 +1,8 @@
 use axum::http::HeaderValue;
 
 // Default CORS origins for development environment
-pub const DEV_DEFAULT_FRONTEND_ORIGINS: &[&str] = &["http://localhost:5173", "http://localhost:3000"];
+pub const DEV_DEFAULT_FRONTEND_ORIGINS: &[&str] =
+    &["http://localhost:5173", "http://localhost:3000"];
 
 /// Parses and validates a list of allowed CORS origins.
 pub fn parse_allowed_origins<'a, I>(origins: I) -> Vec<HeaderValue>

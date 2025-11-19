@@ -8,14 +8,20 @@ pub struct LoginAttempt {
     pub blocked_until: Option<String>,
 }
 
-pub async fn get_user_by_username(pool: &DbPool, username: &str) -> Result<Option<User>, sqlx::Error> {
+pub async fn get_user_by_username(
+    pool: &DbPool,
+    username: &str,
+) -> Result<Option<User>, sqlx::Error> {
     sqlx::query_as::<_, User>("SELECT * FROM users WHERE username = ?")
         .bind(username)
         .fetch_optional(pool)
         .await
 }
 
-pub async fn get_login_attempt(pool: &DbPool, username_hash: &str) -> Result<Option<LoginAttempt>, sqlx::Error> {
+pub async fn get_login_attempt(
+    pool: &DbPool,
+    username_hash: &str,
+) -> Result<Option<LoginAttempt>, sqlx::Error> {
     sqlx::query_as::<_, LoginAttempt>(
         "SELECT fail_count, blocked_until FROM login_attempts WHERE username = ?",
     )

@@ -1,5 +1,3 @@
-
-
 /**
  * Content Import Utility
  *
@@ -39,7 +37,6 @@
  * - Database connection or transaction errors
  * - Data validation failures
  */
-
 use std::{env, fs, path::Path};
 
 use anyhow::{anyhow, Context, Result};
@@ -51,7 +48,6 @@ use linux_tutorial_backend::db;
 
 #[derive(Debug, Deserialize)]
 struct SiteContentImport {
-
     section: String,
 
     content: Value,
@@ -62,7 +58,6 @@ struct SiteContentImport {
 
 #[derive(Debug, Deserialize)]
 struct SitePageImport {
-
     id: String,
 
     slug: String,
@@ -92,7 +87,6 @@ struct SitePageImport {
 
 #[derive(Debug, Deserialize)]
 struct SitePostImport {
-
     id: String,
 
     page_id: String,
@@ -120,7 +114,6 @@ struct SitePostImport {
 
 #[derive(Debug, Deserialize)]
 struct ImportBundle {
-
     site_content: Vec<SiteContentImport>,
 
     pages: Vec<SitePageImport>,
@@ -130,7 +123,6 @@ struct ImportBundle {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-
     dotenv::dotenv().ok();
 
     let args: Vec<String> = env::args().collect();
@@ -178,9 +170,7 @@ async fn import_site_content(
     tx: &mut Transaction<'_, Sqlite>,
     items: &[SiteContentImport],
 ) -> Result<()> {
-
     for item in items {
-
         let serialized = serde_json::to_string(&item.content)
             .context("Failed to serialize site_content entry")?;
 
@@ -203,9 +193,7 @@ async fn import_site_pages(
     tx: &mut Transaction<'_, Sqlite>,
     items: &[SitePageImport],
 ) -> Result<()> {
-
     for item in items {
-
         let hero_serialized =
             serde_json::to_string(&item.hero).context("Failed to serialize page hero JSON")?;
         let layout_serialized =
@@ -241,9 +229,7 @@ async fn import_site_posts(
     tx: &mut Transaction<'_, Sqlite>,
     items: &[SitePostImport],
 ) -> Result<()> {
-
     for item in items {
-
         sqlx::query(
             "INSERT INTO site_posts (id, page_id, title, slug, excerpt, content_markdown, is_published, published_at, order_index, created_at, updated_at) \
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP), COALESCE(?, CURRENT_TIMESTAMP)) \

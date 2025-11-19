@@ -49,10 +49,7 @@ pub async fn get_published_post_by_slug(
     .await
 }
 
-pub async fn get_site_post_by_id(
-    pool: &DbPool,
-    id: &str,
-) -> Result<Option<SitePost>, sqlx::Error> {
+pub async fn get_site_post_by_id(pool: &DbPool, id: &str) -> Result<Option<SitePost>, sqlx::Error> {
     sqlx::query_as::<_, SitePost>(
         "SELECT id, page_id, title, slug, excerpt, content_markdown, is_published, published_at, order_index, created_at, updated_at
          FROM site_posts WHERE id = ?",

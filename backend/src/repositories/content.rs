@@ -4,9 +4,7 @@ use crate::repositories::common::serialize_json_value;
 use serde_json::Value;
 use sqlx;
 
-pub async fn fetch_all_site_content(
-    pool: &DbPool,
-) -> Result<Vec<SiteContent>, sqlx::Error> {
+pub async fn fetch_all_site_content(pool: &DbPool) -> Result<Vec<SiteContent>, sqlx::Error> {
     sqlx::query_as::<_, SiteContent>(
         "SELECT section, content_json, updated_at FROM site_content ORDER BY section",
     )

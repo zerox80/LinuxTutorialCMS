@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, Sparkles, Zap, Shield, Globe, Code, Terminal, ChevronRight } from 'lucide-react'
+import { ArrowRight, ChevronRight } from 'lucide-react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { useContent } from '../context/ContentContext'
@@ -13,13 +13,6 @@ const LandingPage = () => {
     const features = Array.isArray(heroContent.features) ? heroContent.features : []
     const statsContent = getSection('stats') || {}
     const statsItems = Array.isArray(statsContent.items) ? statsContent.items : []
-    const [scrolled, setScrolled] = useState(false)
-
-    useEffect(() => {
-        const handleScroll = () => setScrolled(window.scrollY > 50)
-        window.addEventListener('scroll', handleScroll)
-        return () => window.removeEventListener('scroll', handleScroll)
-    }, [])
 
     // Helper to resolve icons dynamically
     const resolveIcon = (iconName) => {

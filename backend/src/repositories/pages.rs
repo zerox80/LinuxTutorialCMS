@@ -22,9 +22,7 @@ pub async fn list_nav_pages(pool: &DbPool) -> Result<Vec<SitePage>, sqlx::Error>
     .await
 }
 
-pub async fn list_published_pages(
-    pool: &DbPool,
-) -> Result<Vec<SitePage>, sqlx::Error> {
+pub async fn list_published_pages(pool: &DbPool) -> Result<Vec<SitePage>, sqlx::Error> {
     sqlx::query_as::<_, SitePage>(
         "SELECT id, slug, title, description, nav_label, show_in_nav, order_index, is_published, hero_json, layout_json, created_at, updated_at
          FROM site_pages
@@ -35,10 +33,7 @@ pub async fn list_published_pages(
     .await
 }
 
-pub async fn get_site_page_by_id(
-    pool: &DbPool,
-    id: &str,
-) -> Result<Option<SitePage>, sqlx::Error> {
+pub async fn get_site_page_by_id(pool: &DbPool, id: &str) -> Result<Option<SitePage>, sqlx::Error> {
     sqlx::query_as::<_, SitePage>(
         "SELECT id, slug, title, description, nav_label, show_in_nav, order_index, is_published, hero_json, layout_json, created_at, updated_at FROM site_pages WHERE id = ?",
     )
@@ -63,7 +58,6 @@ pub async fn create_site_page(
     pool: &DbPool,
     page: CreateSitePageRequest,
 ) -> Result<SitePage, sqlx::Error> {
-
     validate_slug(&page.slug)?;
 
     let id = uuid::Uuid::new_v4().to_string();

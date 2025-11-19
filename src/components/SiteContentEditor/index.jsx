@@ -5,7 +5,6 @@ import {
   useContent,
   DEFAULT_CONTENT,
 } from '../../context/ContentContext'
-import { getIconComponent } from '../../utils/iconMap'
 
 const sectionLabels = {
   hero: 'Hero-Bereich (Startseite)',
@@ -904,23 +903,18 @@ const SiteContentEditor = () => {
     return getSection(selectedSection)
   }, [content, getSection, selectedSection])
 
-  useEffect(() => {
-    if (!selectedSection) {
-      return
-    }
-    const current = cloneContent(activeContent ?? getDefaultSection(selectedSection) ?? DEFAULT_CONTENT[selectedSection])
+  const handleSectionSelect = useCallback((section) => {
+    setSelectedSection(section)
+    setStatus(null)
+
+    const sectionContent = (content && content[section]) ?? getSection(section)
+    const current = cloneContent(sectionContent ?? getDefaultSection(section) ?? DEFAULT_CONTENT[section])
     setOriginalContent(current)
     setDraftContent(current)
     setEditorValue(JSON.stringify(current, null, 2))
     setJsonError(null)
-    setStatus(null)
-    setShowJson(false) // Reset JSON view on section change
-  }, [selectedSection, activeContent, getDefaultSection])
-
-  const handleSectionSelect = useCallback((section) => {
-    setSelectedSection(section)
-    setStatus(null)
-  }, [])
+    setShowJson(false)
+  }, [content, getSection, getDefaultSection])
 
   const handleEditorChange = useCallback((value) => {
     setEditorValue(value)

@@ -2,7 +2,6 @@ use crate::db::DbPool;
 use crate::models::Tutorial;
 use sqlx;
 
-
 pub async fn list_tutorials(
     pool: &DbPool,
     limit: i64,

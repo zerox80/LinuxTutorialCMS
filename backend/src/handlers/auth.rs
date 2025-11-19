@@ -33,7 +33,6 @@ use sha2::{Digest, Sha256};
 use sqlx::{self, FromRow};
 use std::{env, sync::OnceLock, time::Duration};
 
-
 /// Global salt for hashing login attempt identifiers.
 /// Initialized once at startup via init_login_attempt_salt().
 static LOGIN_ATTEMPT_SALT: OnceLock<String> = OnceLock::new();
@@ -61,7 +60,10 @@ pub fn init_login_attempt_salt() -> Result<(), String> {
         return Err("LOGIN_ATTEMPT_SALT must be at least 32 characters long".to_string());
     }
 
-    let unique_chars = trimmed.chars().collect::<std::collections::HashSet<_>>().len();
+    let unique_chars = trimmed
+        .chars()
+        .collect::<std::collections::HashSet<_>>()
+        .len();
     if unique_chars < 10 {
         return Err("LOGIN_ATTEMPT_SALT must contain at least 10 unique characters".to_string());
     }
@@ -479,7 +481,9 @@ pub async fn logout(
 ) -> (StatusCode, HeaderMap) {
     // Extract token to blacklist it
     if let Some(token) = auth::extract_token(&headers) {
-        if let Err(e) = repositories::token_blacklist::blacklist_token(&pool, &token, claims.exp as i64).await {
+        if let Err(e) =
+            repositories::token_blacklist::blacklist_token(&pool, &token, claims.exp as i64).await
+        {
             tracing::error!("Failed to blacklist token on logout: {}", e);
         }
     }

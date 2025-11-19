@@ -243,7 +243,6 @@ const Footer = () => {
                 quickLinks.map((link, index) => {
                   const href = link.href || '#'
                   const isExternal = typeof href === 'string' && (href.startsWith('http://') || href.startsWith('https://'))
-                  const isSpecialProtocol = typeof href === 'string' && (href.startsWith('mailto:') || href.startsWith('tel:'))
                   return (
                     <li key={link.label || link.target?.value || `quick-${index}`}>
                       <a

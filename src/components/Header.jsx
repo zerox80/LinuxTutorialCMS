@@ -61,7 +61,7 @@ const Header = () => {
         return
       }
       if (safeUrl.startsWith('mailto:') || safeUrl.startsWith('tel:')) {
-        window.location.href = safeUrl
+        window.location.assign(safeUrl)
         return
       }
       window.location.assign(safeUrl)

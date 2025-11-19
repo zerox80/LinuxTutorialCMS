@@ -43,7 +43,10 @@ pub(crate) fn validate_tutorial_id(id: &str) -> Result<(), String> {
     }
 
     // Ensure only safe characters for database and URL usage
-    if !id.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == '.') {
+    if !id
+        .chars()
+        .all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == '.')
+    {
         return Err("Tutorial ID contains invalid characters".to_string());
     }
     Ok(())
@@ -76,14 +79,14 @@ fn validate_tutorial_data(title: &str, description: &str, content: &str) -> Resu
 
 pub(crate) fn validate_icon(icon: &str) -> Result<(), String> {
     const ALLOWED_ICONS: &[&str] = &[
-        "Terminal",    // Command line and shell tutorials
-        "FolderTree",  // File system and directory tutorials
-        "FileText",    // Text editing and file manipulation
-        "Settings",    // System configuration and settings
-        "Shield",      // Security and permissions
-        "Network",     // Networking and connectivity
-        "Database",    // Database and data management
-        "Server",      // Server administration and services
+        "Terminal",   // Command line and shell tutorials
+        "FolderTree", // File system and directory tutorials
+        "FileText",   // Text editing and file manipulation
+        "Settings",   // System configuration and settings
+        "Shield",     // Security and permissions
+        "Network",    // Networking and connectivity
+        "Database",   // Database and data management
+        "Server",     // Server administration and services
     ];
 
     if ALLOWED_ICONS.contains(&icon) {
@@ -182,7 +185,6 @@ fn sanitize_topics(topics: &[String]) -> Result<Vec<String>, String> {
 
 #[derive(Deserialize)]
 pub struct TutorialListQuery {
-
     #[serde(default = "default_tutorial_limit")]
     limit: i64,
 
@@ -235,7 +237,6 @@ pub async fn get_tutorial(
     State(pool): State<DbPool>,
     Path(id): Path<String>,
 ) -> Result<Json<TutorialResponse>, (StatusCode, Json<ErrorResponse>)> {
-
     if let Err(e) = validate_tutorial_id(&id) {
         return Err((StatusCode::BAD_REQUEST, Json(ErrorResponse { error: e })));
     }
@@ -279,7 +280,6 @@ pub async fn create_tutorial(
     State(pool): State<DbPool>,
     Json(payload): Json<CreateTutorialRequest>,
 ) -> Result<Json<TutorialResponse>, (StatusCode, Json<ErrorResponse>)> {
-
     if claims.role != "admin" {
         return Err((
             StatusCode::FORBIDDEN,
@@ -321,9 +321,9 @@ pub async fn create_tutorial(
                     }),
                 )
             })?;
-        
+
         if exists {
-             return Err((
+            return Err((
                 StatusCode::CONFLICT,
                 Json(ErrorResponse {
                     error: "Tutorial ID already exists".to_string(),
@@ -599,7 +599,6 @@ pub async fn delete_tutorial(
     State(pool): State<DbPool>,
     Path(id): Path<String>,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
-
     if claims.role != "admin" {
         return Err((
             StatusCode::FORBIDDEN,

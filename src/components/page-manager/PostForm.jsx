@@ -31,7 +31,6 @@ const parseDateTimeLocal = (value) => {
 }
 
 const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
-  const auth = useAuth()
   const textareaRef = useRef(null)
   const [title, setTitle] = useState(initialData?.title ?? '')
   const [slug, setSlug] = useState(initialData?.slug ?? '')

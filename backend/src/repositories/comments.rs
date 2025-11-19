@@ -125,14 +125,17 @@ pub async fn check_comment_exists(pool: &DbPool, id: &str) -> Result<bool, sqlx:
     Ok(exists.is_some())
 }
 
-pub async fn check_vote_exists(pool: &DbPool, comment_id: &str, voter_id: &str) -> Result<bool, sqlx::Error> {
-    let exists: Option<(i64,)> = sqlx::query_as(
-        "SELECT 1 FROM comment_votes WHERE comment_id = ? AND voter_id = ?"
-    )
-    .bind(comment_id)
-    .bind(voter_id)
-    .fetch_optional(pool)
-    .await?;
+pub async fn check_vote_exists(
+    pool: &DbPool,
+    comment_id: &str,
+    voter_id: &str,
+) -> Result<bool, sqlx::Error> {
+    let exists: Option<(i64,)> =
+        sqlx::query_as("SELECT 1 FROM comment_votes WHERE comment_id = ? AND voter_id = ?")
+            .bind(comment_id)
+            .bind(voter_id)
+            .fetch_optional(pool)
+            .await?;
     Ok(exists.is_some())
 }
 
@@ -151,9 +154,12 @@ pub async fn add_vote(pool: &DbPool, comment_id: &str, voter_id: &str) -> Result
     Ok(())
 }
 
-pub async fn get_last_comment_time(pool: &DbPool, author: &str) -> Result<Option<String>, sqlx::Error> {
+pub async fn get_last_comment_time(
+    pool: &DbPool,
+    author: &str,
+) -> Result<Option<String>, sqlx::Error> {
     let last_comment: Option<(String,)> = sqlx::query_as(
-        "SELECT created_at FROM comments WHERE author = ? ORDER BY created_at DESC LIMIT 1"
+        "SELECT created_at FROM comments WHERE author = ? ORDER BY created_at DESC LIMIT 1",
     )
     .bind(author)
     .fetch_optional(pool)

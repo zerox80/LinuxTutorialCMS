@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Sparkles, ArrowRight } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useContent } from '../context/ContentContext'
@@ -9,7 +10,7 @@ const Hero = () => {
   const location = useLocation()
   const { getSection } = useContent()
   const heroContent = getSection('hero') ?? {}
-  const HeroIcon = getIconComponent(heroContent.icon, 'Terminal')
+  const HeroIcon = useMemo(() => getIconComponent(heroContent.icon, 'Terminal'), [heroContent.icon])
   const features = Array.isArray(heroContent.features) ? heroContent.features : []
   const handleTarget = (target) => {
     if (!target || !target.type) {
