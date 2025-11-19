@@ -146,7 +146,18 @@ pub async fn list_comments(
             )
         })?;
 
-    Ok(Json(comments))
+    let response_comments: Vec<Comment> = comments.into_iter().map(|c| Comment {
+        id: c.id,
+        tutorial_id: c.tutorial_id,
+        post_id: c.post_id,
+        author: c.author,
+        content: c.content,
+        created_at: c.created_at,
+        votes: c.votes,
+        is_admin: c.is_admin,
+    }).collect();
+
+    Ok(Json(response_comments))
 }
 
 pub async fn create_comment(
@@ -202,7 +213,18 @@ pub async fn list_post_comments(
             (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse { error: "Failed to fetch comments".to_string() }))
         })?;
 
-    Ok(Json(comments))
+    let response_comments: Vec<Comment> = comments.into_iter().map(|c| Comment {
+        id: c.id,
+        tutorial_id: c.tutorial_id,
+        post_id: c.post_id,
+        author: c.author,
+        content: c.content,
+        created_at: c.created_at,
+        votes: c.votes,
+        is_admin: c.is_admin,
+    }).collect();
+
+    Ok(Json(response_comments))
 }
 
 pub async fn create_post_comment(
@@ -301,7 +323,18 @@ async fn create_comment_internal(
         (StatusCode::INTERNAL_SERVER_ERROR, Json(ErrorResponse { error: "Failed to create comment".to_string() }))
     })?;
 
-    Ok(Json(comment))
+    let response_comment = Comment {
+        id: comment.id,
+        tutorial_id: comment.tutorial_id,
+        post_id: comment.post_id,
+        author: comment.author,
+        content: comment.content,
+        created_at: comment.created_at,
+        votes: comment.votes,
+        is_admin: comment.is_admin,
+    };
+
+    Ok(Json(response_comment))
 }
 
 pub async fn delete_comment(

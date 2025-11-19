@@ -301,7 +301,7 @@ pub fn build_auth_cookie(token: &str) -> Cookie<'static> {
         .path("/")
         .http_only(true)
         .same_site(SameSite::Lax)
-        .max_age(Duration::seconds(AUTH_COOKIE_TTL_SECONDS));
+        .max_age(cookie::time::Duration::seconds(AUTH_COOKIE_TTL_SECONDS));
 
     // Add Secure flag in production (HTTPS only)
     if cookies_should_be_secure() {
@@ -331,7 +331,7 @@ pub fn build_cookie_removal() -> Cookie<'static> {
         .http_only(true)
         .same_site(SameSite::Lax)
         .expires(OffsetDateTime::UNIX_EPOCH)
-        .max_age(Duration::seconds(0));
+        .max_age(cookie::time::Duration::seconds(0));
 
     // Match security settings of auth cookie
     if cookies_should_be_secure() {
