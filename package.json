@@ -118,4 +118,11 @@
     "tailwindcss": "^4.1.16",
     "vite": "^7.1.12"
   }
+},
+"overrides": {
+  "react-helmet-async": {
+    "react": "$react",
+    "react-dom": "$react-dom"
+  }
+}
 }
