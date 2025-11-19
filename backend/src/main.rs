@@ -247,9 +247,8 @@ async fn main() {
             "/api/upload",
             post(handlers::upload::upload_image),
         )
-        .with_state(pool.clone())
-        .route_layer(from_extractor::<csrf::CsrfGuard>())
-        .route_layer(from_fn(middleware::auth::auth_middleware))
+        .route_layer(axum::middleware::from_fn_with_state(pool.clone(), csrf::enforce_csrf))
+        .route_layer(axum::middleware::from_fn_with_state(pool.clone(), middleware::auth::auth_middleware))
         .layer(RequestBodyLimitLayer::new(ADMIN_BODY_LIMIT))
         .layer(GovernorLayer::new(admin_rate_limit_config.clone()));
 

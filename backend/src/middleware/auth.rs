@@ -33,6 +33,7 @@ use axum::{
 /// On success, inserts Claims into request extensions for easy access
 /// by downstream handlers.
 pub async fn auth_middleware(
+    axum::extract::State(pool): axum::extract::State<crate::db::DbPool>,
     mut request: axum::extract::Request,
     next: axum::middleware::Next,
 ) -> Result<axum::response::Response, (StatusCode, Json<crate::models::ErrorResponse>)> {
@@ -57,12 +58,7 @@ pub async fn auth_middleware(
     })?;
 
     // Check if token is blacklisted
-    let pool = request
-        .extensions()
-        .get::<crate::db::DbPool>()
-        .expect("Database pool not found in request extensions");
-
-    if let Ok(true) = repositories::token_blacklist::is_token_blacklisted(pool, &token).await {
+    if let Ok(true) = repositories::token_blacklist::is_token_blacklisted(&pool, &token).await {
         return Err((
             StatusCode::UNAUTHORIZED,
             Json(crate::models::ErrorResponse {

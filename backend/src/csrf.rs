@@ -571,3 +571,17 @@ pub fn csrf_cookie_name() -> &'static str {
 pub fn csrf_header_name() -> &'static str {
     CSRF_HEADER_NAME
 }
+
+/// Middleware to enforce CSRF protection.
+///
+/// This middleware extracts the `CsrfGuard` which performs the validation.
+/// It is designed to be used with `axum::middleware::from_fn_with_state`
+/// to ensure the database pool state is available for extraction.
+pub async fn enforce_csrf(
+    axum::extract::State(_pool): axum::extract::State<crate::db::DbPool>,
+    _guard: CsrfGuard,
+    req: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> axum::response::Response {
+    next.run(req).await
+}
