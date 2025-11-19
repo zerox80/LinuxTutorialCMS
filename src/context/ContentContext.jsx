@@ -12,71 +12,71 @@ import { api } from '../api/client'
 const ContentContext = createContext(null)
 export const DEFAULT_CONTENT = {
   hero: {
-    badgeText: 'Professionelles Linux Training',
+    badgeText: 'Professionelles IT Wissen',
     icon: 'Terminal',
     title: {
-      line1: 'Lerne Linux',
-      line2: 'von Grund auf',
+      line1: 'IT Security, Programming',
+      line2: '& Administration',
     },
-    subtitle: 'Dein umfassendes Tutorial für Linux – von den Basics bis zu Advanced-Techniken.',
-    subline: 'Interaktiv, modern und praxisnah.',
+    subtitle: 'Dein Wissensportal für IT-Themen – von Security bis Systemadministration.',
+    subline: 'Aktuell, praxisnah und verständlich.',
     primaryCta: {
-      label: "Los geht's",
-      target: { type: 'section', value: 'tutorials' },
+      label: "Themen entdecken",
+      target: { type: 'section', value: 'features' },
     },
     secondaryCta: {
-      label: 'Mehr erfahren',
-      target: { type: 'section', value: 'tutorials' },
+      label: 'Blog lesen',
+      target: { type: 'route', value: '/blog' },
     },
     features: [
       {
-        icon: 'Book',
-        title: 'Schritt für Schritt',
-        description: 'Strukturiert lernen mit klaren Beispielen',
+        icon: 'Shield',
+        title: 'IT Security',
+        description: 'Sicherheitskonzepte und Best Practices',
         color: 'from-blue-500 to-cyan-500',
       },
       {
         icon: 'Code',
-        title: 'Praktische Befehle',
-        description: 'Direkt anwendbare Kommandos',
+        title: 'Programming',
+        description: 'Softwareentwicklung und Coding',
         color: 'from-purple-500 to-pink-500',
       },
       {
-        icon: 'Zap',
-        title: 'Modern & Aktuell',
-        description: 'Neueste Best Practices',
+        icon: 'Server',
+        title: 'IT Administration',
+        description: 'Systemverwaltung und DevOps',
         color: 'from-orange-500 to-red-500',
       },
     ],
   },
   site_meta: {
-    title: 'Linux Tutorial - Lerne Linux Schritt für Schritt',
-    description: 'Lerne Linux von Grund auf - Interaktiv, modern und praxisnah.',
+    title: 'IT Wissensportal - Security, Programming & Admin',
+    description: 'Dein Portal für IT Security, Programmierung und Administration.',
   },
   tutorial_section: {
-    title: 'Tutorial Inhalte',
-    description: 'Umfassende Lernmodule für alle Erfahrungsstufen – vom Anfänger bis zum Profi',
-    heading: 'Bereit anzufangen?',
-    ctaDescription: 'Wähle ein Thema aus und starte deine Linux-Lernreise noch heute!',
+    title: 'Neueste Beiträge',
+    description: 'Aktuelle Artikel und Guides aus der IT-Welt',
+    heading: 'Wissen vertiefen',
+    ctaDescription: 'Stöbere in unseren Artikeln und erweitere dein Know-how.',
     ctaPrimary: {
-      label: 'Tutorial starten',
-      target: { type: 'section', value: 'home' },
+      label: 'Alle Beiträge',
+      target: { type: 'route', value: '/blog' },
     },
     ctaSecondary: {
       label: 'Mehr erfahren',
       target: { type: 'section', value: 'home' },
     },
-    tutorialCardButton: 'Zum Tutorial',
+    tutorialCardButton: 'Artikel lesen',
   },
   header: {
     brand: {
-      name: 'Linux Tutorial',
+      name: 'IT Portal',
       tagline: '',
       icon: 'Terminal',
     },
     navItems: [
       { id: 'home', label: 'Home', type: 'section' },
-      { id: 'grundlagen', label: 'Grundlagen', type: 'route', path: '/grundlagen' },
+      { id: 'blog', label: 'Blog', type: 'route', path: '/blog' },
     ],
     cta: {
       guestLabel: 'Login',
@@ -86,81 +86,43 @@ export const DEFAULT_CONTENT = {
   },
   footer: {
     brand: {
-      title: 'Linux Tutorial',
-      description: 'Dein umfassendes Tutorial für Linux – von den Basics bis zu Advanced-Techniken.',
+      title: 'IT Wissensportal',
+      description: 'Dein Portal für IT Security, Programmierung und Administration.',
       icon: 'Terminal',
     },
     quickLinks: [
-      { label: 'Grundlagen', target: { type: 'section', value: 'grundlagen' } },
-      { label: 'Befehle', target: { type: 'section', value: 'befehle' } },
-      { label: 'Praxis', target: { type: 'section', value: 'praxis' } },
-      { label: 'Advanced', target: { type: 'section', value: 'advanced' } },
+      { label: 'Home', target: { type: 'section', value: 'home' } },
+      { label: 'Blog', target: { type: 'route', value: '/blog' } },
     ],
     contactLinks: [
       { label: 'GitHub', href: 'https://github.com', icon: 'Github' },
       { label: 'E-Mail', href: 'mailto:info@example.com', icon: 'Mail' },
     ],
     bottom: {
-      copyright: '© {year} Linux Tutorial. Alle Rechte vorbehalten.',
-      signature: 'Gemacht mit Herz für die Linux Community',
+      copyright: '© {year} IT Wissensportal. Alle Rechte vorbehalten.',
+      signature: 'Made for IT Professionals',
     },
   },
   grundlagen_page: {
     hero: {
-      badge: 'Grundlagenkurs',
-      title: 'Starte deine Linux-Reise mit einem starken Fundament',
+      badge: 'Wissensbasis',
+      title: 'Grundlagen & Konzepte',
       description:
-        'In diesem Grundlagenbereich begleiten wir dich von den allerersten Schritten im Terminal bis hin zu sicheren Arbeitsabläufen. Nach diesem Kurs bewegst du dich selbstbewusst in der Linux-Welt.',
+        'Fundiertes Wissen für IT-Einsteiger und Fortgeschrittene.',
       icon: 'BookOpen',
     },
-    highlights: [
-      {
-        icon: 'BookOpen',
-        title: 'Terminal Basics verstehen',
-        description:
-          'Lerne die wichtigsten Shell-Befehle, arbeite sicher mit Dateien und nutze Pipes, um Aufgaben zu automatisieren.',
-      },
-      {
-        icon: 'Compass',
-        title: 'Linux-Philosophie kennenlernen',
-        description:
-          'Verstehe das Zusammenspiel von Kernel, Distribution, Paketverwaltung und warum Linux so flexibel einsetzbar ist.',
-      },
-      {
-        icon: 'Layers',
-        title: 'Praxisnahe Übungen',
-        description:
-          'Setze das Erlernte direkt in kleinen Projekten um – von der Benutzerverwaltung bis zum Einrichten eines Webservers.',
-      },
-      {
-        icon: 'ShieldCheck',
-        title: 'Sicher arbeiten',
-        description:
-          'Erhalte Best Practices für Benutzerrechte, sudo, SSH und weitere Sicherheitsmechanismen.',
-      },
-    ],
+    highlights: [],
     modules: {
-      title: 'Module im Grundlagenkurs',
-      description:
-        'Unsere Tutorials bauen logisch aufeinander auf. Jedes Modul enthält praxisnahe Beispiele, Schritt-für-Schritt Anleitungen und kleine Wissenschecks, damit du deinen Fortschritt direkt sehen kannst.',
-      items: [
-        'Einstieg in die Shell: Navigation, grundlegende Befehle, Dateiverwaltung',
-        'Linux-Systemaufbau: Kernel, Distributionen, Paketmanager verstehen und nutzen',
-        'Benutzer & Rechte: Arbeiten mit sudo, Gruppen und Dateiberechtigungen',
-        'Wichtige Tools: SSH, einfache Netzwerkanalyse und nützliche Utilities für den Alltag',
-      ],
-      summary: [
-        'Über 40 praxisnahe Lessons',
-        'Schritt-für-Schritt-Guides mit Screenshots & Code-Beispielen',
-        'Übungen und Checklisten zum Selbstüberprüfen',
-      ],
+      title: 'Themenbereiche',
+      description: 'Strukturierte Inhalte zu verschiedenen IT-Disziplinen.',
+      items: [],
+      summary: [],
     },
     cta: {
-      title: 'Bereit für den nächsten Schritt?',
-      description:
-        'Wechsel zur Startseite und wähle das Modul, das am besten zu dir passt, oder tauche direkt in die Praxis- und Advanced-Themen ein, sobald du die Grundlagen sicher beherrschst.',
-      primary: { label: 'Zur Startseite', href: '/' },
-      secondary: { label: 'Tutorials verwalten', href: '/admin' },
+      title: 'Mehr erfahren?',
+      description: 'Entdecke unsere detaillierten Blog-Beiträge.',
+      primary: { label: 'Zum Blog', href: '/blog' },
+      secondary: { label: 'Admin', href: '/admin' },
     },
   },
 }
@@ -356,18 +318,18 @@ export const ContentProvider = ({ children }) => {
 
     const filteredDynamic = Array.isArray(dynamicNavItems)
       ? dynamicNavItems.filter((item) => {
-          if (!item || typeof item.slug !== 'string') {
-            return false
-          }
-          const normalizedSlug = item.slug.trim().toLowerCase()
-          if (!normalizedSlug) {
-            return false
-          }
-          if (restrictToPublished && !normalizedPublishedSlugs.has(normalizedSlug)) {
-            return false
-          }
-          return true
-        })
+        if (!item || typeof item.slug !== 'string') {
+          return false
+        }
+        const normalizedSlug = item.slug.trim().toLowerCase()
+        if (!normalizedSlug) {
+          return false
+        }
+        if (restrictToPublished && !normalizedPublishedSlugs.has(normalizedSlug)) {
+          return false
+        }
+        return true
+      })
       : []
     const sortedDynamic = [...filteredDynamic].sort(
       (a, b) => (a?.order_index ?? 0) - (b?.order_index ?? 0),

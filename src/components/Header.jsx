@@ -11,7 +11,7 @@ import ThemeToggle from './ThemeToggle'
 import SearchBar from './SearchBar'
 const FALLBACK_NAV_ITEMS = [
   { id: 'home', label: 'Home', type: 'section' },
-  { id: 'grundlagen', label: 'Grundlagen', type: 'route', path: '/grundlagen' },
+  { id: 'blog', label: 'Blog', type: 'route', path: '/blog' },
 ]
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -163,7 +163,7 @@ const Header = () => {
     <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl shadow-soft sticky top-0 z-50 border-b border-gray-100/50 dark:border-gray-800/50">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          {}
+          { }
           <a
             href="/"
             onClick={handleBrandClick}
@@ -174,10 +174,10 @@ const Header = () => {
               <BrandIcon className="w-6 h-6" />
             </div>
             <span className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-              {headerContent?.brand?.name || 'Linux Tutorial'}
+              {headerContent?.brand?.name || 'IT Portal'}
             </span>
           </a>
-          {}
+          { }
           <div className="hidden md:flex items-center space-x-8">
             {computedNavItems.map((item, index) => {
               const href = getNavHref(item)
@@ -215,7 +215,7 @@ const Header = () => {
               <span>{isAuthenticated ? ctaContent.authLabel || 'Admin' : ctaContent.guestLabel || 'Login'}</span>
             </button>
           </div>
-          {}
+          { }
           <div className="md:hidden flex items-center space-x-2">
             <button
               onClick={() => setSearchOpen(true)}

@@ -1,26 +1,29 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import PropTypes from 'prop-types'
-import { AlertCircle, ArrowLeft, Check, Loader2, RefreshCw } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Check, Loader2, RefreshCw, Plus, Trash2, Code } from 'lucide-react'
 import {
   useContent,
   CONTENT_SECTIONS,
   DEFAULT_CONTENT,
 } from '../../context/ContentContext'
 import { getIconComponent } from '../../utils/iconMap'
+
 const sectionLabels = {
-  hero: 'Hero-Bereich',
+  hero: 'Hero-Bereich (Startseite)',
   tutorial_section: 'Tutorial-Sektion',
   header: 'Navigation & Header',
   footer: 'Footer',
   grundlagen_page: 'Grundlagen-Seite',
   site_meta: 'Seitentitel & Beschreibung',
 }
+
 const cloneContent = (value) => {
   if (value === undefined || value === null) {
     return {}
   }
   return JSON.parse(JSON.stringify(value))
 }
+
 const setNestedValue = (obj, path, value) => {
   if (!Array.isArray(path) || path.length === 0) {
     return obj
@@ -36,6 +39,7 @@ const setNestedValue = (obj, path, value) => {
   cursor[path[path.length - 1]] = value
   return obj
 }
+
 const SectionPicker = ({ sections, selected, onSelect }) => {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -47,11 +51,10 @@ const SectionPicker = ({ sections, selected, onSelect }) => {
             key={section}
             type="button"
             onClick={() => onSelect(section)}
-            className={`rounded-xl border px-4 py-3 text-left transition-all ${
-              isActive
+            className={`rounded-xl border px-4 py-3 text-left transition-all ${isActive
                 ? 'border-primary-600 bg-primary-50 text-primary-700 shadow-sm'
                 : 'border-gray-200 text-gray-700 hover:border-primary-200 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700'
-            }`}
+              }`}
           >
             <p className="text-sm font-semibold">{label}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">{section}</p>
@@ -61,12 +64,14 @@ const SectionPicker = ({ sections, selected, onSelect }) => {
     </div>
   )
 }
+
 SectionPicker.propTypes = {
   sections: PropTypes.arrayOf(PropTypes.string).isRequired,
   selected: PropTypes.string,
   onSelect: PropTypes.func.isRequired,
 }
-const SectionToolbar = ({ onBack, onReset, onSave, isSaving, hasChanges }) => (
+
+const SectionToolbar = ({ onBack, onReset, onSave, isSaving, hasChanges, showJson, onToggleJson }) => (
   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
     <button
       type="button"
@@ -79,11 +84,22 @@ const SectionToolbar = ({ onBack, onReset, onSave, isSaving, hasChanges }) => (
     <div className="flex items-center gap-2">
       <button
         type="button"
+        onClick={onToggleJson}
+        className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm transition-colors ${showJson
+            ? 'border-primary-200 bg-primary-50 text-primary-700 dark:border-primary-800 dark:bg-primary-900/20 dark:text-primary-300'
+            : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200'
+          }`}
+      >
+        <Code className="h-4 w-4" />
+        {showJson ? 'Editor ausblenden' : 'JSON-Editor'}
+      </button>
+      <button
+        type="button"
         onClick={onReset}
         className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         disabled={!hasChanges || isSaving}
       >
-        Änderungen verwerfen
+        Verwerfen
       </button>
       <button
         type="button"
@@ -97,16 +113,20 @@ const SectionToolbar = ({ onBack, onReset, onSave, isSaving, hasChanges }) => (
     </div>
   </div>
 )
+
 SectionToolbar.propTypes = {
   onBack: PropTypes.func.isRequired,
   onReset: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   isSaving: PropTypes.bool,
   hasChanges: PropTypes.bool,
+  showJson: PropTypes.bool,
+  onToggleJson: PropTypes.func,
 }
+
 const ContentJsonEditor = ({ value, onChange, error, schemaHint }) => (
   <div className="space-y-3">
-    <label className="block text-sm font-semibold text-gray-700 dark:text-slate-200">JSON-Inhalt</label>
+    <label className="block text-sm font-semibold text-gray-700 dark:text-slate-200">JSON-Inhalt (Erweitert)</label>
     <textarea
       className="min-h-[420px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 font-mono text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
       value={value}
@@ -115,7 +135,7 @@ const ContentJsonEditor = ({ value, onChange, error, schemaHint }) => (
     <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600">
       <p className="font-semibold">Strukturhinweis</p>
       <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap text-gray-500">
-{schemaHint}
+        {schemaHint}
       </pre>
     </div>
     {error && (
@@ -126,12 +146,110 @@ const ContentJsonEditor = ({ value, onChange, error, schemaHint }) => (
     )}
   </div>
 )
+
 ContentJsonEditor.propTypes = {
   value: PropTypes.string.isRequired,
   onChange: PropTypes.func.isRequired,
   error: PropTypes.string,
   schemaHint: PropTypes.string,
 }
+
+const FeaturesEditor = ({ features, onChange }) => {
+  const items = Array.isArray(features) ? features : []
+
+  const handleAdd = () => {
+    const newItem = {
+      icon: 'Star',
+      title: 'Neues Feature',
+      description: 'Beschreibung hier eingeben',
+      color: 'text-blue-500',
+      bg: 'bg-blue-500/10',
+      border: 'border-blue-500/20',
+    }
+    onChange([...items, newItem])
+  }
+
+  const handleRemove = (index) => {
+    const newItems = items.filter((_, i) => i !== index)
+    onChange(newItems)
+  }
+
+  const handleChange = (index, field, value) => {
+    const newItems = [...items]
+    newItems[index] = { ...newItems[index], [field]: value }
+    onChange(newItems)
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Feature-Karten</label>
+        <button
+          type="button"
+          onClick={handleAdd}
+          className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+        >
+          <Plus className="h-3 w-3" />
+          Karte hinzufügen
+        </button>
+      </div>
+      <div className="grid gap-4">
+        {items.map((item, index) => (
+          <div key={index} className="relative rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+            <button
+              type="button"
+              onClick={() => handleRemove(index)}
+              className="absolute right-2 top-2 rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+              title="Entfernen"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="text-xs font-medium text-gray-500">Titel</label>
+                <input
+                  type="text"
+                  className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  value={item.title || ''}
+                  onChange={(e) => handleChange(index, 'title', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500">Icon (Lucide Name)</label>
+                <input
+                  type="text"
+                  className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  value={item.icon || ''}
+                  onChange={(e) => handleChange(index, 'icon', e.target.value)}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="text-xs font-medium text-gray-500">Beschreibung</label>
+                <textarea
+                  className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  rows="2"
+                  value={item.description || ''}
+                  onChange={(e) => handleChange(index, 'description', e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+        {items.length === 0 && (
+          <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500">
+            Keine Feature-Karten vorhanden.
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+FeaturesEditor.propTypes = {
+  features: PropTypes.array,
+  onChange: PropTypes.func.isRequired,
+}
+
 const HeroPreview = ({ content }) => {
   const HeroIcon = getIconComponent(content.icon, 'Terminal')
   const features = Array.isArray(content.features) ? content.features : []
@@ -184,67 +302,91 @@ const HeroPreview = ({ content }) => {
     </div>
   )
 }
+
 HeroPreview.propTypes = {
   content: PropTypes.object.isRequired,
 }
+
 const HeroContentForm = ({ content, onFieldChange }) => {
   const heroContent = content || {}
   const title = heroContent.title || {}
   const handleChange = (path) => (event) => {
     onFieldChange(path, event.target.value)
   }
+
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Hero-Inhalt bearbeiten</h3>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Titel Zeile 1</label>
-          <input
-            type="text"
-            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
-            value={title.line1 || ''}
-            onChange={handleChange(['title', 'line1'])}
-            placeholder="z. B. Lerne Linux"
-          />
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Hero-Inhalt bearbeiten</h3>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Badge Text</label>
+            <input
+              type="text"
+              className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              value={heroContent.badgeText || ''}
+              onChange={handleChange(['badgeText'])}
+              placeholder="z. B. Neu"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Titel Zeile 1</label>
+            <input
+              type="text"
+              className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              value={title.line1 || ''}
+              onChange={handleChange(['title', 'line1'])}
+              placeholder="z. B. Lerne Linux"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Titel Zeile 2</label>
+            <input
+              type="text"
+              className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              value={title.line2 || ''}
+              onChange={handleChange(['title', 'line2'])}
+              placeholder="z. B. von Grund auf"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Untertitel</label>
+            <textarea
+              className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              rows="2"
+              value={heroContent.subtitle || ''}
+              onChange={handleChange(['subtitle'])}
+              placeholder="Kurze Beschreibung"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Subline</label>
+            <textarea
+              className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              rows="2"
+              value={heroContent.subline || ''}
+              onChange={handleChange(['subline'])}
+              placeholder="Zusätzlicher Satz unter dem Untertitel"
+            />
+          </div>
         </div>
-        <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Titel Zeile 2</label>
-          <input
-            type="text"
-            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
-            value={title.line2 || ''}
-            onChange={handleChange(['title', 'line2'])}
-            placeholder="z. B. von Grund auf"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Untertitel</label>
-          <textarea
-            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
-            rows="2"
-            value={heroContent.subtitle || ''}
-            onChange={handleChange(['subtitle'])}
-            placeholder="Kurze Beschreibung"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Subline</label>
-          <textarea
-            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
-            rows="2"
-            value={heroContent.subline || ''}
-            onChange={handleChange(['subline'])}
-            placeholder="Zusätzlicher Satz unter dem Untertitel"
-          />
-        </div>
+      </div>
+
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+        <FeaturesEditor
+          features={heroContent.features}
+          onChange={(newFeatures) => onFieldChange(['features'], newFeatures)}
+        />
       </div>
     </div>
   )
 }
+
 HeroContentForm.propTypes = {
   content: PropTypes.object,
   onFieldChange: PropTypes.func.isRequired,
 }
+
 const SiteMetaPreview = ({ content }) => {
   return (
     <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
@@ -266,9 +408,11 @@ const SiteMetaPreview = ({ content }) => {
     </div>
   )
 }
+
 SiteMetaPreview.propTypes = {
   content: PropTypes.object.isRequired,
 }
+
 const SiteMetaForm = ({ content, onFieldChange }) => {
   const siteMeta = content || {}
   return (
@@ -308,10 +452,12 @@ const SiteMetaForm = ({ content, onFieldChange }) => {
     </div>
   )
 }
+
 SiteMetaForm.propTypes = {
   content: PropTypes.object,
   onFieldChange: PropTypes.func.isRequired,
 }
+
 const TutorialSectionPreview = ({ content }) => {
   return (
     <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -343,9 +489,11 @@ const TutorialSectionPreview = ({ content }) => {
     </div>
   )
 }
+
 TutorialSectionPreview.propTypes = {
   content: PropTypes.object.isRequired,
 }
+
 const SectionPreview = ({ section, content }) => {
   switch (section) {
     case 'hero':
@@ -365,10 +513,12 @@ const SectionPreview = ({ section, content }) => {
       )
   }
 }
+
 SectionPreview.propTypes = {
   section: PropTypes.string.isRequired,
   content: PropTypes.object.isRequired,
 }
+
 const SiteContentEditor = () => {
   const {
     content,
@@ -380,6 +530,7 @@ const SiteContentEditor = () => {
     updateSection,
     savingSections,
   } = useContent()
+
   const sectionOptions = useMemo(() => {
     const base = [...CONTENT_SECTIONS]
     const extraKeys = content
@@ -387,12 +538,15 @@ const SiteContentEditor = () => {
       : []
     return [...base, ...extraKeys.sort()]
   }, [content])
+
   const [selectedSection, setSelectedSection] = useState(null)
   const [originalContent, setOriginalContent] = useState(null)
   const [draftContent, setDraftContent] = useState(null)
   const [editorValue, setEditorValue] = useState('')
   const [jsonError, setJsonError] = useState(null)
   const [status, setStatus] = useState(null)
+  const [showJson, setShowJson] = useState(false)
+
   const activeContent = useMemo(() => {
     if (!selectedSection) {
       return null
@@ -402,6 +556,7 @@ const SiteContentEditor = () => {
     }
     return getSection(selectedSection)
   }, [content, getSection, selectedSection])
+
   useEffect(() => {
     if (!selectedSection) {
       return
@@ -412,11 +567,14 @@ const SiteContentEditor = () => {
     setEditorValue(JSON.stringify(current, null, 2))
     setJsonError(null)
     setStatus(null)
+    setShowJson(false) // Reset JSON view on section change
   }, [selectedSection, activeContent, getDefaultSection])
+
   const handleSectionSelect = useCallback((section) => {
     setSelectedSection(section)
     setStatus(null)
   }, [])
+
   const handleEditorChange = useCallback((value) => {
     setEditorValue(value)
     try {
@@ -427,6 +585,7 @@ const SiteContentEditor = () => {
       setJsonError(err.message)
     }
   }, [])
+
   const handleReset = useCallback(() => {
     if (!originalContent) {
       return
@@ -437,6 +596,7 @@ const SiteContentEditor = () => {
     setJsonError(null)
     setStatus(null)
   }, [originalContent])
+
   const handleBack = useCallback(() => {
     setSelectedSection(null)
     setOriginalContent(null)
@@ -445,6 +605,7 @@ const SiteContentEditor = () => {
     setJsonError(null)
     setStatus(null)
   }, [])
+
   const handleSave = useCallback(async () => {
     if (!selectedSection || !draftContent || jsonError) {
       return
@@ -461,13 +622,16 @@ const SiteContentEditor = () => {
       setStatus({ type: 'error', message: err?.message || 'Speichern fehlgeschlagen.' })
     }
   }, [draftContent, jsonError, selectedSection, updateSection])
+
   const hasChanges = useMemo(() => {
     if (!selectedSection || !draftContent || !originalContent || jsonError) {
       return false
     }
     return JSON.stringify(draftContent) !== JSON.stringify(originalContent)
   }, [draftContent, jsonError, originalContent, selectedSection])
+
   const isSaving = selectedSection ? Boolean(savingSections?.[selectedSection]) : false
+
   const schemaHint = useMemo(() => {
     if (!selectedSection) {
       return ''
@@ -475,6 +639,7 @@ const SiteContentEditor = () => {
     const base = getDefaultSection(selectedSection) ?? DEFAULT_CONTENT[selectedSection] ?? {}
     return JSON.stringify(base, null, 2)
   }, [getDefaultSection, selectedSection])
+
   const handleStructuredFieldChange = useCallback(
     (path, value) => {
       if (!selectedSection) {
@@ -492,13 +657,14 @@ const SiteContentEditor = () => {
     },
     [getDefaultSection, selectedSection],
   )
+
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Seiteninhalte verwalten</h2>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Bearbeite Texte, Navigation und weitere statische Inhalte. Änderungen werden nach dem Speichern sofort aktiv.
+            Bearbeite Texte, Navigation und weitere statische Inhalte.
           </p>
         </div>
         <button
@@ -510,6 +676,7 @@ const SiteContentEditor = () => {
           {loading ? 'Aktualisiere…' : 'Inhalte neu laden'}
         </button>
       </div>
+
       {error && !selectedSection && (
         <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           <AlertCircle className="h-4 w-4" />
@@ -519,6 +686,7 @@ const SiteContentEditor = () => {
           </div>
         </div>
       )}
+
       {!selectedSection && (
         <div className="space-y-4">
           <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Wähle einen Inhaltsbereich aus:</p>
@@ -529,6 +697,7 @@ const SiteContentEditor = () => {
           />
         </div>
       )}
+
       {selectedSection && (
         <div className="space-y-6">
           <SectionToolbar
@@ -537,37 +706,51 @@ const SiteContentEditor = () => {
             onSave={handleSave}
             isSaving={isSaving}
             hasChanges={hasChanges}
+            showJson={showJson}
+            onToggleJson={() => setShowJson(!showJson)}
           />
+
           {status && (
             <div
-              className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${
-                status.type === 'success'
+              className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${status.type === 'success'
                   ? 'border-green-200 bg-green-50 text-green-700'
                   : 'border-red-200 bg-red-50 text-red-700'
-              }`}
+                }`}
             >
               <AlertCircle className="h-4 w-4" />
               <span>{status.message}</span>
             </div>
           )}
+
+          {/* Structured Editors */}
           {selectedSection === 'hero' && (
             <HeroContentForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
           )}
+
           {selectedSection === 'site_meta' && (
             <SiteMetaForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
           )}
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <ContentJsonEditor
-              value={editorValue}
-              onChange={handleEditorChange}
-              error={jsonError}
-              schemaHint={schemaHint}
-            />
+
+          {/* JSON Editor (Toggleable) */}
+          {showJson && (
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <ContentJsonEditor
+                value={editorValue}
+                onChange={handleEditorChange}
+                error={jsonError}
+                schemaHint={schemaHint}
+              />
+              <SectionPreview section={selectedSection} content={draftContent || {}} />
+            </div>
+          )}
+
+          {!showJson && (
             <SectionPreview section={selectedSection} content={draftContent || {}} />
-          </div>
+          )}
         </div>
       )}
     </div>
   )
 }
+
 export default SiteContentEditor

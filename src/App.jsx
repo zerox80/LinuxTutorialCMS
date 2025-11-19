@@ -16,6 +16,8 @@ import TutorialDetail from './pages/TutorialDetail' // Individual tutorial view
 import DynamicPage from './pages/DynamicPage' // CMS-driven dynamic pages
 import PostDetail from './pages/PostDetail' // Individual blog post view
 import AdminDashboard from './pages/AdminDashboard' // Admin control panel
+import LandingPage from './pages/LandingPage' // New IT Landing Page
+
 function App() {
   return (
     <ErrorBoundary>
@@ -30,6 +32,14 @@ function App() {
                     <Routes>
                       <Route
                         path="/"
+                        element={
+                          <ErrorBoundary>
+                            <LandingPage />
+                          </ErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/blog"
                         element={
                           <ErrorBoundary>
                             <Header />
@@ -93,9 +103,7 @@ function App() {
                         path="*"
                         element={
                           <ErrorBoundary>
-                            <Header />
-                            <Home />
-                            <Footer />
+                            <LandingPage />
                           </ErrorBoundary>
                         }
                       />

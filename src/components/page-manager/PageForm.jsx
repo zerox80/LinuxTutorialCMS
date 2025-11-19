@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import PropTypes from 'prop-types'
-import { AlertCircle, FilePlus, RefreshCw, X } from 'lucide-react'
+import { AlertCircle, FilePlus, RefreshCw, X, Code, ChevronDown, ChevronUp } from 'lucide-react'
 import { normalizeTitle } from '../../utils/postUtils'
 import { sanitizeSlug, isValidSlug } from '../../utils/slug'
 import { parseJsonField, sanitizeInteger } from './formUtils'
@@ -38,12 +38,14 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
   const [showInNav, setShowInNav] = useState(Boolean(initialData?.show_in_nav))
   const [isPublished, setIsPublished] = useState(Boolean(initialData?.is_published))
   const [orderIndex, setOrderIndex] = useState(initialData?.order_index ?? 0)
+
   const [hero, setHero] = useState(
     initialData?.hero ? JSON.stringify(initialData.hero, null, 2) : defaultHeroJson,
   )
   const [layout, setLayout] = useState(
     initialData?.layout ? JSON.stringify(initialData.layout, null, 2) : defaultLayoutJson,
   )
+
   const [heroTitle, setHeroTitle] = useState(() => {
     if (initialData?.hero) {
       return normalizeTitle(initialData.hero.title ?? initialData.hero, initialData?.title ?? '')
@@ -51,12 +53,48 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
     return initialData?.title ?? defaultHeroTitle
   })
   const [heroTitleDirty, setHeroTitleDirty] = useState(false)
+
+  const [showAdvanced, setShowAdvanced] = useState(false)
   const [error, setError] = useState(null)
+
   const formSanitizedSlug = useMemo(() => sanitizeSlug(slug), [slug])
   const slugHasInput = slug.trim().length > 0
   const slugHasInvalidCharacters = slugHasInput && !formSanitizedSlug
   const slugDiffersAfterSanitize =
     slugHasInput && formSanitizedSlug && formSanitizedSlug !== slug.trim()
+
+  // Helper to safely parse JSON state
+  const getParsedState = (jsonString, fallback) => {
+    try {
+      return JSON.parse(jsonString) || fallback
+    } catch (e) {
+      return fallback
+    }
+  }
+
+  const heroState = getParsedState(hero, {})
+  const layoutState = getParsedState(layout, defaultLayoutConfig)
+
+  const updateHeroField = (field, value) => {
+    const newHero = { ...heroState, [field]: value }
+    setHero(JSON.stringify(newHero, null, 2))
+    if (field === 'title') {
+      setHeroTitle(value)
+      setHeroTitleDirty(true)
+    }
+  }
+
+  const updateLayoutField = (section, field, value) => {
+    const newLayout = {
+      ...layoutState,
+      [section]: {
+        ...(layoutState[section] || {}),
+        [field]: value
+      }
+    }
+    setLayout(JSON.stringify(newLayout, null, 2))
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError(null)
@@ -70,6 +108,7 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
       const trimmedHeroTitle = heroTitle.trim()
       const trimmedSlug = slug.trim()
       const sanitizedSlug = sanitizeSlug(trimmedSlug)
+
       if (heroTitleDirty) {
         if (trimmedHeroTitle) {
           heroPayload.title = trimmedHeroTitle
@@ -80,6 +119,7 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
       if (!heroPayload.title) {
         heroPayload.title = trimmedTitle
       }
+
       if (!trimmedTitle) {
         throw new Error('Titel darf nicht leer sein.')
       }
@@ -89,7 +129,9 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
       if (!isValidSlug(sanitizedSlug)) {
         throw new Error('Slug ist ungültig.')
       }
+
       setSlug(sanitizedSlug)
+
       const payload = {
         title: trimmedTitle,
         slug: sanitizedSlug,
@@ -106,6 +148,7 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
       setError(err)
     }
   }
+
   return (
     <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto dark:bg-slate-900">
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-slate-800">
@@ -114,7 +157,7 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
             {mode === 'edit' ? 'Seite bearbeiten' : 'Neue Seite erstellen'}
           </h3>
           <p className="text-sm text-gray-500 dark:text-slate-400">
-            Slug und JSON-Konfiguration beeinflussen die Darstellung der Seite.
+            Konfiguriere die Darstellung und Inhalte deiner Seite.
           </p>
         </div>
         <button
@@ -125,7 +168,8 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
           <X className="w-5 h-5" />
         </button>
       </div>
-      <form onSubmit={handleSubmit} className="space-y-6 px-6 py-6">
+
+      <form onSubmit={handleSubmit} className="space-y-8 px-6 py-6">
         {error && (
           <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300">
             <AlertCircle className="w-4 h-4 mt-0.5" />
@@ -135,160 +179,211 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
             </div>
           </div>
         )}
-        <div className="grid gap-4 md:grid-cols-2">
+
+        {/* Basic Info Section */}
+        <div className="space-y-4">
+          <h4 className="text-lg font-medium text-gray-900 dark:text-slate-100 border-b border-gray-100 pb-2 dark:border-slate-800">Allgemein</h4>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
+              Seitentitel (Intern)
+              <input
+                type="text"
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                required
+              />
+            </label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
+              URL Slug
+              <input
+                type="text"
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                value={slug}
+                onChange={(event) => setSlug(event.target.value)}
+                onBlur={() => setSlug(formSanitizedSlug)}
+                required
+              />
+              {slugHasInvalidCharacters && (
+                <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                  Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt.
+                </p>
+              )}
+            </label>
+          </div>
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
-            Titel
-            <input
-              type="text"
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              required
-            />
-          </label>
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
-            Slug
-            <input
-              type="text"
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              value={slug}
-              onChange={(event) => setSlug(event.target.value)}
-              onBlur={() => setSlug(formSanitizedSlug)}
-              required
-            />
-            {slugHasInvalidCharacters && (
-              <p className="mt-1 text-xs text-red-600 dark:text-red-400">
-                Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt.
-              </p>
-            )}
-            {slugDiffersAfterSanitize && !slugHasInvalidCharacters && (
-              <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
-                Gespeicherter Slug:{' '}
-                <code className="rounded bg-gray-100 px-1 py-0.5 text-[11px] dark:bg-slate-800 dark:text-slate-200">{formSanitizedSlug}</code>
-              </p>
-            )}
-          </label>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
-            Navigationstitel
-            <input
-              type="text"
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              value={navLabel}
-              onChange={(event) => setNavLabel(event.target.value)}
-            />
-          </label>
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
-            Reihenfolge (Navigation)
-            <input
-              type="number"
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              value={orderIndex}
-              onChange={(event) => setOrderIndex(event.target.value)}
-            />
-          </label>
-        </div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
-          Beschreibung
-          <textarea
-            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-            rows={3}
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            placeholder="Kurzbeschreibung der Seite"
-          />
-        </label>
-        <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
-          Hero-Titel
-          <input
-            type="text"
-            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-            value={heroTitle}
-            onChange={(event) => {
-              const { value } = event.target
-              setHeroTitle(value)
-              setHeroTitleDirty(true)
-              const trimmedValue = value.trim()
-              setHero((currentHero) => {
-                try {
-                  const parsed = parseJsonField(currentHero, 'Hero JSON')
-                  const nextHero =
-                    typeof parsed === 'object' && parsed !== null ? { ...parsed } : {}
-                  if (trimmedValue) {
-                    nextHero.title = trimmedValue
-                  } else {
-                    delete nextHero.title
-                  }
-                  return JSON.stringify(nextHero, null, 2)
-                } catch (err) {
-                  return currentHero
-                }
-              })
-            }}
-            placeholder="Titel im oberen Bereich der Seite"
-          />
-          <span className="mt-1 block text-xs text-gray-500 dark:text-slate-400">
-            Wird beim Speichern automatisch in das Hero JSON übernommen.
-          </span>
-        </label>
-        <div className="flex flex-wrap items-center gap-4">
-          <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-slate-200">
-            <input
-              type="checkbox"
-              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-900"
-              checked={showInNav}
-              onChange={(event) => setShowInNav(event.target.checked)}
-            />
-            In Navigation anzeigen
-          </label>
-          <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-slate-200">
-            <input
-              type="checkbox"
-              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-900"
-              checked={isPublished}
-              onChange={(event) => setIsPublished(event.target.checked)}
-            />
-            Veröffentlicht
-          </label>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
-            Hero JSON
+            Beschreibung (Meta & Übersicht)
             <textarea
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-mono focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              rows={8}
-              value={hero}
-              onChange={(event) => {
-                const { value } = event.target
-                setHero(value)
-                try {
-                  const parsed = JSON.parse(value)
-                  if (!heroTitleDirty) {
-                    const derivedTitle = normalizeTitle(parsed?.title ?? parsed, '').trim()
-                    setHeroTitle((previous) =>
-                      derivedTitle !== previous ? derivedTitle : previous,
-                    )
-                  }
-                } catch (err) {
-                }
-              }}
+              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              rows={3}
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder="Kurzbeschreibung der Seite"
             />
-          </label>
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
-            Layout JSON
-            <textarea
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-mono focus:border-primary-500 focus:outline-none focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              rows={8}
-              value={layout}
-              onChange={(event) => setLayout(event.target.value)}
-            />
-            <span className="mt-1 block text-xs text-gray-500 dark:text-slate-400">
-              Verwendet u.a. <code>aboutSection.title</code>, <code>postsSection.title</code>,{' '}
-              <code>postsSection.emptyTitle</code>, <code>postsSection.emptyMessage</code>.
-            </span>
           </label>
         </div>
+
+        {/* Navigation Section */}
+        <div className="space-y-4">
+          <h4 className="text-lg font-medium text-gray-900 dark:text-slate-100 border-b border-gray-100 pb-2 dark:border-slate-800">Navigation</h4>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
+              Label im Menü
+              <input
+                type="text"
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                value={navLabel}
+                onChange={(event) => setNavLabel(event.target.value)}
+                placeholder={title}
+              />
+            </label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
+              Reihenfolge
+              <input
+                type="number"
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                value={orderIndex}
+                onChange={(event) => setOrderIndex(event.target.value)}
+              />
+            </label>
+          </div>
+          <div className="flex flex-wrap items-center gap-6 pt-2">
+            <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-slate-200 cursor-pointer">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-900"
+                checked={showInNav}
+                onChange={(event) => setShowInNav(event.target.checked)}
+              />
+              In Navigation anzeigen
+            </label>
+            <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-slate-200 cursor-pointer">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-900"
+                checked={isPublished}
+                onChange={(event) => setIsPublished(event.target.checked)}
+              />
+              Veröffentlicht
+            </label>
+          </div>
+        </div>
+
+        {/* Hero Configuration */}
+        <div className="space-y-4">
+          <h4 className="text-lg font-medium text-gray-900 dark:text-slate-100 border-b border-gray-100 pb-2 dark:border-slate-800">Hero Bereich</h4>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
+              Badge Text
+              <input
+                type="text"
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                value={heroState.badge || ''}
+                onChange={(e) => updateHeroField('badge', e.target.value)}
+                placeholder="z.B. Neu"
+              />
+            </label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
+              Überschrift
+              <input
+                type="text"
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                value={heroState.title || heroTitle}
+                onChange={(e) => updateHeroField('title', e.target.value)}
+                placeholder="Große Überschrift"
+              />
+            </label>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
+                Untertitel
+                <textarea
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                  rows={2}
+                  value={heroState.subtitle || ''}
+                  onChange={(e) => updateHeroField('subtitle', e.target.value)}
+                  placeholder="Erklärender Text unter der Überschrift"
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Layout Configuration */}
+        <div className="space-y-4">
+          <h4 className="text-lg font-medium text-gray-900 dark:text-slate-100 border-b border-gray-100 pb-2 dark:border-slate-800">Seiten-Layout</h4>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
+              Titel "Über diese Seite"
+              <input
+                type="text"
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                value={layoutState.aboutSection?.title || ''}
+                onChange={(e) => updateLayoutField('aboutSection', 'title', e.target.value)}
+                placeholder="Über diese Seite"
+              />
+            </label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
+              Titel "Beiträge"
+              <input
+                type="text"
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                value={layoutState.postsSection?.title || ''}
+                onChange={(e) => updateLayoutField('postsSection', 'title', e.target.value)}
+                placeholder="Beiträge"
+              />
+            </label>
+          </div>
+        </div>
+
+        {/* Advanced JSON Toggle */}
+        <div className="pt-4 border-t border-gray-100 dark:border-slate-800">
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200"
+          >
+            {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            Erweiterte Einstellungen (JSON)
+          </button>
+
+          {showAdvanced && (
+            <div className="mt-4 grid gap-4 lg:grid-cols-2 animate-fade-in-down">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
+                Hero JSON (Raw)
+                <textarea
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-mono focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                  rows={8}
+                  value={hero}
+                  onChange={(event) => {
+                    const { value } = event.target
+                    setHero(value)
+                    try {
+                      const parsed = JSON.parse(value)
+                      if (!heroTitleDirty) {
+                        const derivedTitle = normalizeTitle(parsed?.title ?? parsed, '').trim()
+                        setHeroTitle((previous) =>
+                          derivedTitle !== previous ? derivedTitle : previous,
+                        )
+                      }
+                    } catch (err) {
+                    }
+                  }}
+                />
+              </label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
+                Layout JSON (Raw)
+                <textarea
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-mono focus:border-primary-500 focus:outline-none focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                  rows={8}
+                  value={layout}
+                  onChange={(event) => setLayout(event.target.value)}
+                />
+              </label>
+            </div>
+          )}
+        </div>
+
+        {/* Form Actions */}
         <div className="flex justify-end gap-3 pt-2">
           <button
             type="button"
@@ -314,6 +409,7 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
     </div>
   )
 }
+
 PageForm.propTypes = {
   mode: PropTypes.oneOf(['create', 'edit']).isRequired,
   initialData: PropTypes.object,

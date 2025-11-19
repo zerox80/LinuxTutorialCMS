@@ -220,22 +220,22 @@ const Footer = () => {
     <footer className="bg-gray-900 text-gray-300 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-          {}
+          { }
           <div>
             <div className="flex items-center space-x-3 mb-4">
               <div className="bg-gradient-to-r from-primary-600 to-primary-800 p-2 rounded-lg">
                 <BrandIcon className="w-6 h-6 text-white" />
               </div>
               <span className="text-xl font-bold text-white">
-                {footerContent?.brand?.title || footerContent?.brand?.name || 'Linux Tutorial'}
+                {footerContent?.brand?.title || footerContent?.brand?.name || 'IT Portal'}
               </span>
             </div>
             <p className="text-gray-400">
               {footerContent?.brand?.description ||
-                'Dein umfassendes Tutorial für Linux - von den Basics bis zu Advanced Techniken.'}
+                'Dein Portal für IT Security, Programmierung und Administration.'}
             </p>
           </div>
-          {}
+          { }
           <div>
             <h4 className="text-white font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2">
@@ -263,7 +263,7 @@ const Footer = () => {
               )}
             </ul>
           </div>
-          {}
+          { }
           <div>
             <h4 className="text-white font-semibold mb-4">Kontakt</h4>
             <div className="space-y-3">
@@ -303,10 +303,10 @@ const Footer = () => {
             </div>
           </div>
         </div>
-        {}
+        { }
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 text-sm mb-4 md:mb-0">
-            {(footerContent?.bottom?.copyright || '© {year} Linux Tutorial. Alle Rechte vorbehalten.').replace(
+            {(footerContent?.bottom?.copyright || '© {year} IT Portal. Alle Rechte vorbehalten.').replace(
               '{year}',
               currentYear,
             )}
@@ -319,7 +319,7 @@ const Footer = () => {
             <div className="flex items-center space-x-1 text-sm">
               <span className="text-gray-400">Gemacht mit</span>
               <Heart className="w-4 h-4 text-red-500 fill-red-500" />
-              <span className="text-gray-400">für die Linux Community</span>
+              <span className="text-gray-400">für IT Professionals</span>
             </div>
           )}
         </div>
