@@ -1,22 +1,67 @@
 import html2pdf from 'html2pdf.js'
 
 /**
- * Helper to convert any CSS color string to RGB format using the browser's native color parsing.
- * This handles oklch, oklab, hsl, etc. by letting the browser compute the rgb value.
+ * Copies computed styles from a source element to a target element.
+ * This "bakes" the styles into the element so it looks correct even without stylesheets.
  */
-const convertColorToRgb = (colorString) => {
-    if (!colorString || colorString === 'transparent' || colorString === 'inherit') return colorString;
+const copyComputedStyles = (source, target) => {
+    const computed = window.getComputedStyle(source);
 
-    // Create a temporary element to compute the color
-    const div = document.createElement('div');
-    div.style.color = colorString;
-    div.style.display = 'none';
-    document.body.appendChild(div);
+    // We can't just copy cssText because it's often empty for computed styles.
+    // We need to copy specific properties. This is a comprehensive list of visual properties.
+    const properties = [
+        // Layout
+        'display', 'position', 'width', 'height', 'margin', 'padding', 'top', 'left', 'right', 'bottom',
+        'float', 'clear', 'z-index', 'box-sizing', 'overflow',
 
-    const computedColor = window.getComputedStyle(div).color;
-    document.body.removeChild(div);
+        // Flex/Grid (important for layout)
+        'flex', 'flex-direction', 'flex-wrap', 'justify-content', 'align-items', 'align-content', 'gap',
+        'grid-template-columns', 'grid-template-rows', 'grid-gap',
 
-    return computedColor;
+        // Typography
+        'font-family', 'font-size', 'font-weight', 'font-style', 'line-height',
+        'text-align', 'text-transform', 'text-decoration', 'letter-spacing', 'white-space', 'color',
+
+        // Visuals
+        'background-color', 'background-image', 'background-position', 'background-size', 'background-repeat',
+        'border', 'border-top', 'border-right', 'border-bottom', 'border-left',
+        'border-radius', 'border-collapse', 'border-spacing',
+        'box-shadow', 'opacity', 'visibility'
+    ];
+
+    properties.forEach(prop => {
+        // We use getPropertyValue to get the resolved value (e.g. 'rgb(0, 0, 0)' instead of 'var(--color)')
+        const value = computed.getPropertyValue(prop);
+        if (value && value !== 'none' && value !== 'auto' && value !== 'normal') {
+            target.style.setProperty(prop, value);
+        }
+    });
+
+    // Explicitly handle background color if it's transparent, to ensure readability if parents change
+    if (computed.backgroundColor === 'rgba(0, 0, 0, 0)' || computed.backgroundColor === 'transparent') {
+        // Don't force white, just leave transparent
+    } else {
+        target.style.backgroundColor = computed.backgroundColor;
+    }
+
+    // Explicitly handle color to ensure it's RGB
+    target.style.color = computed.color;
+}
+
+/**
+ * Recursively copies styles from a source tree to a target tree.
+ */
+const cloneWithStyles = (source, target) => {
+    copyComputedStyles(source, target);
+
+    // Iterate children
+    for (let i = 0; i < source.children.length; i++) {
+        const sourceChild = source.children[i];
+        const targetChild = target.children[i];
+        if (sourceChild && targetChild) {
+            cloneWithStyles(sourceChild, targetChild);
+        }
+    }
 }
 
 /**
@@ -27,85 +72,62 @@ const convertColorToRgb = (colorString) => {
 export const generatePdf = async (element, filename) => {
     if (!element) throw new Error('Element not found')
 
-    // 1. Clone the element
-    const clone = element.cloneNode(true)
-
-    // 2. Create a container for isolation
-    // We use a fixed-width container to simulate A4 paper width and ensure consistent rendering
-    const container = document.createElement('div')
-    container.style.position = 'absolute'
-    container.style.left = '-9999px'
-    container.style.top = '0'
-    container.style.width = '800px' // ~A4 width at 96dpi
-    container.style.backgroundColor = '#ffffff'
-    container.style.color = '#000000'
-    container.style.fontFamily = 'Inter, sans-serif' // Ensure font consistency
-
-    // Append to body to allow rendering
-    document.body.appendChild(container)
+    // 1. Create a hidden iframe to isolate the PDF generation
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.left = '-9999px';
+    iframe.style.top = '0';
+    iframe.style.width = '800px'; // A4 width
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
 
     try {
-        // 3. Clean the clone for print
-        // Remove dark mode classes and other UI artifacts
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        doc.open();
+        doc.write('<html><head></head><body></body></html>');
+        doc.close();
+
+        // 2. Clone the element
+        // We clone it into the main document first to ensure we can traverse it easily if needed, 
+        // but actually we just clone the node.
+        const clone = element.cloneNode(true);
+
+        // 3. Copy computed styles from the original element to the clone
+        // This is crucial: we are "baking" the styles into the inline style attributes
+        // so that we don't need the external stylesheets (which contain the problematic oklch).
+        cloneWithStyles(element, clone);
+
+        // 4. Clean up the clone for print (overrides)
         const cleanElement = (el) => {
-            // Remove dark mode specific classes
-            if (el.classList) {
-                // Remove shadow and border classes that look bad in print
-                el.classList.remove('shadow-xl', 'shadow-2xl', 'shadow-lg', 'shadow-md', 'shadow-sm')
-                el.classList.remove('border', 'border-gray-200', 'border-slate-700', 'dark:border-slate-700')
-                el.classList.remove('bg-slate-900', 'dark:bg-slate-900', 'bg-gradient-to-br')
+            // Remove shadows and borders that look bad in print
+            // We can just overwrite the styles we just copied
+            if (el.style.boxShadow) el.style.boxShadow = 'none';
 
-                // Force white background and black text for main containers
-                if (el.tagName === 'ARTICLE' || el.classList.contains('bg-white')) {
-                    el.style.backgroundColor = '#ffffff'
-                    el.style.color = '#000000'
-                    el.style.boxShadow = 'none'
-                    el.style.border = 'none'
-                }
-
-                // Fix text colors
-                if (el.classList.contains('text-gray-300') || el.classList.contains('text-slate-300')) {
-                    el.classList.remove('text-gray-300', 'text-slate-300')
-                    el.classList.add('text-gray-700')
-                }
-                if (el.classList.contains('text-slate-100')) {
-                    el.classList.remove('text-slate-100')
-                    el.classList.add('text-black')
-                }
+            // Force white background for the main container
+            if (el.tagName === 'ARTICLE') {
+                el.style.backgroundColor = '#ffffff';
+                el.style.color = '#000000';
+                el.style.border = 'none';
             }
 
-            // SANITIZE COLORS: Convert all computed colors to RGB to avoid 'oklch' errors
-            const computedStyle = window.getComputedStyle(el);
-
-            // We explicitly check and convert specific properties that might contain oklch
-            const propertiesToCheck = ['color', 'backgroundColor', 'borderColor', 'borderTopColor', 'borderBottomColor', 'borderLeftColor', 'borderRightColor'];
-
-            propertiesToCheck.forEach(prop => {
-                const val = computedStyle[prop];
-                if (val && (val.includes('oklch') || val.includes('oklab'))) {
-                    // Convert to RGB
-                    el.style[prop] = convertColorToRgb(val);
-                }
-            });
-
-            // Recursively clean children
+            // Recursively clean
             for (let i = 0; i < el.children.length; i++) {
-                cleanElement(el.children[i])
+                cleanElement(el.children[i]);
             }
         }
+        cleanElement(clone);
 
-        // We need to append the clone to the container BEFORE cleaning/computing styles
-        // because window.getComputedStyle requires the element to be in the DOM.
-        container.appendChild(clone);
+        // 5. Append clone to iframe
+        doc.body.appendChild(clone);
 
-        // Now clean and sanitize colors
-        cleanElement(clone)
+        // Add some basic reset styles to the iframe body
+        doc.body.style.margin = '0';
+        doc.body.style.padding = '20px';
+        doc.body.style.backgroundColor = '#ffffff';
+        doc.body.style.fontFamily = 'sans-serif';
 
-        // Add padding to the clone itself to act as page margins inside the container
-        clone.style.padding = '40px'
-        clone.style.backgroundColor = '#ffffff'
-
-        // 4. Configure html2pdf
+        // 6. Configure html2pdf
         const opt = {
             margin: [10, 10, 10, 10],
             filename: filename,
@@ -114,18 +136,18 @@ export const generatePdf = async (element, filename) => {
                 scale: 2,
                 useCORS: true,
                 logging: false,
-                backgroundColor: '#ffffff', // Force white background
-                windowWidth: 800 // Match container width
+                backgroundColor: '#ffffff',
+                windowWidth: 800
             },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
             pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
         }
 
-        // 5. Generate
-        await html2pdf().set(opt).from(clone).save()
+        // 7. Generate PDF from the element INSIDE the iframe
+        await html2pdf().set(opt).from(clone).save();
 
     } finally {
-        // 6. Cleanup
-        document.body.removeChild(container)
+        // 8. Cleanup
+        document.body.removeChild(iframe);
     }
 }
