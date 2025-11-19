@@ -154,6 +154,10 @@ export const generatePdf = async (element, filename) => {
                 el.style.backgroundColor = '#ffffff';
                 el.style.color = '#000000';
                 el.style.border = 'none';
+                el.style.width = '100%';
+                el.style.maxWidth = '100%';
+                el.style.boxSizing = 'border-box';
+                el.style.margin = '0';
             }
 
             // Fix image sizing
