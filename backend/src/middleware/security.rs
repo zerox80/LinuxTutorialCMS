@@ -102,8 +102,8 @@ pub async fn security_headers(request: Request, next: Next) -> Response {
         // Development CSP - allows unsafe-inline for easier debugging
         "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
     } else {
-        // Production CSP - stricter, no unsafe-inline
-        "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;"
+        // Production CSP - stricter, but needs unsafe-inline for html2pdf/html2canvas
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests;"
     };
 
     headers.insert(CONTENT_SECURITY_POLICY, HeaderValue::from_static(csp));
