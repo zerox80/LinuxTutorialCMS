@@ -12,7 +12,6 @@ const sectionLabels = {
   hero: 'Hero-Bereich (Startseite)',
   stats: 'Statistiken (Startseite)',
   cta_section: 'CTA-Bereich (Startseite)',
-  tutorial_section: 'Blog-Sektion (Startseite)',
   header: 'Navigation & Header',
   footer: 'Footer',
   site_meta: 'Seitentitel & Beschreibung',
@@ -720,57 +719,7 @@ FooterForm.propTypes = {
   onFieldChange: PropTypes.func.isRequired,
 }
 
-const BlogSectionForm = ({ content, onFieldChange }) => {
-  const section = content || {}
-  return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Blog-Sektion (Startseite)</h3>
-      <div className="grid grid-cols-1 gap-4">
-        <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Badge</label>
-          <input
-            type="text"
-            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-            value={section.badge || ''}
-            onChange={(e) => onFieldChange(['badge'], e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Titel</label>
-          <input
-            type="text"
-            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-            value={section.title || ''}
-            onChange={(e) => onFieldChange(['title'], e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Untertitel</label>
-          <textarea
-            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-            rows="2"
-            value={section.subtitle || ''}
-            onChange={(e) => onFieldChange(['subtitle'], e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Button-Text (Karte)</label>
-          <input
-            type="text"
-            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-            value={section.tutorialCardButton || ''}
-            onChange={(e) => onFieldChange(['tutorialCardButton'], e.target.value)}
-          />
-        </div>
-      </div>
-    </div>
-  )
-}
 
-BlogSectionForm.propTypes = {
-  content: PropTypes.object,
-  onFieldChange: PropTypes.func.isRequired,
-}
 
 
 
@@ -891,41 +840,7 @@ SiteMetaPreview.propTypes = {
   content: PropTypes.object.isRequired,
 }
 
-const TutorialSectionPreview = ({ content }) => {
-  return (
-    <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-      <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-        <h4 className="text-lg font-semibold text-gray-900">Blog-Sektion</h4>
-        <span className="rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
-          Vorschau
-        </span>
-      </div>
-      <div className="space-y-3">
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Badge</p>
-          <p className="mt-1 text-sm font-semibold text-gray-900">{content.badge || 'Neueste Beiträge'}</p>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Titel</p>
-          <p className="mt-1 text-sm font-semibold text-gray-900">{content.title || 'Aktuelle Artikel'}</p>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Untertitel</p>
-          <p className="mt-1 text-sm text-gray-700">{content.subtitle || 'Entdecke die neuesten Insights'}</p>
-        </div>
-        <div className="rounded-lg border border-primary-200 bg-primary-50 p-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-primary-600">Button-Text</p>
-          <p className="mt-1 text-sm font-semibold text-primary-700">{content.tutorialCardButton || 'Zum Artikel'}</p>
-          <p className="mt-1 text-xs text-primary-600">Dieser Text erscheint auf den Blog-Karten</p>
-        </div>
-      </div>
-    </div>
-  )
-}
 
-TutorialSectionPreview.propTypes = {
-  content: PropTypes.object.isRequired,
-}
 
 const SectionPreview = ({ section, content }) => {
   switch (section) {
@@ -935,8 +850,6 @@ const SectionPreview = ({ section, content }) => {
       return <StatsPreview content={content} />
     case 'cta_section':
       return <CtaSectionPreview content={content} />
-    case 'tutorial_section':
-      return <TutorialSectionPreview content={content} />
     case 'site_meta':
       return <SiteMetaPreview content={content} />
     default:
@@ -1182,10 +1095,6 @@ const SiteContentEditor = () => {
 
           {selectedSection === 'footer' && (
             <FooterForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
-          )}
-
-          {selectedSection === 'tutorial_section' && (
-            <BlogSectionForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
           )}
 
           {/* JSON Editor (Toggleable) */}

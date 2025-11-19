@@ -26,8 +26,9 @@ fn allowed_sections() -> &'static HashSet<&'static str> {
             "tutorial_section",
             "header",
             "footer",
-            "grundlagen_page",
             "site_meta",
+            "stats",
+            "cta_section",
         ]
         .into_iter()
         .collect()
@@ -56,7 +57,8 @@ fn validate_content_structure(
         "tutorial_section" => validate_tutorial_section_structure(content),
         "header" => validate_header_structure(content),
         "footer" => validate_footer_structure(content),
-        "grundlagen_page" => Ok(()),
+        "stats" => Ok(()),
+        "cta_section" => Ok(()),
         _ => Ok(()),
     };
 

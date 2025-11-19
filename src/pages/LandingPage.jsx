@@ -57,7 +57,7 @@ const LandingPage = () => {
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <button
-                            onClick={() => navigate('/tutorials')}
+                            onClick={() => navigate('/blog')}
                             className="group relative px-8 py-4 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg shadow-primary-600/20 hover:shadow-primary-600/40 flex items-center gap-2"
                         >
                             {heroContent.primaryCta?.label || 'Jetzt starten'}
@@ -95,6 +95,30 @@ const LandingPage = () => {
                             )
                         })}
                     </div>
+                </div>
+            </section>
+
+            {/* Blog Section (Hardcoded defaults as requested) */}
+            <section id="tutorials" className="py-24 relative">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-16">
+                        <span className="text-primary-400 font-semibold tracking-wider uppercase text-sm">
+                            Neueste Beiträge
+                        </span>
+                        <h2 className="mt-2 text-3xl md:text-4xl font-bold text-white">
+                            Aktuelle Artikel
+                        </h2>
+                        <p className="mt-4 text-xl text-slate-400 max-w-2xl mx-auto">
+                            Entdecke die neuesten Insights aus der IT-Welt.
+                        </p>
+                    </div>
+                    {/* Note: The actual blog cards are rendered by a separate component or this is just the header section. 
+                        If this page is supposed to list blogs, it needs to fetch them. 
+                        Currently, the Home page (now at /blog) does that. 
+                        This LandingPage seems to be just the landing page. 
+                        If we need to show blog cards here, we need to fetch them. 
+                        For now, I am just fixing the static content structure. 
+                    */}
                 </div>
             </section>
 
