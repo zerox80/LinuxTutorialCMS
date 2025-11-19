@@ -168,6 +168,10 @@ export const generatePdf = async (element, filename) => {
                 el.style.whiteSpace = 'pre-wrap';
                 el.style.wordBreak = 'break-word';
                 el.style.overflowWrap = 'break-word';
+            } else {
+                // For all other elements, ensure they don't overflow
+                el.style.overflowWrap = 'break-word';
+                el.style.wordBreak = 'break-word';
             }
 
             // Recursively clean
