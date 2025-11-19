@@ -31,7 +31,7 @@ use axum::{
 use axum_extra::extract::cookie::{Cookie, CookieJar, SameSite};
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
-use once_cell::sync::Lazy;
+use std::sync::LazyLock;
 use serde::{Deserialize, Serialize};
 use std::sync::OnceLock;
 use std::collections::HashSet;
@@ -43,6 +43,12 @@ use crate::db::{self, DbPool};
 /// Global storage for the JWT secret key.
 /// Initialized once at application startup via init_jwt_secret().
 pub static JWT_SECRET: OnceLock<String> = OnceLock::new();
+
+/// Global storage for the JWT decoding key.
+/// Derived from JWT_SECRET once it's initialized.
+pub static DECODING_KEY: LazyLock<DecodingKey> = LazyLock::new(|| {
+    DecodingKey::from_secret(get_jwt_secret().as_bytes())
+});
 
 /// List of known placeholder secrets that must not be used in production.
 /// These are common defaults found in example configurations.
