@@ -261,7 +261,7 @@ async fn main() {
         .layer(GovernorLayer::new(admin_rate_limit_config.clone()));
 
     // Define the application router with all routes and middleware
-    let mut app = Router::new()
+    let mut app = Router::default()
         // Merge all route modules
         .merge(login_router)
 
