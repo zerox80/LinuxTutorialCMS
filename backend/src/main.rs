@@ -189,7 +189,7 @@ async fn main() {
             .expect("Failed to build governor config"),
     );
 
-    let login_router: Router<db::DbPool> = Router::default()
+    let login_router = Router::new()
         .route("/api/auth/login", post(handlers::auth::login))
         .route("/api/auth/logout", post(handlers::auth::logout))
         .layer(RequestBodyLimitLayer::new(LOGIN_BODY_LIMIT))
@@ -204,7 +204,7 @@ async fn main() {
             .expect("Failed to build governor config for write routes"),
     );
 
-    let admin_routes: Router<db::DbPool> = Router::default()
+    let admin_routes = Router::new()
 
         .route("/api/tutorials", post(handlers::tutorials::create_tutorial))
         .route(
@@ -258,15 +258,12 @@ async fn main() {
 
         .layer(RequestBodyLimitLayer::new(ADMIN_BODY_LIMIT))
 
-        .layer(GovernorLayer::new(admin_rate_limit_config.clone()))
-        .with_state(pool.clone());
+        .layer(GovernorLayer::new(admin_rate_limit_config.clone()));
 
     // Define the application router with all routes and middleware
-    let login_router_with_state = login_router.with_state(pool.clone());
-    
-    let mut app = Router::default()
+    let mut app = Router::new()
         // Merge all route modules
-        .merge(login_router_with_state)
+        .merge(login_router)
 
         .route("/api/auth/me", get(handlers::auth::me))
 
