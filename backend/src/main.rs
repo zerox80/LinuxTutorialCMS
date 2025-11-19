@@ -1,12 +1,12 @@
 
 // Module declarations for organizing the backend codebase
-mod auth;     // Authentication and JWT token management
-mod csrf;     // Cross-Site Request Forgery protection
-mod db;       // Database connection and pooling
-mod handlers; // HTTP request handlers organized by feature
-mod models;   // Data structures and database models
-mod middleware; // Middleware modules
-mod repositories; // Repository modules
+pub mod auth;     // Authentication and JWT token management
+pub mod csrf;     // Cross-Site Request Forgery protection
+pub mod db;       // Database connection and pooling
+pub mod handlers; // HTTP request handlers organized by feature
+pub mod models;   // Data structures and database models
+pub mod middleware; // Middleware modules
+pub mod repositories; // Repository modules
 
 use crate::middleware::{cors, security};
 
@@ -189,7 +189,7 @@ async fn main() {
             .expect("Failed to build governor config"),
     );
 
-    let login_router = Router::new()
+    let login_router: Router<db::DbPool> = Router::default()
         .route("/api/auth/login", post(handlers::auth::login))
         .route("/api/auth/logout", post(handlers::auth::logout))
         .layer(RequestBodyLimitLayer::new(LOGIN_BODY_LIMIT))
@@ -204,7 +204,7 @@ async fn main() {
             .expect("Failed to build governor config for write routes"),
     );
 
-    let admin_routes = Router::new()
+    let admin_routes: Router<db::DbPool> = Router::default()
 
         .route("/api/tutorials", post(handlers::tutorials::create_tutorial))
         .route(
