@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import PropTypes from 'prop-types'
-import { AlertCircle, ArrowLeft, Check, Loader2, RefreshCw, Plus, Trash2, Code } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Check, Loader2, RefreshCw, Plus, Trash2, Code, Terminal } from 'lucide-react'
 import {
   useContent,
   CONTENT_SECTIONS,
@@ -10,7 +10,8 @@ import { getIconComponent } from '../../utils/iconMap'
 
 const sectionLabels = {
   hero: 'Hero-Bereich (Startseite)',
-  tutorial_section: 'Tutorial-Sektion',
+  stats: 'Statistiken (Startseite)',
+  tutorial_section: 'Blog-Sektion (Startseite)',
   header: 'Navigation & Header',
   footer: 'Footer',
   grundlagen_page: 'Grundlagen-Seite',
@@ -52,8 +53,8 @@ const SectionPicker = ({ sections, selected, onSelect }) => {
             type="button"
             onClick={() => onSelect(section)}
             className={`rounded-xl border px-4 py-3 text-left transition-all ${isActive
-                ? 'border-primary-600 bg-primary-50 text-primary-700 shadow-sm'
-                : 'border-gray-200 text-gray-700 hover:border-primary-200 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700'
+              ? 'border-primary-600 bg-primary-50 text-primary-700 shadow-sm'
+              : 'border-gray-200 text-gray-700 hover:border-primary-200 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700'
               }`}
           >
             <p className="text-sm font-semibold">{label}</p>
@@ -86,8 +87,8 @@ const SectionToolbar = ({ onBack, onReset, onSave, isSaving, hasChanges, showJso
         type="button"
         onClick={onToggleJson}
         className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm transition-colors ${showJson
-            ? 'border-primary-200 bg-primary-50 text-primary-700 dark:border-primary-800 dark:bg-primary-900/20 dark:text-primary-300'
-            : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200'
+          ? 'border-primary-200 bg-primary-50 text-primary-700 dark:border-primary-800 dark:bg-primary-900/20 dark:text-primary-300'
+          : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200'
           }`}
       >
         <Code className="h-4 w-4" />
@@ -250,61 +251,79 @@ FeaturesEditor.propTypes = {
   onChange: PropTypes.func.isRequired,
 }
 
-const HeroPreview = ({ content }) => {
-  const HeroIcon = getIconComponent(content.icon, 'Terminal')
-  const features = Array.isArray(content.features) ? content.features : []
+const StatsForm = ({ content, onFieldChange }) => {
+  const stats = content || {}
+  const items = Array.isArray(stats.items) ? stats.items : []
+
+  const handleAdd = () => {
+    const newItem = { label: 'Neuer Wert', value: '100+' }
+    onFieldChange(['items'], [...items, newItem])
+  }
+
+  const handleRemove = (index) => {
+    const newItems = items.filter((_, i) => i !== index)
+    onFieldChange(['items'], newItems)
+  }
+
+  const handleChange = (index, field, value) => {
+    const newItems = [...items]
+    newItems[index] = { ...newItems[index], [field]: value }
+    onFieldChange(['items'], newItems)
+  }
+
   return (
-    <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="rounded-xl bg-gradient-to-r from-primary-600 to-primary-700 p-3 text-white">
-            <HeroIcon className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Badge</p>
-            <p className="text-lg font-semibold text-gray-900">{content.badgeText}</p>
-          </div>
-        </div>
-        <span className="rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
-          Vorschau
-        </span>
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Statistiken</h3>
+        <button
+          type="button"
+          onClick={handleAdd}
+          className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+        >
+          <Plus className="h-3 w-3" />
+          Statistik hinzufügen
+        </button>
       </div>
       <div className="space-y-3">
-        <h3 className="text-2xl font-bold text-gray-900">
-          {content?.title?.line1}
-          <br />
-          <span className="bg-gradient-to-r from-yellow-200 via-yellow-100 to-yellow-200 bg-clip-text text-transparent">
-            {content?.title?.line2}
-          </span>
-        </h3>
-        <p className="text-gray-600">
-          {content.subtitle}
-          {content.subline && <span className="block text-sm text-gray-500">{content.subline}</span>}
-        </p>
-      </div>
-      <div className="grid grid-cols-1 gap-4 border-t border-gray-100 pt-4 sm:grid-cols-2 lg:grid-cols-3">
-        {features.map((feature, idx) => {
-          const FeatureIcon = getIconComponent(feature.icon, 'Terminal')
-          return (
-            <div key={`${feature.title}-${idx}`} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-              <div className="flex items-center gap-2 text-primary-700">
-                <FeatureIcon className="h-4 w-4" />
-                <span className="text-sm font-semibold">{feature.title}</span>
+        {items.map((item, index) => (
+          <div key={index} className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
+            <div className="flex-1 grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="text-xs font-medium text-gray-500">Wert (z.B. 10k+)</label>
+                <input
+                  type="text"
+                  className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  value={item.value || ''}
+                  onChange={(e) => handleChange(index, 'value', e.target.value)}
+                />
               </div>
-              <p className="mt-1 text-sm text-gray-600">{feature.description}</p>
+              <div>
+                <label className="text-xs font-medium text-gray-500">Label (z.B. Leser)</label>
+                <input
+                  type="text"
+                  className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  value={item.label || ''}
+                  onChange={(e) => handleChange(index, 'label', e.target.value)}
+                />
+              </div>
             </div>
-          )
-        })}
-        {features.length === 0 && (
-          <p className="col-span-full text-sm text-gray-500">Keine Feature-Karten konfiguriert.</p>
-        )}
+            <button
+              type="button"
+              onClick={() => handleRemove(index)}
+              className="mt-6 rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        ))}
       </div>
     </div>
   )
 }
 
-HeroPreview.propTypes = {
-  content: PropTypes.object.isRequired,
+StatsForm.propTypes = {
+  content: PropTypes.object,
+  onFieldChange: PropTypes.func.isRequired,
 }
 
 const HeroContentForm = ({ content, onFieldChange }) => {
@@ -387,32 +406,6 @@ HeroContentForm.propTypes = {
   onFieldChange: PropTypes.func.isRequired,
 }
 
-const SiteMetaPreview = ({ content }) => {
-  return (
-    <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
-      <div className="flex items-center justify-between">
-        <h4 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Seitentitel (Tab)</h4>
-        <span className="rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
-          Vorschau
-        </span>
-      </div>
-      <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-        <p className="text-sm font-semibold text-gray-800">{content?.title || 'Linux Tutorial - Lerne Linux Schritt für Schritt'}</p>
-        <p className="mt-2 text-sm text-gray-600 leading-relaxed">
-          {content?.description || 'Lerne Linux von Grund auf - Interaktiv, modern und praxisnah.'}
-        </p>
-      </div>
-      <p className="text-xs text-gray-500">
-        Diese Angaben erscheinen als Browser-Titel und Meta-Beschreibung (z. B. in Suchmaschinen).
-      </p>
-    </div>
-  )
-}
-
-SiteMetaPreview.propTypes = {
-  content: PropTypes.object.isRequired,
-}
-
 const SiteMetaForm = ({ content, onFieldChange }) => {
   const siteMeta = content || {}
   return (
@@ -429,7 +422,7 @@ const SiteMetaForm = ({ content, onFieldChange }) => {
             className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
             value={siteMeta.title || ''}
             onChange={(event) => onFieldChange(['title'], event.target.value)}
-            placeholder="z. B. Linux Tutorial - Lerne Linux Schritt für Schritt"
+            placeholder="z. B. IT Portal"
           />
         </div>
         <div>
@@ -458,11 +451,432 @@ SiteMetaForm.propTypes = {
   onFieldChange: PropTypes.func.isRequired,
 }
 
+const HeaderForm = ({ content, onFieldChange }) => {
+  const header = content || {}
+  const brand = header.brand || {}
+  const navItems = Array.isArray(header.navItems) ? header.navItems : []
+
+  const handleNavChange = (index, field, value) => {
+    const newItems = [...navItems]
+    newItems[index] = { ...newItems[index], [field]: value }
+    onFieldChange(['navItems'], newItems)
+  }
+
+  const handleAddNav = () => {
+    onFieldChange(['navItems'], [...navItems, { id: `nav-${Date.now()}`, label: 'Neuer Link', type: 'route', path: '/' }])
+  }
+
+  const handleRemoveNav = (index) => {
+    const newItems = navItems.filter((_, i) => i !== index)
+    onFieldChange(['navItems'], newItems)
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Marke & Logo</h3>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Markenname</label>
+            <input
+              type="text"
+              className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              value={brand.name || ''}
+              onChange={(e) => onFieldChange(['brand', 'name'], e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Icon (Lucide Name)</label>
+            <input
+              type="text"
+              className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              value={brand.icon || ''}
+              onChange={(e) => onFieldChange(['brand', 'icon'], e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Navigation</h3>
+          <button
+            type="button"
+            onClick={handleAddNav}
+            className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+          >
+            <Plus className="h-3 w-3" />
+            Link hinzufügen
+          </button>
+        </div>
+        <div className="space-y-3">
+          {navItems.map((item, index) => (
+            <div key={index} className="flex items-start gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
+              <div className="flex-1 grid gap-3 sm:grid-cols-3">
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Label</label>
+                  <input
+                    type="text"
+                    className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    value={item.label || ''}
+                    onChange={(e) => handleNavChange(index, 'label', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Typ</label>
+                  <select
+                    className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    value={item.type || 'route'}
+                    onChange={(e) => handleNavChange(index, 'type', e.target.value)}
+                  >
+                    <option value="route">Interne Route</option>
+                    <option value="section">Scroll-Sektion</option>
+                    <option value="external">Externer Link</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Pfad / URL / ID</label>
+                  <input
+                    type="text"
+                    className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                    value={item.path || item.value || ''}
+                    onChange={(e) => handleNavChange(index, 'path', e.target.value)}
+                  />
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleRemoveNav(index)}
+                className="mt-6 rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+HeaderForm.propTypes = {
+  content: PropTypes.object,
+  onFieldChange: PropTypes.func.isRequired,
+}
+
+const FooterForm = ({ content, onFieldChange }) => {
+  const footer = content || {}
+  const brand = footer.brand || {}
+  const bottom = footer.bottom || {}
+  const quickLinks = Array.isArray(footer.quickLinks) ? footer.quickLinks : []
+
+  const handleLinkChange = (index, field, value) => {
+    const newLinks = [...quickLinks]
+    newLinks[index] = { ...newLinks[index], [field]: value }
+    onFieldChange(['quickLinks'], newLinks)
+  }
+
+  const handleAddLink = () => {
+    onFieldChange(['quickLinks'], [...quickLinks, { label: 'Neuer Link', path: '/' }])
+  }
+
+  const handleRemoveLink = (index) => {
+    const newLinks = quickLinks.filter((_, i) => i !== index)
+    onFieldChange(['quickLinks'], newLinks)
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Footer Marke</h3>
+        <div className="grid grid-cols-1 gap-4">
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Titel</label>
+            <input
+              type="text"
+              className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              value={brand.title || ''}
+              onChange={(e) => onFieldChange(['brand', 'title'], e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Beschreibung</label>
+            <textarea
+              className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              rows="2"
+              value={brand.description || ''}
+              onChange={(e) => onFieldChange(['brand', 'description'], e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Quick Links</h3>
+          <button
+            type="button"
+            onClick={handleAddLink}
+            className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+          >
+            <Plus className="h-3 w-3" />
+            Link hinzufügen
+          </button>
+        </div>
+        <div className="space-y-3">
+          {quickLinks.map((link, index) => (
+            <div key={index} className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
+              <div className="flex-1 grid gap-3 sm:grid-cols-2">
+                <input
+                  type="text"
+                  placeholder="Label"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  value={link.label || ''}
+                  onChange={(e) => handleLinkChange(index, 'label', e.target.value)}
+                />
+                <input
+                  type="text"
+                  placeholder="Pfad / URL"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+                  value={link.path || link.href || ''}
+                  onChange={(e) => handleLinkChange(index, 'path', e.target.value)}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => handleRemoveLink(index)}
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Copyright & Signatur</h3>
+        <div className="grid grid-cols-1 gap-4">
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Copyright Text ({'{year}'} Platzhalter)</label>
+            <input
+              type="text"
+              className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              value={bottom.copyright || ''}
+              onChange={(e) => onFieldChange(['bottom', 'copyright'], e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Signatur (Rechts unten)</label>
+            <input
+              type="text"
+              className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              value={bottom.signature || ''}
+              onChange={(e) => onFieldChange(['bottom', 'signature'], e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+FooterForm.propTypes = {
+  content: PropTypes.object,
+  onFieldChange: PropTypes.func.isRequired,
+}
+
+const BlogSectionForm = ({ content, onFieldChange }) => {
+  const section = content || {}
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Blog-Sektion (Startseite)</h3>
+      <div className="grid grid-cols-1 gap-4">
+        <div>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Badge</label>
+          <input
+            type="text"
+            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            value={section.badge || ''}
+            onChange={(e) => onFieldChange(['badge'], e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Titel</label>
+          <input
+            type="text"
+            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            value={section.title || ''}
+            onChange={(e) => onFieldChange(['title'], e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Untertitel</label>
+          <textarea
+            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            rows="2"
+            value={section.subtitle || ''}
+            onChange={(e) => onFieldChange(['subtitle'], e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Button-Text (Karte)</label>
+          <input
+            type="text"
+            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            value={section.tutorialCardButton || ''}
+            onChange={(e) => onFieldChange(['tutorialCardButton'], e.target.value)}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+BlogSectionForm.propTypes = {
+  content: PropTypes.object,
+  onFieldChange: PropTypes.func.isRequired,
+}
+
+const GrundlagenForm = ({ content, onFieldChange }) => {
+  const page = content || {}
+  const hero = page.hero || {}
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Grundlagen-Seite</h3>
+      <div className="grid grid-cols-1 gap-4">
+        <div>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Hero Titel</label>
+          <input
+            type="text"
+            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            value={hero.title || ''}
+            onChange={(e) => onFieldChange(['hero', 'title'], e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Hero Untertitel</label>
+          <textarea
+            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            rows="2"
+            value={hero.subtitle || ''}
+            onChange={(e) => onFieldChange(['hero', 'subtitle'], e.target.value)}
+          />
+        </div>
+        <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 dark:bg-slate-800 dark:border-slate-700">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Die Module dieser Seite können aktuell nur über den JSON-Editor (Erweitert) bearbeitet werden.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+GrundlagenForm.propTypes = {
+  content: PropTypes.object,
+  onFieldChange: PropTypes.func.isRequired,
+}
+
+const HeroPreview = ({ content }) => {
+  const HeroIcon = getIconComponent(content.icon, 'Terminal')
+  const features = Array.isArray(content.features) ? content.features : []
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-slate-900 p-8 shadow-xl">
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
+      <div className="relative z-10 text-center">
+        <div className="mb-6 flex justify-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-primary-500/30 bg-primary-500/10 px-4 py-1.5 text-sm font-medium text-primary-400 backdrop-blur-sm">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-400 opacity-75"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary-500"></span>
+            </span>
+            {content.badgeText || 'IT Portal'}
+          </span>
+        </div>
+        <h3 className="mb-6 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+          {content?.title?.line1}
+          <span className="block bg-gradient-to-r from-primary-400 to-purple-400 bg-clip-text text-transparent">
+            {content?.title?.line2}
+          </span>
+        </h3>
+        <p className="mx-auto mb-8 max-w-2xl text-lg text-slate-400">
+          {content.subtitle}
+        </p>
+        {content.subline && (
+          <p className="text-sm text-slate-500">{content.subline}</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+HeroPreview.propTypes = {
+  content: PropTypes.object.isRequired,
+}
+
+const StatsPreview = ({ content }) => {
+  const items = Array.isArray(content.items) ? content.items : []
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+      <div className="flex items-center justify-between mb-6">
+        <h4 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Statistiken Vorschau</h4>
+        <span className="rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
+          Vorschau
+        </span>
+      </div>
+      <div className="rounded-xl bg-slate-950 p-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          {items.map((stat, i) => (
+            <div key={i}>
+              <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
+              <div className="text-sm text-slate-500 font-medium">{stat.label}</div>
+            </div>
+          ))}
+          {items.length === 0 && (
+            <div className="col-span-full text-slate-500">Keine Statistiken vorhanden.</div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+StatsPreview.propTypes = {
+  content: PropTypes.object.isRequired,
+}
+
+const SiteMetaPreview = ({ content }) => {
+  return (
+    <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
+      <div className="flex items-center justify-between">
+        <h4 className="text-lg font-semibold text-gray-900 dark:text-slate-100">Seitentitel (Tab)</h4>
+        <span className="rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
+          Vorschau
+        </span>
+      </div>
+      <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+        <p className="text-sm font-semibold text-gray-800">{content?.title || 'IT Portal - Security, Programming & Admin'}</p>
+        <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+          {content?.description || 'Dein Portal für IT Security, Programmierung und Administration.'}
+        </p>
+      </div>
+      <p className="text-xs text-gray-500">
+        Diese Angaben erscheinen als Browser-Titel und Meta-Beschreibung (z. B. in Suchmaschinen).
+      </p>
+    </div>
+  )
+}
+
+SiteMetaPreview.propTypes = {
+  content: PropTypes.object.isRequired,
+}
+
 const TutorialSectionPreview = ({ content }) => {
   return (
     <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-        <h4 className="text-lg font-semibold text-gray-900">Tutorial-Sektion</h4>
+        <h4 className="text-lg font-semibold text-gray-900">Blog-Sektion</h4>
         <span className="rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700">
           Vorschau
         </span>
@@ -470,20 +884,20 @@ const TutorialSectionPreview = ({ content }) => {
       <div className="space-y-3">
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Badge</p>
-          <p className="mt-1 text-sm font-semibold text-gray-900">{content.badge || 'Tutorials'}</p>
+          <p className="mt-1 text-sm font-semibold text-gray-900">{content.badge || 'Neueste Beiträge'}</p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Titel</p>
-          <p className="mt-1 text-sm font-semibold text-gray-900">{content.title || 'Linux Tutorials'}</p>
+          <p className="mt-1 text-sm font-semibold text-gray-900">{content.title || 'Aktuelle Artikel'}</p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Untertitel</p>
-          <p className="mt-1 text-sm text-gray-700">{content.subtitle || 'Lerne die Grundlagen'}</p>
+          <p className="mt-1 text-sm text-gray-700">{content.subtitle || 'Entdecke die neuesten Insights'}</p>
         </div>
         <div className="rounded-lg border border-primary-200 bg-primary-50 p-3">
           <p className="text-xs font-medium uppercase tracking-wide text-primary-600">Button-Text</p>
-          <p className="mt-1 text-sm font-semibold text-primary-700">{content.tutorialCardButton || 'Zum Tutorial'}</p>
-          <p className="mt-1 text-xs text-primary-600">Dieser Text erscheint auf den Tutorial-Karten</p>
+          <p className="mt-1 text-sm font-semibold text-primary-700">{content.tutorialCardButton || 'Zum Artikel'}</p>
+          <p className="mt-1 text-xs text-primary-600">Dieser Text erscheint auf den Blog-Karten</p>
         </div>
       </div>
     </div>
@@ -498,6 +912,8 @@ const SectionPreview = ({ section, content }) => {
   switch (section) {
     case 'hero':
       return <HeroPreview content={content} />
+    case 'stats':
+      return <StatsPreview content={content} />
     case 'tutorial_section':
       return <TutorialSectionPreview content={content} />
     case 'site_meta':
@@ -505,9 +921,9 @@ const SectionPreview = ({ section, content }) => {
     default:
       return (
         <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600 shadow-sm">
-          <p className="font-semibold text-gray-700">Keine visuelle Vorschau für diesen Abschnitt vorhanden.</p>
+          <p className="font-semibold text-gray-700">Vorschau nicht verfügbar</p>
           <p className="mt-2 text-gray-500">
-            Bearbeite die JSON-Struktur links. Änderungen sind sofort nach dem Speichern auf der Seite sichtbar.
+            Nutze das Formular oben, um die Inhalte zu bearbeiten.
           </p>
         </div>
       )
@@ -713,8 +1129,8 @@ const SiteContentEditor = () => {
           {status && (
             <div
               className={`flex items-start gap-2 rounded-lg border p-3 text-sm ${status.type === 'success'
-                  ? 'border-green-200 bg-green-50 text-green-700'
-                  : 'border-red-200 bg-red-50 text-red-700'
+                ? 'border-green-200 bg-green-50 text-green-700'
+                : 'border-red-200 bg-red-50 text-red-700'
                 }`}
             >
               <AlertCircle className="h-4 w-4" />
@@ -727,8 +1143,28 @@ const SiteContentEditor = () => {
             <HeroContentForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
           )}
 
+          {selectedSection === 'stats' && (
+            <StatsForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
+          )}
+
           {selectedSection === 'site_meta' && (
             <SiteMetaForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
+          )}
+
+          {selectedSection === 'header' && (
+            <HeaderForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
+          )}
+
+          {selectedSection === 'footer' && (
+            <FooterForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
+          )}
+
+          {selectedSection === 'tutorial_section' && (
+            <BlogSectionForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
+          )}
+
+          {selectedSection === 'grundlagen_page' && (
+            <GrundlagenForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
           )}
 
           {/* JSON Editor (Toggleable) */}

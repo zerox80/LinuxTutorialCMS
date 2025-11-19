@@ -17,6 +17,9 @@ const LandingPage = () => {
         return getIconComponent(iconName, 'Terminal')
     }
 
+    const statsContent = getSection('stats') || {}
+    const statsItems = Array.isArray(statsContent.items) ? statsContent.items : []
+
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-primary-500/30">
             <Header />
@@ -99,12 +102,7 @@ const LandingPage = () => {
             <section className="py-20 border-y border-slate-800/50 bg-slate-950">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-                        {[
-                            { label: 'Leser monatlich', value: '10k+' },
-                            { label: 'Artikel', value: '500+' },
-                            { label: 'Themenbereiche', value: '20+' },
-                            { label: 'Community', value: 'Active' },
-                        ].map((stat, i) => (
+                        {statsItems.map((stat, i) => (
                             <div key={i}>
                                 <div className="text-4xl font-bold text-white mb-2">{stat.value}</div>
                                 <div className="text-slate-500 font-medium">{stat.label}</div>

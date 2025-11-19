@@ -49,6 +49,14 @@ export const DEFAULT_CONTENT = {
       },
     ],
   },
+  stats: {
+    items: [
+      { label: 'Leser monatlich', value: '10k+' },
+      { label: 'Artikel', value: '500+' },
+      { label: 'Themenbereiche', value: '20+' },
+      { label: 'Community', value: 'Active' },
+    ],
+  },
   site_meta: {
     title: 'IT Wissensportal - Security, Programming & Admin',
     description: 'Dein Portal für IT Security, Programmierung und Administration.',
