@@ -48,7 +48,8 @@ const copyComputedStyles = (source, target) => {
     // We need to copy specific properties. This is a comprehensive list of visual properties.
     const properties = [
         // Layout
-        'display', 'position', 'width', 'height', 'margin', 'padding', 'top', 'left', 'right', 'bottom',
+        // Layout
+        'display', 'position', 'margin', 'padding', 'top', 'left', 'right', 'bottom',
         'float', 'clear', 'z-index', 'box-sizing', 'overflow',
 
         // Flex/Grid (important for layout)
