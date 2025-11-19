@@ -193,7 +193,8 @@ async fn main() {
         .route("/api/auth/login", post(handlers::auth::login))
         .route("/api/auth/logout", post(handlers::auth::logout))
         .layer(RequestBodyLimitLayer::new(LOGIN_BODY_LIMIT))
-        .layer(GovernorLayer::new(rate_limit_config));
+        .layer(GovernorLayer::new(rate_limit_config))
+        .with_state(pool.clone());
 
     let admin_rate_limit_config = std::sync::Arc::new(
         GovernorConfigBuilder::default()
@@ -204,19 +205,16 @@ async fn main() {
             .expect("Failed to build governor config for write routes"),
     );
 
-    let admin_routes: Router<db::DbPool> = Router::new()
-
+    let admin_routes = Router::new()
         .route("/api/tutorials", post(handlers::tutorials::create_tutorial))
         .route(
             "/api/tutorials/{id}",
             put(handlers::tutorials::update_tutorial).delete(handlers::tutorials::delete_tutorial),
         )
-
         .route(
             "/api/content/{section}",
             put(handlers::site_content::update_site_content),
         )
-
         .route(
             "/api/pages",
             get(handlers::site_pages::list_site_pages).post(handlers::site_pages::create_site_page),
@@ -227,7 +225,6 @@ async fn main() {
                 .put(handlers::site_pages::update_site_page)
                 .delete(handlers::site_pages::delete_site_page),
         )
-
         .route(
             "/api/pages/{page_id}/posts",
             get(handlers::site_posts::list_posts_for_page).post(handlers::site_posts::create_post),
@@ -238,7 +235,6 @@ async fn main() {
                 .put(handlers::site_posts::update_post)
                 .delete(handlers::site_posts::delete_post),
         )
-
         .route(
             "/api/tutorials/{id}/comments",
             post(handlers::comments::create_comment),
@@ -251,17 +247,15 @@ async fn main() {
             "/api/upload",
             post(handlers::upload::upload_image),
         )
-
+        .with_state(pool.clone())
         .route_layer(from_extractor::<csrf::CsrfGuard>())
-
         .route_layer(from_fn(middleware::auth::auth_middleware))
-
         .layer(RequestBodyLimitLayer::new(ADMIN_BODY_LIMIT))
-
         .layer(GovernorLayer::new(admin_rate_limit_config.clone()));
 
     // Define the application router with all routes and middleware
     let mut app = Router::new()
+        .with_state(pool)
         // Merge all route modules
         .merge(login_router)
 
@@ -328,9 +322,7 @@ async fn main() {
 
         // Serve index.html with server-side injection for root and fallback
         .route("/", get(handlers::frontend_proxy::serve_index))
-        .route("/{*path}", get(handlers::frontend_proxy::serve_index))
-
-        .with_state(pool)
+        .route("/{*path}", get(handlers::frontend_proxy::serve_index));
         .layer(axum::middleware::from_fn(security::security_headers))
         .layer(cors_layer)
         .layer(DefaultBodyLimit::max(10 * 1024 * 1024)); // 10MB body limit
