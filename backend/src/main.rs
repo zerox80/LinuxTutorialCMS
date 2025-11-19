@@ -252,9 +252,9 @@ async fn main() {
             post(handlers::upload::upload_image),
         )
 
-        .route_layer(middleware::from_extractor::<csrf::CsrfGuard>())
+        .route_layer(from_extractor::<csrf::CsrfGuard>())
 
-        .route_layer(middleware::from_fn(middleware::auth::auth_middleware))
+        .route_layer(from_fn(middleware::auth::auth_middleware))
 
         .layer(RequestBodyLimitLayer::new(ADMIN_BODY_LIMIT))
 
@@ -299,7 +299,7 @@ async fn main() {
             "/api/posts/{id}/comments",
             get(handlers::comments::list_post_comments)
                 .post(handlers::comments::create_post_comment)
-                .route_layer(middleware::from_extractor::<csrf::CsrfGuard>())
+                .route_layer(from_extractor::<csrf::CsrfGuard>())
                 .route_layer(GovernorLayer::new(admin_rate_limit_config.clone())),
         )
         .route(
