@@ -65,21 +65,7 @@ export const DEFAULT_CONTENT = {
     title: 'IT Wissensportal - Security, Programming & Admin',
     description: 'Dein Portal für IT Security, Programmierung und Administration.',
   },
-  tutorial_section: {
-    title: 'Neueste Beiträge',
-    description: 'Aktuelle Artikel und Guides aus der IT-Welt',
-    heading: 'Wissen vertiefen',
-    ctaDescription: 'Stöbere in unseren Artikeln und erweitere dein Know-how.',
-    ctaPrimary: {
-      label: 'Alle Beiträge',
-      target: { type: 'route', value: '/blog' },
-    },
-    ctaSecondary: {
-      label: 'Mehr erfahren',
-      target: { type: 'section', value: 'home' },
-    },
-    tutorialCardButton: 'Artikel lesen',
-  },
+
   header: {
     brand: {
       name: 'IT Portal',

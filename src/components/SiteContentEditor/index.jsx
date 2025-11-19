@@ -882,11 +882,11 @@ const SiteContentEditor = () => {
   } = useContent()
 
   const sectionOptions = useMemo(() => {
-    const base = [...CONTENT_SECTIONS]
-    const extraKeys = content
-      ? Object.keys(content).filter((key) => !base.includes(key))
-      : []
-    return [...base, ...extraKeys.sort()]
+    const keys = Object.keys(content || {})
+    const defaultKeys = Object.keys(DEFAULT_CONTENT)
+    const combined = Array.from(new Set([...keys, ...defaultKeys]))
+    // Only show sections that have a defined label (whitelist approach)
+    return combined.filter(key => sectionLabels.hasOwnProperty(key)).sort()
   }, [content])
 
   const [selectedSection, setSelectedSection] = useState(null)
