@@ -1027,8 +1027,40 @@ async fn apply_comment_migrations(
 async fn apply_vote_migration(
     tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
 ) -> Result<(), sqlx::Error> {
+    // Create comment_votes table
     sqlx::query(include_str!("../migrations/20241119_create_comment_votes.sql"))
         .execute(&mut **tx)
         .await?;
+
+    // Add votes column to comments if missing
+    let has_votes: bool = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM pragma_table_info('comments') WHERE name='votes'",
+    )
+    .fetch_one(&mut **tx)
+    .await
+    .map(|count: i64| count > 0)?;
+
+    if !has_votes {
+        tracing::info!("Adding votes column to comments table");
+        sqlx::query("ALTER TABLE comments ADD COLUMN votes INTEGER NOT NULL DEFAULT 0")
+            .execute(&mut **tx)
+            .await?;
+    }
+
+    // Add is_admin column to comments if missing
+    let has_is_admin: bool = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM pragma_table_info('comments') WHERE name='is_admin'",
+    )
+    .fetch_one(&mut **tx)
+    .await
+    .map(|count: i64| count > 0)?;
+
+    if !has_is_admin {
+        tracing::info!("Adding is_admin column to comments table");
+        sqlx::query("ALTER TABLE comments ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT FALSE")
+            .execute(&mut **tx)
+            .await?;
+    }
+
     Ok(())
 }
