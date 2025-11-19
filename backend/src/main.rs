@@ -14,7 +14,7 @@ use crate::middleware::{cors, security};
 use axum::http::{
     header::{
         AUTHORIZATION, CACHE_CONTROL, CONTENT_SECURITY_POLICY, CONTENT_TYPE, EXPIRES, PRAGMA,
-        STRICT_TRANSPORT_SECURITY, X_CONTENT_TYPE_OPTIONS, X_FRAME_OPTIONS,
+        STRICT_TRANSPORT_SECURITY, X_CONTENT_TYPE_OPTIONS, X_FRAME_OPTIONS, ACCEPT,
     },
     HeaderName, HeaderValue, Method,
 };
@@ -68,7 +68,7 @@ const X_REAL_IP_HEADER: HeaderName = HeaderName::from_static("x-real-ip");
 /// # Supported formats
 /// - true: "1", "true", "yes", "on" (case-insensitive)
 /// - false: "0", "false", "no", "off" (case-insensitive)
-
+///
 
 /// Middleware to strip potentially spoofable forwarded headers from incoming requests.
 ///
@@ -155,7 +155,7 @@ async fn main() {
                 .iter()
                 .map(|&s| s.to_string())
                 .collect()
-        });
+            });
 
     let allowed_origins = cors::parse_allowed_origins(cors_origins.iter().map(|s| s.as_str()));
 
@@ -204,7 +204,7 @@ async fn main() {
             .expect("Failed to build governor config for write routes"),
     );
 
-    let admin_routes = Router::new()
+    let admin_routes: Router<db::DbPool> = Router::new()
 
         .route("/api/tutorials", post(handlers::tutorials::create_tutorial))
         .route(
