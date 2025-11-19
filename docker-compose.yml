@@ -127,7 +127,7 @@ services:
     # Port mapping: Host:Container
     # To change external port, modify "8489:80" (e.g., "8080:80" for port 8080)
     ports:
-      - "8489:80"  # External port 8489 maps to container port 80
+      - "127.0.0.1:8489:80"  # External port 8489 maps to container port 80
 
     # Configuration and logging
     volumes:
