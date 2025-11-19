@@ -988,7 +988,7 @@ async fn insert_default_tutorials_tx(
         .execute(&mut **tx)
         .await?;
 
-        replace_tutorial_topics_tx(tx, id, &topics_vec).await?;
+        crate::repositories::tutorials::replace_tutorial_topics_tx(tx, id, &topics_vec).await?;
     }
 
     Ok(())
