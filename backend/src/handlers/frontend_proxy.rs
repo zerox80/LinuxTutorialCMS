@@ -30,7 +30,7 @@ pub async fn serve_index(State(pool): State<db::DbPool>) -> impl IntoResponse {
     };
 
     // Fetch site meta from DB
-    let site_meta = match db::fetch_site_content_by_section(&pool, "site_meta").await {
+    let site_meta = match repositories::content::fetch_site_content_by_section(&pool, "site_meta").await {
         Ok(Some(record)) => {
             match serde_json::from_str::<serde_json::Value>(&record.content_json) {
                 Ok(json) => json,
