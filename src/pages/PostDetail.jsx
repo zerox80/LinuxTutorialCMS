@@ -55,6 +55,10 @@ const PostDetail = () => {
       setLoading(true)
       const element = document.getElementById('post-content')
 
+      if (!element) {
+        throw new Error('Inhalt nicht gefunden')
+      }
+
       // Wait for all images to be loaded
       const images = Array.from(element.getElementsByTagName('img'))
       await Promise.all(
@@ -82,11 +86,25 @@ const PostDetail = () => {
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       }
 
-      const html2pdf = (await import('html2pdf.js')).default
+      // Robust import for html2pdf.js
+      let html2pdf
+      try {
+        const module = await import('html2pdf.js')
+        html2pdf = module.default || module
+      } catch (e) {
+        console.error('Failed to load html2pdf.js:', e)
+        throw new Error('PDF-Bibliothek konnte nicht geladen werden')
+      }
+
+      if (typeof html2pdf !== 'function') {
+        console.error('html2pdf is not a function:', html2pdf)
+        throw new Error('PDF-Bibliothek ist fehlerhaft')
+      }
+
       await html2pdf().set(opt).from(element).save()
     } catch (err) {
       console.error('PDF generation failed:', err)
-      alert('Fehler beim Erstellen des PDFs')
+      alert(`Fehler beim Erstellen des PDFs: ${err.message}`)
     } finally {
       setLoading(false)
     }

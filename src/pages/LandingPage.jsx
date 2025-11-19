@@ -88,12 +88,7 @@ const LandingPage = () => {
                         </button>
                     </div>
 
-                    {/* Scroll Indicator */}
-                    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce opacity-50">
-                        <div className="w-6 h-10 rounded-full border-2 border-slate-500 flex items-start justify-center p-1">
-                            <div className="w-1 h-2 bg-slate-500 rounded-full animate-scroll" />
-                        </div>
-                    </div>
+
                 </div>
             </section>
 
