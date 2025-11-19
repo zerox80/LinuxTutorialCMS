@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import PropTypes from 'prop-types'
-import { AlertCircle, ArrowLeft, Check, Loader2, RefreshCw, Plus, Trash2, Code, Terminal } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Check, Loader2, RefreshCw, Plus, Trash2, Code } from 'lucide-react'
 import {
   useContent,
-  CONTENT_SECTIONS,
   DEFAULT_CONTENT,
 } from '../../context/ContentContext'
 import { getIconComponent } from '../../utils/iconMap'
@@ -724,8 +723,6 @@ FooterForm.propTypes = {
 
 
 const HeroPreview = ({ content }) => {
-  const HeroIcon = getIconComponent(content.icon, 'Terminal')
-  const features = Array.isArray(content.features) ? content.features : []
   return (
     <div className="relative overflow-hidden rounded-2xl bg-slate-900 p-8 shadow-xl">
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>

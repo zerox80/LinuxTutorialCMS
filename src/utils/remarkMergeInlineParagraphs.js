@@ -1,8 +1,8 @@
 import { visit } from 'unist-util-visit'
 
-const tightenListItems = () => {}
-const reattachDanglingParagraphs = () => {}
-const mergeLooseParagraphs = () => {}
+const tightenListItems = () => { }
+const reattachDanglingParagraphs = () => { }
+const mergeLooseParagraphs = () => { }
 
 // Set of inline node types for classification
 const INLINE_NODE_TYPES = new Set([
@@ -21,6 +21,23 @@ const INLINE_NODE_TYPES = new Set([
 ])
 // Regex for letter and number detection in multiple languages
 const LETTER_NUMBER_REGEX = /[A-Za-z0-9\u00C0-\u024F]/
+
+const NEVER_BEFORE_SPACE = new Set(['.', ',', ':', ';', '!', '?', ')', ']', '}', '"', "'"])
+const NEVER_AFTER_SPACE = new Set(['(', '[', '{', '"', "'"])
+
+const getFirstInlineChar = (nodes) => {
+  if (!nodes || nodes.length === 0) return null
+  const first = nodes[0]
+  if (first.type === 'text') return first.value.charAt(0)
+  return null
+}
+
+const getLastInlineChar = (nodes) => {
+  if (!nodes || nodes.length === 0) return null
+  const last = nodes[nodes.length - 1]
+  if (last.type === 'text') return last.value.charAt(last.value.length - 1)
+  return null
+}
 const cloneNode = (node) => {
   if (!node || typeof node !== 'object') {
     return node

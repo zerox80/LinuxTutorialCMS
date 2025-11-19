@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import PropTypes from 'prop-types'
-import { AlertCircle, FilePlus, RefreshCw, X, Code, ChevronDown, ChevronUp } from 'lucide-react'
+import { AlertCircle, FilePlus, RefreshCw, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { normalizeTitle } from '../../utils/postUtils'
 import { sanitizeSlug, isValidSlug } from '../../utils/slug'
 import { parseJsonField, sanitizeInteger } from './formUtils'

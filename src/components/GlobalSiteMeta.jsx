@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async'
-import { useMemo, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useContent } from '../context/ContentContext'
 
 const FALLBACK_TITLE = 'Linux Tutorial - Lerne Linux Schritt für Schritt'
