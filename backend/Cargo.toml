@@ -27,7 +27,7 @@ dotenv = "0.15"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 uuid = { version = "1.4", features = ["v4", "fast-rng", "macro-diagnostics"] }
-infer = "0.15"
+infer = "0.19"
 url = "2.5"
 idna_adapter = "=1.2.1"
 regex = { version = "1.10", default-features = false, features = ["std"] }
