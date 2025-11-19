@@ -563,3 +563,53 @@ fn parse_bearer_token(value: &str) -> Option<String> {
     None
 }
 
+
+/// Optional Claims extractor for endpoints that support both authenticated and anonymous access.
+///
+/// If a valid token is provided, it extracts the claims.
+/// If no token is provided, it returns `None`.
+/// If an invalid token is provided, it returns an error (401).
+pub struct OptionalClaims(pub Option<Claims>);
+
+impl<S> FromRequestParts<S> for OptionalClaims
+where
+    S: Send + Sync,
+    DbPool: FromRef<S>,
+{
+    type Rejection = (StatusCode, String);
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        // Check if claims already extracted by middleware
+        if let Some(claims) = parts.extensions.get::<Claims>() {
+            return Ok(OptionalClaims(Some(claims.clone())));
+        }
+
+        // Extract token from Authorization header or cookie
+        let token = match extract_token(&parts.headers) {
+            Some(token) => token,
+            None => return Ok(OptionalClaims(None)),
+        };
+
+        // Verify and decode the token
+        let claims = verify_jwt(&token)
+            .map_err(|e| (StatusCode::UNAUTHORIZED, format!("Invalid token: {}", e)))?;
+
+        // Check if token is blacklisted
+        let pool = DbPool::from_ref(state);
+        let is_blacklisted = crate::repositories::token_blacklist::is_token_blacklisted(&pool, &token)
+            .await
+            .map_err(|e| {
+                tracing::error!("Database error checking token blacklist: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Internal server error".to_string(),
+                )
+            })?;
+
+        if is_blacklisted {
+            return Err((StatusCode::UNAUTHORIZED, "Token has been revoked".to_string()));
+        }
+
+        Ok(OptionalClaims(Some(claims)))
+    }
+}

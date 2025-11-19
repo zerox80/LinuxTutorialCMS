@@ -229,6 +229,7 @@ pub async fn list_post_comments(
 pub async fn create_post_comment(
     State(pool): State<DbPool>,
     Path(post_id): Path<String>,
+    auth::OptionalClaims(claims): auth::OptionalClaims,
     Json(payload): Json<CreateCommentRequest>,
 ) -> Result<Json<Comment>, (StatusCode, Json<ErrorResponse>)> {
     
@@ -244,7 +245,7 @@ pub async fn create_post_comment(
         return Err((StatusCode::NOT_FOUND, Json(ErrorResponse { error: "Post not found".to_string() })));
     }
 
-    create_comment_internal(pool, None, Some(post_id), payload, None).await
+    create_comment_internal(pool, None, Some(post_id), payload, claims).await
 }
 
 async fn create_comment_internal(
@@ -412,6 +413,7 @@ pub async fn delete_comment(
 
 pub async fn vote_comment(
     State(pool): State<DbPool>,
+    claims: auth::Claims,
     Path(id): Path<String>,
 ) -> Result<Json<Comment>, (StatusCode, Json<ErrorResponse>)> {
     // Check if comment exists
@@ -437,9 +439,7 @@ pub async fn vote_comment(
     }
 
     // Determine voter ID
-    // TEMPORARY FIX: Removed claims to debug compilation error.
-    // This effectively disables auth checks for voting temporarily.
-    let voter_id = "user:unknown".to_string(); 
+    let voter_id = claims.sub; 
 
     // Check if already voted
     let has_voted = repositories::comments::check_vote_exists(&pool, &id, &voter_id)
