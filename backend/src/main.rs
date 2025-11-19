@@ -191,8 +191,7 @@ async fn main() {
         .route("/api/auth/login", post(handlers::auth::login))
         .route("/api/auth/logout", post(handlers::auth::logout))
         .layer(RequestBodyLimitLayer::new(LOGIN_BODY_LIMIT))
-        .layer(GovernorLayer::new(rate_limit_config))
-        .with_state(pool.clone());
+        .layer(GovernorLayer::new(rate_limit_config));
 
     let admin_rate_limit_config = std::sync::Arc::new(
         GovernorConfigBuilder::default()
@@ -248,8 +247,7 @@ async fn main() {
         .route_layer(axum::middleware::from_fn_with_state(pool.clone(), csrf::enforce_csrf))
         .route_layer(axum::middleware::from_fn_with_state(pool.clone(), middleware::auth::auth_middleware))
         .layer(RequestBodyLimitLayer::new(ADMIN_BODY_LIMIT))
-        .layer(GovernorLayer::new(admin_rate_limit_config.clone()))
-        .with_state(pool.clone());
+        .layer(GovernorLayer::new(admin_rate_limit_config.clone()));
 
     let api_routes = Router::new()
         .route("/api/auth/me", get(handlers::auth::me))
@@ -301,8 +299,7 @@ async fn main() {
             "/api/public/published-pages",
             get(handlers::site_pages::list_published_page_slugs),
         )
-        .nest_service("/uploads", ServeDir::new(upload_dir))
-        .with_state(pool.clone());
+        .nest_service("/uploads", ServeDir::new(upload_dir));
 
     // Define the application router with all routes and middleware
     let app = Router::new()
@@ -315,7 +312,8 @@ async fn main() {
         .route("/{*path}", get(handlers::frontend_proxy::serve_index))
         .layer(axum::middleware::from_fn(security::security_headers))
         .layer(cors_layer)
-        .layer(DefaultBodyLimit::max(10 * 1024 * 1024)); // 10MB body limit
+        .layer(DefaultBodyLimit::max(10 * 1024 * 1024)) // 10MB body limit
+        .with_state(pool.clone());
 
     // Apply trusted proxy middleware if configured
     let app = if trust_proxy_ip_headers {
