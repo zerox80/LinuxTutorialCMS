@@ -258,12 +258,15 @@ async fn main() {
 
         .layer(RequestBodyLimitLayer::new(ADMIN_BODY_LIMIT))
 
-        .layer(GovernorLayer::new(admin_rate_limit_config.clone()));
+        .layer(GovernorLayer::new(admin_rate_limit_config.clone()))
+        .with_state(pool.clone());
 
     // Define the application router with all routes and middleware
+    let login_router_with_state = login_router.with_state(pool.clone());
+    
     let mut app = Router::default()
         // Merge all route modules
-        .merge(login_router)
+        .merge(login_router_with_state)
 
         .route("/api/auth/me", get(handlers::auth::me))
 
@@ -299,7 +302,6 @@ async fn main() {
             "/api/posts/{id}/comments",
             get(handlers::comments::list_post_comments)
                 .post(handlers::comments::create_post_comment)
-                .route_layer(from_extractor::<csrf::CsrfGuard>())
                 .route_layer(GovernorLayer::new(admin_rate_limit_config.clone())),
         )
         .route(
