@@ -57,76 +57,11 @@ const PostDetail = () => {
         throw new Error('Inhalt nicht gefunden')
       }
 
-      // Strategy:
-      // We use html2canvas onclone to traverse the cloned DOM and replace unsupported color formats
-      // (oklab, oklch) with safe fallbacks (hex) to prevent the parser from crashing.
+      // Dynamically import the generator to keep bundle size small
+      const { generatePdf } = await import('../utils/pdfGenerator')
 
-      // We can't easily traverse the clone in sync if we don't append it.
-      // But html2pdf uses the element passed.
-      // Let's try to use the 'onclone' option of html2canvas instead.
+      await generatePdf(element, `${post.slug}.pdf`)
 
-      const opt = {
-        margin: [10, 10],
-        filename: `${post.slug}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          scrollY: 0,
-          windowWidth: element.scrollWidth,
-          onclone: (clonedDoc) => {
-            const clonedElement = clonedDoc.getElementById('post-content')
-            if (clonedElement) {
-              // Helper to sanitize colors that html2canvas doesn't support (oklab, oklch)
-              const sanitizeColors = (el) => {
-                const style = window.getComputedStyle(el)
-                const colorProps = ['color', 'backgroundColor', 'borderColor', 'outlineColor', 'textDecorationColor']
-
-                colorProps.forEach(prop => {
-                  const val = style[prop]
-                  if (val && (val.includes('oklab') || val.includes('oklch'))) {
-                    // Fallback to safe colors
-                    // If it's a background, white is usually safer. For text/borders, black.
-                    // This is a rough fallback but prevents the crash.
-                    if (prop === 'backgroundColor') {
-                      el.style[prop] = '#ffffff'
-                    } else {
-                      el.style[prop] = '#000000'
-                    }
-                  }
-                })
-
-                // Recursively check children
-                for (let i = 0; i < el.children.length; i++) {
-                  sanitizeColors(el.children[i])
-                }
-              }
-
-              sanitizeColors(clonedElement)
-            }
-          }
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-      }
-
-      // Robust import for html2pdf.js
-      let html2pdf
-      try {
-        const module = await import('html2pdf.js')
-        html2pdf = module.default || module
-      } catch (e) {
-        console.error('Failed to load html2pdf.js:', e)
-        throw new Error('PDF-Bibliothek konnte nicht geladen werden')
-      }
-
-      if (typeof html2pdf !== 'function') {
-        console.error('html2pdf is not a function:', html2pdf)
-        throw new Error('PDF-Bibliothek ist fehlerhaft')
-      }
-
-      await html2pdf().set(opt).from(element).save()
     } catch (err) {
       console.error('PDF generation failed:', err)
       alert(`Fehler beim Erstellen des PDFs: ${err.message}`)
