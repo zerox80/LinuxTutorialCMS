@@ -57,69 +57,9 @@ const PostDetail = () => {
         throw new Error('Inhalt nicht gefunden')
       }
 
-      // Helper to convert oklab to rgb (simplified approximation or fallback)
-      // Since we can't easily parse oklab in JS without a library, we'll rely on 
-      // getComputedStyle returning RGB if we force it, or we'll just strip it if it fails.
-      // Actually, the best way is to let the browser compute it. 
-      // If the browser returns oklab, we are in trouble unless we use a polyfill.
-      // However, most browsers return RGB for getComputedStyle unless explicitly set to something else.
-      // The issue is likely that html2canvas clones the element and re-applies styles, 
-      // and if the stylesheet has oklab, it re-applies oklab.
-
       // Strategy:
-      // 1. Clone the node
-      // 2. Traverse the clone and the original in parallel
-      // 3. Get computed style from original (which should be resolved)
-      // 4. Apply resolved RGB values as inline styles to the clone
-
-      const clone = element.cloneNode(true)
-      // We need to append clone to body to get computed styles? No, we use original.
-      // But we need to modify clone.
-
-      // Create a hidden container for the clone to ensure it renders correctly during PDF gen if needed
-      // But html2pdf takes an element.
-
-      const applyComputedStyles = (source, target) => {
-        const computed = window.getComputedStyle(source)
-
-        // Properties that might contain colors
-        const colorProps = ['color', 'backgroundColor', 'borderColor', 'textDecorationColor', 'outlineColor']
-
-        colorProps.forEach(prop => {
-          const val = computed[prop]
-          if (val && (val.includes('oklab') || val.includes('oklch'))) {
-            // If browser returns oklab, we can try to force a conversion by setting it to a temp element
-            // But if the browser supports oklab, it might just keep it.
-            // However, html2canvas fails on it.
-            // We can try to approximate or just default to black/white/transparent if we can't convert.
-            // A better hack: create a canvas context, set fillStyle, and read back? Too slow.
-            // Let's assume we can just set it to a safe fallback if it's oklab, 
-            // OR rely on the fact that we overrode Tailwind config so it SHOULD be hex/rgb.
-            // If we still see oklab, it might be from a library or default we missed.
-
-            // FORCE HEX/RGB override if possible. 
-            // For now, let's just log it and try to set a fallback if it's critical.
-            // But wait, if I overrode everything, why is it still oklab?
-            // Maybe it's 'currentColor' resolving to something?
-
-            // Let's try to explicitly set the inline style to the computed value.
-            // If the computed value IS oklab, we are stuck.
-            // But usually Chrome/Firefox return RGB for computed style unless it's a registered property?
-            // Let's assume it returns RGB.
-            target.style[prop] = val
-          } else if (val) {
-            // Copy all color styles as fixed values to avoid inheritance issues in the clone
-            target.style[prop] = val
-          }
-        })
-
-        // Recurse
-        for (let i = 0; i < source.children.length; i++) {
-          if (target.children[i]) {
-            applyComputedStyles(source.children[i], target.children[i])
-          }
-        }
-      }
+      // We use html2canvas onclone to traverse the cloned DOM and replace unsupported color formats
+      // (oklab, oklch) with safe fallbacks (hex) to prevent the parser from crashing.
 
       // We can't easily traverse the clone in sync if we don't append it.
       // But html2pdf uses the element passed.
@@ -138,26 +78,32 @@ const PostDetail = () => {
           onclone: (clonedDoc) => {
             const clonedElement = clonedDoc.getElementById('post-content')
             if (clonedElement) {
-              // Brute force: find all elements and force colors to RGB if they are oklab
-              // But we can't easily convert oklab to rgb here without a library.
-              // However, we can try to replace 'oklab(...)' with a safe fallback like '#000000' 
-              // just to prevent the crash, if we can't convert.
-              // Better: The error comes from html2canvas parsing the CSS.
-              // If we remove the offending style, it works.
-
-              const allElements = clonedElement.getElementsByTagName('*')
-              for (let el of allElements) {
+              // Helper to sanitize colors that html2canvas doesn't support (oklab, oklch)
+              const sanitizeColors = (el) => {
                 const style = window.getComputedStyle(el)
-                // Check specific properties
-                ['color', 'backgroundColor', 'borderColor'].forEach(prop => {
+                const colorProps = ['color', 'backgroundColor', 'borderColor', 'outlineColor', 'textDecorationColor']
+
+                colorProps.forEach(prop => {
                   const val = style[prop]
-                  if (val && val.includes('oklab')) {
-                    // Fallback to a safe color to prevent crash
-                    // This is a last resort.
-                    el.style[prop] = prop === 'backgroundColor' ? '#ffffff' : '#000000'
+                  if (val && (val.includes('oklab') || val.includes('oklch'))) {
+                    // Fallback to safe colors
+                    // If it's a background, white is usually safer. For text/borders, black.
+                    // This is a rough fallback but prevents the crash.
+                    if (prop === 'backgroundColor') {
+                      el.style[prop] = '#ffffff'
+                    } else {
+                      el.style[prop] = '#000000'
+                    }
                   }
                 })
+
+                // Recursively check children
+                for (let i = 0; i < el.children.length; i++) {
+                  sanitizeColors(el.children[i])
+                }
               }
+
+              sanitizeColors(clonedElement)
             }
           }
         },

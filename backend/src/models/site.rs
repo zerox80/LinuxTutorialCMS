@@ -1,0 +1,177 @@
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use sqlx::FromRow;
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct SiteContent {
+    pub section: String,
+    pub content_json: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SiteContentResponse {
+    pub section: String,
+    pub content: Value,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SiteContentListResponse {
+    pub items: Vec<SiteContentResponse>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateSiteContentRequest {
+    pub content: Value,
+}
+
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
+pub struct SitePage {
+    pub id: String,
+    pub slug: String,
+    pub title: String,
+    pub description: String,
+    pub nav_label: Option<String>,
+    pub show_in_nav: bool,
+    pub order_index: i64,
+    pub is_published: bool,
+    pub hero_json: String,
+    pub layout_json: String,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SitePageResponse {
+    pub id: String,
+    pub slug: String,
+    pub title: String,
+    pub description: String,
+    pub nav_label: Option<String>,
+    pub show_in_nav: bool,
+    pub order_index: i64,
+    pub is_published: bool,
+    pub hero: Value,
+    pub layout: Value,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SitePageListResponse {
+    pub items: Vec<SitePageResponse>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SitePageWithPostsResponse {
+    pub page: SitePageResponse,
+    pub posts: Vec<SitePostResponse>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SitePostDetailResponse {
+    pub page: SitePageResponse,
+    pub post: SitePostResponse,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateSitePageRequest {
+    pub slug: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub nav_label: Option<String>,
+    #[serde(default)]
+    pub show_in_nav: bool,
+    pub order_index: Option<i64>,
+    #[serde(default)]
+    pub is_published: bool,
+    #[serde(default)]
+    pub hero: Value,
+    #[serde(default)]
+    pub layout: Value,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateSitePageRequest {
+    pub slug: Option<String>,
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub nav_label: Option<Option<String>>,
+    pub show_in_nav: Option<bool>,
+    pub order_index: Option<i64>,
+    pub is_published: Option<bool>,
+    pub hero: Option<Value>,
+    pub layout: Option<Value>,
+}
+
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
+pub struct SitePost {
+    pub id: String,
+    pub page_id: String,
+    pub title: String,
+    pub slug: String,
+    pub excerpt: String,
+    pub content_markdown: String,
+    pub is_published: bool,
+    pub published_at: Option<String>,
+    pub order_index: i64,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SitePostResponse {
+    pub id: String,
+    pub page_id: String,
+    pub title: String,
+    pub slug: String,
+    pub excerpt: String,
+    pub content_markdown: String,
+    pub is_published: bool,
+    pub published_at: Option<String>,
+    pub order_index: i64,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SitePostListResponse {
+    pub items: Vec<SitePostResponse>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateSitePostRequest {
+    pub title: String,
+    pub slug: String,
+    pub excerpt: Option<String>,
+    pub content_markdown: String,
+    #[serde(default)]
+    pub is_published: bool,
+    pub published_at: Option<String>,
+    pub order_index: Option<i64>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateSitePostRequest {
+    pub title: Option<String>,
+    pub slug: Option<String>,
+    pub excerpt: Option<String>,
+    pub content_markdown: Option<String>,
+    pub is_published: Option<bool>,
+    pub published_at: Option<Option<String>>,
+    pub order_index: Option<i64>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct NavigationItemResponse {
+    pub id: String,
+    pub slug: String,
+    pub label: String,
+    pub order_index: i64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct NavigationResponse {
+    pub items: Vec<NavigationItemResponse>,
+}
