@@ -27,57 +27,57 @@ const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
         remarkPlugins={remarkPlugins}
         rehypePlugins={[rehypeKatex, rehypeHighlight]}
         components={{
-          h1: ({ node, children, ...props }) => (
+          h1: ({ children, ...props }) => (
             <h1 className={headingClasses[1]} {...props}>
               {children}
             </h1>
           ),
-          h2: ({ node, children, ...props }) => (
+          h2: ({ children, ...props }) => (
             <h2 className={headingClasses[2]} {...props}>
               {children}
             </h2>
           ),
-          h3: ({ node, children, ...props }) => (
+          h3: ({ children, ...props }) => (
             <h3 className={headingClasses[3]} {...props}>
               {children}
             </h3>
           ),
-          h4: ({ node, children, ...props }) => (
+          h4: ({ children, ...props }) => (
             <h4 className={headingClasses[4]} {...props}>
               {children}
             </h4>
           ),
-          h5: ({ node, children, ...props }) => (
+          h5: ({ children, ...props }) => (
             <h5 className={headingClasses[5]} {...props}>
               {children}
             </h5>
           ),
-          h6: ({ node, children, ...props }) => (
+          h6: ({ children, ...props }) => (
             <h6 className={headingClasses[6]} {...props}>
               {children}
             </h6>
           ),
-          p: ({ node, children, ...props }) => (
+          p: ({ children, ...props }) => (
             <p className="mt-5 first:mt-0 text-base sm:text-lg leading-8 text-gray-700 dark:text-slate-200" {...props}>
               {children}
             </p>
           ),
-          ul: ({ node, children, ...props }) => (
+          ul: ({ children, ...props }) => (
             <ul className="mt-5 first:mt-0 list-disc list-outside space-y-3 pl-6 text-base sm:text-lg leading-8 text-gray-700 dark:text-slate-200" {...props}>
               {children}
             </ul>
           ),
-          ol: ({ node, children, ...props }) => (
+          ol: ({ children, ...props }) => (
             <ol className="mt-5 first:mt-0 list-decimal list-outside space-y-3 pl-6 text-base sm:text-lg leading-8 text-gray-700 dark:text-slate-200" {...props}>
               {children}
             </ol>
           ),
-          li: ({ node, children, ...props }) => (
+          li: ({ children, ...props }) => (
             <li className="leading-7 text-gray-700 dark:text-slate-200 marker:text-primary-600 dark:marker:text-primary-300 break-words" {...props}>
               {children}
             </li>
           ),
-          blockquote: ({ node, children, ...props }) => (
+          blockquote: ({ children, ...props }) => (
             <blockquote
               className="mt-6 first:mt-0 rounded-2xl border-l-4 border-primary-400/80 bg-primary-50/60 dark:bg-slate-800/60 dark:border-primary-400/50 px-5 py-4 text-base sm:text-lg italic text-gray-700 dark:text-slate-200"
               {...props}
@@ -85,7 +85,7 @@ const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
               {children}
             </blockquote>
           ),
-          a: ({ node, href, children, ...props }) => (
+          a: ({ href, children, ...props }) => (
             <a
               href={href}
               className="font-semibold text-primary-700 dark:text-primary-300 underline underline-offset-4 transition-colors hover:text-primary-800 dark:hover:text-primary-200"
@@ -96,32 +96,32 @@ const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
               {children}
             </a>
           ),
-          hr: ({ node, ...props }) => (
+          hr: ({ ...props }) => (
             <hr className="my-10 border-t border-gray-200 dark:border-slate-700" {...props} />
           ),
-          table: ({ node, children, ...props }) => (
+          table: ({ children, ...props }) => (
             <div className="mt-6 overflow-x-auto rounded-2xl border border-gray-200 dark:border-slate-700/80">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700" {...props}>
                 {children}
               </table>
             </div>
           ),
-          thead: ({ node, children, ...props }) => (
+          thead: ({ children, ...props }) => (
             <thead className="bg-gray-50 dark:bg-slate-800" {...props}>
               {children}
             </thead>
           ),
-          tbody: ({ node, children, ...props }) => (
+          tbody: ({ children, ...props }) => (
             <tbody className="divide-y divide-gray-100 dark:divide-slate-800" {...props}>
               {children}
             </tbody>
           ),
-          th: ({ node, children, ...props }) => (
+          th: ({ children, ...props }) => (
             <th className="px-4 py-3 text-left text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-slate-300" {...props}>
               {children}
             </th>
           ),
-          td: ({ node, children, ...props }) => (
+          td: ({ children, ...props }) => (
             <td className="px-4 py-3 text-sm text-gray-700 dark:text-slate-200" {...props}>
               {children}
             </td>
@@ -156,7 +156,7 @@ const MarkdownRenderer = ({ content, className = '', withBreaks = false }) => {
               {children}
             </CodeBlock>
           ),
-          img: ({ node, alt, src, ...props }) => (
+          img: ({ alt, src, ...props }) => (
             <img
               src={src}
               alt={alt || ''}

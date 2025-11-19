@@ -17,9 +17,8 @@ export const getApiBaseUrl = () => {
       }
     }
   }
-  if (typeof process !== 'undefined' && process.env && process.env.API_BASE_URL) {
-    return process.env.API_BASE_URL.replace(/\/+$/, '')
-  }
+  // Removed process.env check to avoid "process is not defined" in browser
+
   return typeof window !== 'undefined' ? '/api' : 'http://localhost:8489/api'
 }
 const API_BASE_URL = getApiBaseUrl()

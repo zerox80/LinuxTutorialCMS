@@ -313,7 +313,7 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
           <h4 className="text-lg font-medium text-gray-900 dark:text-slate-100 border-b border-gray-100 pb-2 dark:border-slate-800">Seiten-Layout</h4>
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
-              Titel "Über diese Seite"
+              Titel &quot;Über diese Seite&quot;
               <input
                 type="text"
                 className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
@@ -323,7 +323,7 @@ const PageForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
               />
             </label>
             <label className="block text-sm font-medium text-gray-700 dark:text-slate-200">
-              Titel "Beiträge"
+              Titel &quot;Beiträge&quot;
               <input
                 type="text"
                 className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"

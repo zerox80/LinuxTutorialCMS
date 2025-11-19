@@ -21,7 +21,6 @@ const Header = () => {
   const { isAuthenticated } = useAuth()
   const { getSection, navigation } = useContent()
   const headerContent = getSection('header') ?? {}
-  const contentNavItems = Array.isArray(headerContent.navItems) ? headerContent.navItems : []
   const BrandIcon = getIconComponent(headerContent?.brand?.icon, 'Terminal')
   const ctaContent = headerContent?.cta ?? {}
   const CTAIcon = getIconComponent(ctaContent.icon, 'Lock')
@@ -36,6 +35,7 @@ const Header = () => {
     if (navigation?.items?.length) {
       return navigation.items
     }
+    const contentNavItems = Array.isArray(headerContent.navItems) ? headerContent.navItems : []
     if (contentNavItems.length > 0) {
       return contentNavItems
     }
@@ -43,7 +43,7 @@ const Header = () => {
       return []
     }
     return FALLBACK_NAV_ITEMS
-  }, [navigation?.items, navigation?.loading, contentNavItems])
+  }, [navigation?.items, navigation?.loading, headerContent.navItems])
   const handleNavigation = (item) => {
     if (!item) return
     if (item.target) {

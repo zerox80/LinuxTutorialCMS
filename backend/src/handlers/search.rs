@@ -50,7 +50,7 @@ fn default_limit() -> i64 {
     20
 }
 
-fn sanitize_fts_query(raw: &str) -> Result<String, String> {
+pub fn sanitize_fts_query(raw: &str) -> Result<String, String> {
     let tokens: Vec<String> = raw
         .split_whitespace()
         .filter_map(|token| {

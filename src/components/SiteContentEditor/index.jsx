@@ -830,7 +830,7 @@ const SiteMetaPreview = ({ content }) => {
         </p>
       </div>
       <p className="text-xs text-gray-500">
-        Diese Angaben erscheinen als Browser-Titel und Meta-Beschreibung (z. B. in Suchmaschinen).
+        Diese Angaben erscheinen als Browser-Titel und Meta-Beschreibung (z. B. in Suchmaschinen).
       </p>
     </div>
   )
@@ -886,7 +886,7 @@ const SiteContentEditor = () => {
     const defaultKeys = Object.keys(DEFAULT_CONTENT)
     const combined = Array.from(new Set([...keys, ...defaultKeys]))
     // Only show sections that have a defined label (whitelist approach)
-    return combined.filter(key => sectionLabels.hasOwnProperty(key)).sort()
+    return combined.filter(key => Object.prototype.hasOwnProperty.call(sectionLabels, key)).sort()
   }, [content])
 
   const [selectedSection, setSelectedSection] = useState(null)

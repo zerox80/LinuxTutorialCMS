@@ -11,10 +11,15 @@ mod search_tests {
         assert!(long_query.len() > 500);
     }
 
+    use linux_tutorial_backend::handlers::search::sanitize_fts_query;
+
     #[test]
     fn test_search_query_sanitization() {
         let query = "<script>alert('xss')</script>";
         // Query should be escaped before being used in FTS
-        assert!(!query.contains("script"));
+        let sanitized = sanitize_fts_query(query).unwrap();
+        assert!(!sanitized.contains("script"));
+        assert!(!sanitized.contains("<"));
+        assert!(!sanitized.contains(">"));
     }
 }
