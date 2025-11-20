@@ -29,7 +29,7 @@ pub fn routes(upload_dir: String, admin_rate_limit_config: Arc<GovernorConfig<Sm
         )
         .route(
             "/api/content/{section}",
-            get(site_content::get_site_content),
+            get(site_content::get_site_content).put(site_content::update_site_content),
         )
         .route(
             "/api/posts/{id}/comments",
