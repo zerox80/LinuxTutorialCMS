@@ -270,7 +270,7 @@ const Header = () => {
                                     onClick={(event) => handleNavClick(event, item)}
                                     target={external ? '_blank' : undefined}
                                     rel={external ? 'noopener noreferrer' : undefined}
-                                    className="block w-full text-left px-4 py-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary-600 dark:hover:text-primary-400"
+                                    className="block w-full text-left px-4 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary-600 dark:hover:text-primary-400"
                                 >
                                     {item.label}
                                 </a>

@@ -115,7 +115,7 @@
 
   /* Navigation link with underline animation on hover */
   .nav-link {
-    @apply relative text-gray-600 hover:text-primary-600 transition-all duration-300 font-medium;
+    @apply relative text-gray-700 hover:text-primary-600 transition-all duration-300 font-medium;
   }
 
   /* Animated underline effect for navigation links */
