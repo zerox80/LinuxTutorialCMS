@@ -13,7 +13,7 @@ const AdminHeader = () => {
     }
 
     return (
-        <header className="bg-white/90 dark:bg-slate-900/80 shadow-md backdrop-blur">
+        <header className="bg-gray-900 shadow-md border-b border-gray-800">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                 <div className="flex justify-between items-center">
                     {/* Left Side: Logo & Title */}

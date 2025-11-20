@@ -7,7 +7,6 @@ import { getIconComponent } from '../../utils/iconMap'
 import { navigateContentTarget } from '../../utils/contentNavigation'
 import { scrollToSection } from '../../utils/scrollToSection'
 import { sanitizeExternalUrl } from '../../utils/urlValidation'
-import ThemeToggle from '../ThemeToggle'
 import SearchBar from '../SearchBar'
 
 const FALLBACK_NAV_ITEMS = [
