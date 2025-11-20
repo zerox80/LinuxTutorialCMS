@@ -44,7 +44,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use sqlx::{Sqlite, Transaction};
 
-use linux_tutorial_backend::db;
+use rust_blog_backend::db;
 
 #[derive(Debug, Deserialize)]
 struct SiteContentImport {

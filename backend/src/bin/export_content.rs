@@ -37,7 +37,7 @@ use serde::Serialize;
 use serde_json::Value;
 use sqlx::FromRow;
 
-use linux_tutorial_backend::db;
+use rust_blog_backend::db;
 
 #[derive(Debug, FromRow)]
 struct SiteContentRow {
