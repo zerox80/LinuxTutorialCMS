@@ -6,6 +6,7 @@ import PageManager from '../components/page-manager'
 import AdminHeader from '../components/admin/AdminHeader'
 import TutorialManagement from '../components/admin/TutorialManagement'
 import DashboardTabs from '../components/admin/dashboard/DashboardTabs'
+import SettingsEditor from '../components/admin/SettingsEditor'
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('tutorials')
@@ -35,6 +36,9 @@ const AdminDashboard = () => {
 
         {/* Tab Content: Pages */}
         {activeTab === 'pages' && <PageManager />}
+
+        {/* Tab Content: Settings */}
+        {activeTab === 'settings' && <SettingsEditor />}
       </main>
     </div>
   )

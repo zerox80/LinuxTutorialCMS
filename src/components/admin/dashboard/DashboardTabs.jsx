@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import { LayoutDashboard, Paintbrush, FileText } from 'lucide-react'
+import { LayoutDashboard, Paintbrush, FileText, Settings } from 'lucide-react'
 
 const DashboardTabs = ({ activeTab, onTabChange }) => {
     return (
@@ -37,6 +37,17 @@ const DashboardTabs = ({ activeTab, onTabChange }) => {
                 >
                     <FileText className="h-4 w-4" />
                     Seiten & Beiträge
+                </button>
+                <button
+                    type="button"
+                    onClick={() => onTabChange('settings')}
+                    className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${activeTab === 'settings'
+                        ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/20'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
+                        }`}
+                >
+                    <Settings className="h-4 w-4" />
+                    Einstellungen
                 </button>
             </div>
         </div>

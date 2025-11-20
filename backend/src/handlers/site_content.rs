@@ -27,7 +27,9 @@ fn allowed_sections() -> &'static HashSet<&'static str> {
             "footer",
             "site_meta",
             "stats",
+        "stats",
             "cta_section",
+            "settings",
         ]
         .into_iter()
         .collect()
@@ -56,6 +58,7 @@ fn validate_content_structure(
         "tutorial_section" => validate_tutorial_section_structure(content),
         "header" => validate_header_structure(content),
         "footer" => validate_footer_structure(content),
+        "settings" => validate_settings_structure(content),
         "stats" => Ok(()),
         "cta_section" => Ok(()),
         _ => Ok(()),
@@ -119,6 +122,18 @@ fn validate_footer_structure(content: &Value) -> Result<(), &'static str> {
     let obj = content.as_object().ok_or("Expected JSON object")?;
     if !obj.contains_key("brand") || !obj.contains_key("quickLinks") {
         return Err("Missing required fields 'brand' or 'quickLinks'");
+    }
+    Ok(())
+}
+
+fn validate_settings_structure(content: &Value) -> Result<(), &'static str> {
+    let obj = content.as_object().ok_or("Expected JSON object")?;
+    // We expect at least pdfEnabled, but we can be lenient or strict.
+    // Let's be strict about the type if it exists.
+    if let Some(val) = obj.get("pdfEnabled") {
+        if !val.is_boolean() {
+            return Err("Field 'pdfEnabled' must be a boolean");
+        }
     }
     Ok(())
 }

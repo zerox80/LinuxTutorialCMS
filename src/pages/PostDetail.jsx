@@ -16,6 +16,25 @@ const PostDetail = () => {
   const [post, setPost] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [pdfEnabled, setPdfEnabled] = useState(true)
+
+  useEffect(() => {
+    // Fetch global settings
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch('/api/content/settings')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.content && typeof data.content.pdfEnabled === 'boolean') {
+            setPdfEnabled(data.content.pdfEnabled)
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch settings:', err)
+      }
+    }
+    fetchSettings()
+  }, [])
 
   useEffect(() => {
     if (!normalizedPageSlug || !normalizedPostSlug) {
@@ -79,7 +98,7 @@ const PostDetail = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <PostControls
           onBack={() => navigate(`/pages/${normalizedPageSlug}`)}
-          onDownload={handleDownloadPDF}
+          onDownload={pdfEnabled ? handleDownloadPDF : undefined}
           loading={loading}
         />
 
