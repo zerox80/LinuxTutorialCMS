@@ -100,7 +100,7 @@ RUN touch src/main.rs && \
     cargo build --release
 
 # Verify binary was built successfully
-RUN test -f target/release/linux-tutorial-backend || (echo "Build failed - binary not found" && exit 1)
+RUN test -f target/release/rust-blog-backend || (echo "Build failed - binary not found" && exit 1)
 
 # ==============================================================================
 # STAGE 2: PRODUCTION RUNTIME CONTAINER
@@ -134,7 +134,7 @@ RUN apt-get update && apt-get install -y \
 
 # Copy compiled binary from builder stage
 # Only the optimized binary, not source code or build artifacts
-COPY --from=builder /app/target/release/linux-tutorial-backend /app/backend
+COPY --from=builder /app/target/release/rust-blog-backend /app/backend
 
 # Set appropriate permissions for the binary
 # Ensure the binary is executable and has correct ownership
