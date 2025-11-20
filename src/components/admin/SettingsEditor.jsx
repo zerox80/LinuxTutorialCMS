@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Save, Loader2 } from 'lucide-react'
-import { useAuth } from '../../context/AuthContext'
+import { api } from '../../api/client'
 
 const SettingsEditor = () => {
-    const { token } = useAuth()
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [settings, setSettings] = useState({
@@ -17,19 +16,18 @@ const SettingsEditor = () => {
 
     const fetchSettings = async () => {
         try {
-            const response = await fetch('/api/content/settings')
-            if (response.ok) {
-                const data = await response.json()
+            const data = await api.getSiteContentSection('settings')
+            if (data) {
                 // Merge with defaults in case new settings are added later
                 setSettings(prev => ({ ...prev, ...data.content }))
-            } else if (response.status === 404) {
+            }
+        } catch (error) {
+            if (error.status === 404) {
                 // If settings don't exist yet, use defaults
                 console.log('Settings not found, using defaults')
             } else {
-                console.error('Failed to fetch settings')
+                console.error('Error fetching settings:', error)
             }
-        } catch (error) {
-            console.error('Error fetching settings:', error)
         } finally {
             setLoading(false)
         }
@@ -39,20 +37,8 @@ const SettingsEditor = () => {
         setSaving(true)
         setMessage(null)
         try {
-            const response = await fetch('/api/content/settings', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ content: settings }),
-            })
-
-            if (response.ok) {
-                setMessage({ type: 'success', text: 'Einstellungen gespeichert' })
-            } else {
-                setMessage({ type: 'error', text: 'Fehler beim Speichern' })
-            }
+            await api.updateSiteContentSection('settings', settings)
+            setMessage({ type: 'success', text: 'Einstellungen gespeichert' })
         } catch (error) {
             console.error('Error saving settings:', error)
             setMessage({ type: 'error', text: 'Fehler beim Speichern' })
