@@ -7,27 +7,43 @@
 /* Custom theme configuration extending Tailwind's design system */
 @theme {
   /* Primary color palette - blue-based theme for Linux tutorial site */
-  --color-primary-50: #f0f9ff;   /* Lightest blue for backgrounds */
-  --color-primary-100: #e0f2fe;  /* Very light blue */
-  --color-primary-200: #bae6fd;  /* Light blue */
-  --color-primary-300: #7dd3fc;  /* Medium light blue */
-  --color-primary-400: #38bdf8;  /* Medium blue */
-  --color-primary-500: #0ea5e9;  /* Primary blue accent */
-  --color-primary-600: #0284c7;  /* Medium dark blue */
-  --color-primary-700: #0369a1;  /* Dark blue */
-  --color-primary-800: #075985;  /* Very dark blue */
-  --color-primary-900: #0c4a6e;  /* Darkest blue */
-  --color-primary-950: #082f49;  /* Ultra dark blue */
+  --color-primary-50: #f0f9ff;
+  /* Lightest blue for backgrounds */
+  --color-primary-100: #e0f2fe;
+  /* Very light blue */
+  --color-primary-200: #bae6fd;
+  /* Light blue */
+  --color-primary-300: #7dd3fc;
+  /* Medium light blue */
+  --color-primary-400: #38bdf8;
+  /* Medium blue */
+  --color-primary-500: #0ea5e9;
+  /* Primary blue accent */
+  --color-primary-600: #0284c7;
+  /* Medium dark blue */
+  --color-primary-700: #0369a1;
+  /* Dark blue */
+  --color-primary-800: #075985;
+  /* Very dark blue */
+  --color-primary-900: #0c4a6e;
+  /* Darkest blue */
+  --color-primary-950: #082f49;
+  /* Ultra dark blue */
 
   /* Custom shadow utilities for glass morphism and depth effects */
-  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.37);       /* Glass morphism shadow */
-  --shadow-inner-glow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1); /* Subtle inner highlight */
-  --shadow-soft: 0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04); /* Soft elevation shadow */
-  --shadow-card-xl: 0 20px 40px rgba(8, 22, 57, 0.35);        /* Deep card shadow for elevated surfaces */
+  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  /* Glass morphism shadow */
+  --shadow-inner-glow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  /* Subtle inner highlight */
+  --shadow-soft: 0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04);
+  /* Soft elevation shadow */
+  --shadow-card-xl: 0 20px 40px rgba(8, 22, 57, 0.35);
+  /* Deep card shadow for elevated surfaces */
 }
 
 /* Base layer styles - fundamental element styling and resets */
 @layer base {
+
   /* Enable font smoothing for better text rendering across all devices */
   * {
     @apply antialiased;
@@ -44,7 +60,8 @@
   .dark body {
     /* Darker gradient with more opaque layers for dark mode */
     background: linear-gradient(to bottom right, #0f172a, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.9));
-    color: rgb(226 232 240); /* Light gray text for dark mode */
+    color: rgb(226 232 240);
+    /* Light gray text for dark mode */
   }
 
   /* Custom text selection styling using primary color theme */
@@ -55,14 +72,19 @@
 
 /* Component layer styles - reusable UI component classes */
 @layer components {
+
   /* Code block styling for syntax highlighting and terminal-like appearance */
   .code-block {
     background: linear-gradient(to bottom right, #111827, #1f2937);
     @apply text-green-400 p-6 rounded-2xl font-mono text-sm shadow-2xl border border-gray-700/50;
-    white-space: pre-wrap !important;      /* Allow text wrapping while preserving formatting */
-    word-wrap: break-word;                 /* Break long words to prevent overflow */
-    overflow-wrap: break-word;             /* Modern property for word breaking */
-    overflow-x: auto;                      /* Horizontal scroll for very long lines */
+    white-space: pre-wrap !important;
+    /* Allow text wrapping while preserving formatting */
+    word-wrap: break-word;
+    /* Break long words to prevent overflow */
+    overflow-wrap: break-word;
+    /* Modern property for word breaking */
+    overflow-x: auto;
+    /* Horizontal scroll for very long lines */
   }
 
   /* Tutorial card component with glass morphism effect and hover animations */
@@ -115,7 +137,7 @@
 
   /* Navigation link with underline animation on hover */
   .nav-link {
-    @apply relative text-gray-700 hover:text-primary-600 transition-all duration-300 font-medium;
+    @apply relative text-gray-900 hover:text-primary-600 transition-all duration-300 font-medium;
   }
 
   /* Animated underline effect for navigation links */
@@ -173,6 +195,7 @@
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 disabled:opacity-60 disabled:cursor-not-allowed px-6 py-3 text-gray-700 hover:text-primary-600 hover:bg-primary-50 dark:text-gray-300 dark:hover:text-primary-300 dark:hover:bg-gray-800/60;
   }
+
   /* Floating animation class for continuous up and down movement */
   .floating {
     animation: float 6s ease-in-out infinite;
@@ -180,36 +203,39 @@
 
   /* Shimmer effect for loading states or decorative elements */
   .shimmer {
-    background: linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.2) 50%,
-      rgba(255, 255, 255, 0) 100%
-    );
+    background: linear-gradient(90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0) 100%);
     background-size: 200% 100%;
     animation: shimmer 2s infinite;
   }
 
   /* Delayed floating animations for staggered entrance effects */
   .animate-float-delayed-2s {
-    animation: float 6s ease-in-out infinite 2s; /* 2 second delay */
+    animation: float 6s ease-in-out infinite 2s;
+    /* 2 second delay */
   }
 
   .animate-float-delayed-4s {
-    animation: float 6s ease-in-out infinite 4s; /* 4 second delay */
+    animation: float 6s ease-in-out infinite 4s;
+    /* 4 second delay */
   }
 
   /* Staggered slide-up animations for sequential element reveals */
   .animate-slide-up-delayed-1 {
-    animation: slideUp 0.8s ease-out 0.1s both; /* 0.1s delay */
+    animation: slideUp 0.8s ease-out 0.1s both;
+    /* 0.1s delay */
   }
 
   .animate-slide-up-delayed-2 {
-    animation: slideUp 0.8s ease-out 0.2s both; /* 0.2s delay */
+    animation: slideUp 0.8s ease-out 0.2s both;
+    /* 0.2s delay */
   }
 
   .animate-slide-up-delayed-3 {
-    animation: slideUp 0.8s ease-out 0.3s both; /* 0.3s delay */
+    animation: slideUp 0.8s ease-out 0.3s both;
+    /* 0.3s delay */
   }
 
   /* =========================================================== */
@@ -217,28 +243,32 @@
   /* =========================================================== */
 
   /* Remove margins from paragraphs inside list items and make them inline */
-  .markdown-renderer li > p {
+  .markdown-renderer li>p {
     @apply mt-0 mb-0;
     display: inline;
   }
 
   /* Keep consecutive paragraphs inline within list items */
-  .markdown-renderer li > p + p {
+  .markdown-renderer li>p+p {
     display: inline;
   }
 
   /* Add space between consecutive paragraphs in list items */
-  .markdown-renderer li > p + p::before {
+  .markdown-renderer li>p+p::before {
     content: ' ';
   }
 
   /* Base inline code styling with proper text wrapping */
   .markdown-renderer code {
     @apply align-baseline;
-    white-space: normal !important;        /* Allow code to wrap instead of overflowing */
-    overflow-wrap: anywhere;               /* Break at any character if needed */
-    word-break: break-word;                /* Break words to prevent overflow */
-    display: inline !important;            /* Force inline display */
+    white-space: normal !important;
+    /* Allow code to wrap instead of overflowing */
+    overflow-wrap: anywhere;
+    /* Break at any character if needed */
+    word-break: break-word;
+    /* Break words to prevent overflow */
+    display: inline !important;
+    /* Force inline display */
     /* Keep inline spacing consistent */
     padding-left: 0.15em;
     padding-right: 0.15em;
@@ -267,11 +297,14 @@
   }
 
   /* Code blocks should remain block elements with proper formatting */
-  .markdown-renderer pre > code {
+  .markdown-renderer pre>code {
     display: block !important;
-    white-space: pre-wrap !important;      /* Preserve formatting but allow wrapping */
-    word-wrap: break-word;                 /* Break long words */
-    overflow-wrap: break-word;             /* Modern word breaking */
+    white-space: pre-wrap !important;
+    /* Preserve formatting but allow wrapping */
+    word-wrap: break-word;
+    /* Break long words */
+    overflow-wrap: break-word;
+    /* Modern word breaking */
     margin: 0;
     padding: 0;
   }
@@ -289,57 +322,124 @@
   /* Enhanced text wrapping for paragraphs and list items */
   .markdown-renderer p,
   .markdown-renderer li {
-    word-wrap: break-word;                 /* Break long words */
-    overflow-wrap: break-word;             /* Modern word breaking */
-    hyphens: none;                         /* Don't add hyphens */
-    white-space: normal;                   /* Normal text behavior */
+    word-wrap: break-word;
+    /* Break long words */
+    overflow-wrap: break-word;
+    /* Modern word breaking */
+    hyphens: none;
+    /* Don't add hyphens */
+    white-space: normal;
+    /* Normal text behavior */
   }
 }
 
 /* =========================================================== */
-  /* Keyframe Animations - Core animation definitions */
-  /* =========================================================== */
+/* Keyframe Animations - Core animation definitions */
+/* =========================================================== */
 
-  /* Floating animation - smooth up and down movement */
-  @keyframes float {
-    0% { transform: translateY(0); }         /* Start position */
-    50% { transform: translateY(-12px); }     /* Highest point */
-    100% { transform: translateY(0); }       /* Return to start */
+/* Floating animation - smooth up and down movement */
+@keyframes float {
+  0% {
+    transform: translateY(0);
   }
 
-  /* Slide up animation - entrance from bottom */
-  @keyframes slideUp {
-    0% { opacity: 0; transform: translateY(20px); }   /* Start: invisible, lower */
-    100% { opacity: 1; transform: translateY(0); }    /* End: visible, in position */
+  /* Start position */
+  50% {
+    transform: translateY(-12px);
   }
 
-  /* Slide down animation - entrance from top */
-  @keyframes slideDown {
-    0% { opacity: 0; transform: translateY(-20px); }  /* Start: invisible, higher */
-    100% { opacity: 1; transform: translateY(0); }    /* End: visible, in position */
+  /* Highest point */
+  100% {
+    transform: translateY(0);
   }
 
-  /* Scale in animation - entrance with scaling effect */
-  @keyframes scaleIn {
-    0% { opacity: 0; transform: scale(0.9); }         /* Start: smaller, invisible */
-    100% { opacity: 1; transform: scale(1); }         /* End: normal size, visible */
+  /* Return to start */
+}
+
+/* Slide up animation - entrance from bottom */
+@keyframes slideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
   }
 
-  /* Gradient shift animation - moving gradient background */
-  @keyframes gradientShift {
-    0% { background-position: 0% 50%; }      /* Start position */
-    50% { background-position: 100% 50%; }    /* End position */
-    100% { background-position: 0% 50%; }    /* Return to start */
+  /* Start: invisible, lower */
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
 
-  /* Shimmer animation - moving highlight effect */
-  @keyframes shimmer {
-    0% { background-position: -200% 0; }     /* Start off-screen left */
-    100% { background-position: 200% 0; }    /* End off-screen right */
+  /* End: visible, in position */
+}
+
+/* Slide down animation - entrance from top */
+@keyframes slideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
   }
+
+  /* Start: invisible, higher */
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* End: visible, in position */
+}
+
+/* Scale in animation - entrance with scaling effect */
+@keyframes scaleIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  /* Start: smaller, invisible */
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* End: normal size, visible */
+}
+
+/* Gradient shift animation - moving gradient background */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  /* Start position */
+  50% {
+    background-position: 100% 50%;
+  }
+
+  /* End position */
+  100% {
+    background-position: 0% 50%;
+  }
+
+  /* Return to start */
+}
+
+/* Shimmer animation - moving highlight effect */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  /* Start off-screen left */
+  100% {
+    background-position: 200% 0;
+  }
+
+  /* End off-screen right */
+}
 
 /* Utilities layer - single-purpose animation utility classes */
 @layer utilities {
+
   /* Slide down entrance animation utility */
   .animate-slide-down {
     animation: slideDown 0.8s ease-out both;
@@ -362,12 +462,12 @@
 
   /* Aurora Background Effect */
   .aurora-bg {
-    background-image: 
-      radial-gradient(at 100% 0%, hsla(250,100%,70%,.1) 0px, transparent 50%),
-      radial-gradient(at 0% 0%, hsla(210,100%,60%,.1) 0px, transparent 50%),
-      radial-gradient(at 0% 100%, hsla(280,100%,70%,.1) 0px, transparent 50%),
-      radial-gradient(at 80% 100%, hsla(200,100%,60%,.1) 0px, transparent 50%),
-      radial-gradient(at 0% 0%, hsla(240,100%,70%,.1) 0px, transparent 50%);
+    background-image:
+      radial-gradient(at 100% 0%, hsla(250, 100%, 70%, .1) 0px, transparent 50%),
+      radial-gradient(at 0% 0%, hsla(210, 100%, 60%, .1) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(280, 100%, 70%, .1) 0px, transparent 50%),
+      radial-gradient(at 80% 100%, hsla(200, 100%, 60%, .1) 0px, transparent 50%),
+      radial-gradient(at 0% 0%, hsla(240, 100%, 70%, .1) 0px, transparent 50%);
     background-size: 200% 200%;
     animation: aurora 20s linear infinite;
   }
@@ -375,11 +475,11 @@
   /* Premium Glass Card */
   .glass-card-premium {
     @apply bg-white/5 backdrop-blur-2xl border border-white/10 shadow-glass;
-    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
   }
 
   .dark .glass-card-premium {
     @apply bg-slate-900/40 border-white/5;
-    background: linear-gradient(135deg, rgba(30,41,59,0.4) 0%, rgba(15,23,42,0.2) 100%);
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.2) 100%);
   }
 }
