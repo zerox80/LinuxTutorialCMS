@@ -17,10 +17,7 @@ pub fn routes(pool: DbPool, rate_limit_config: Arc<GovernorConfig<SmartIpKeyExtr
             "/api/tutorials/{id}",
             put(tutorials::update_tutorial).delete(tutorials::delete_tutorial),
         )
-        .route(
-            "/api/content/{section}",
-            put(site_content::update_site_content),
-        )
+
         .route(
             "/api/pages",
             get(site_pages::list_site_pages).post(site_pages::create_site_page),
