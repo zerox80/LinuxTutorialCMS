@@ -46,13 +46,13 @@ const ThemeContext = createContext();
 export const useTheme = () => {
   // Get theme context
   const context = useContext(ThemeContext);
-  
+
   // Throw error if hook is used outside ThemeProvider
   // This prevents runtime errors and helps developers catch mistakes early
   if (!context) {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
-  
+
   // Return context value with theme state and toggle function
   return context;
 };
@@ -77,71 +77,36 @@ export const ThemeProvider = ({ children }) => {
    * 
    * This ensures theme persists across sessions and respects user preferences.
    */
-  const [theme, setTheme] = useState(() => {
-    if (typeof window === 'undefined') {
-      return 'light';
-    }
+  const [theme] = useState('dark');
 
-    try {
-      const savedTheme = window.localStorage?.getItem('theme');
-      if (savedTheme) {
-        return savedTheme;
-      }
-    } catch (error) {
-      console.warn('Unable to read theme from localStorage:', error);
-    }
-
-    try {
-      if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
-        return 'dark';
-      }
-    } catch (error) {
-      console.warn('System theme preference detection failed:', error);
-    }
-
-    return 'light';
-  });
   /**
-   * Effect: Apply theme to DOM and persist to localStorage
+   * Effect: Apply theme to DOM
    * 
-   * Runs whenever theme changes to:
-   * 1. Add/remove 'dark' class on document root (for Tailwind dark mode)
-   * 2. Save theme preference to localStorage for persistence
-   * 
-   * The 'dark' class on <html> element enables Tailwind's dark mode styles.
+   * Always adds 'dark' class to document root.
    */
   useEffect(() => {
-    // Get reference to document root element (<html>)
     if (typeof window === 'undefined' || !window.document?.documentElement) {
       return undefined;
     }
 
     const root = window.document.documentElement;
+    root.classList.add('dark');
 
-    // Apply or remove 'dark' class based on current theme
-    if (theme === 'dark') {
-      root.classList.add('dark');     // Add 'dark' class for dark mode styles
-    } else {
-      root.classList.remove('dark');  // Remove 'dark' class for light mode
-    }
-
-    // Persist theme preference to localStorage for next session
+    // Optional: Persist 'dark' just in case, though we force it anyway
     try {
-      window.localStorage?.setItem('theme', theme);
+      window.localStorage?.setItem('theme', 'dark');
     } catch (error) {
-      console.warn('Unable to persist theme preference:', error);
+      // Ignore
     }
-  }, [theme]);  // Re-run effect whenever theme changes
+  }, []);
+
   /**
    * Toggle Theme Function
    * 
-   * Switches between light and dark themes.
-   * Uses functional state update to ensure correct previous value.
+   * No-op as we are enforcing dark mode.
    */
   const toggleTheme = () => {
-    // Toggle theme using previous state
-    // If currently dark, switch to light; if light, switch to dark
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+    // No-op
   };
   /**
    * Render Provider

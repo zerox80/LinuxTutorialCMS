@@ -172,7 +172,7 @@ const Header = () => {
     }
 
     return (
-        <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl shadow-soft sticky top-0 z-50 border-b border-gray-100/50 dark:border-gray-800/50">
+        <header className="bg-gray-900 shadow-soft sticky top-0 z-50 border-b border-gray-800">
             <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-20">
                     {/* Logo */}
@@ -185,7 +185,7 @@ const Header = () => {
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-600 text-white shadow-sm">
                             <BrandIcon className="w-6 h-6" />
                         </div>
-                        <span className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                        <span className="text-xl font-semibold text-gray-100">
                             {headerContent?.brand?.name || 'IT Portal'}
                         </span>
                     </a>
@@ -209,7 +209,7 @@ const Header = () => {
                                     onClick={(event) => handleNavClick(event, item)}
                                     target={external ? '_blank' : undefined}
                                     rel={external ? 'noopener noreferrer' : undefined}
-                                    className="nav-link font-medium text-gray-900 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400"
+                                    className="nav-link font-medium text-gray-300 hover:text-primary-400"
                                     aria-current={ariaCurrent}
                                 >
                                     {item.label}
@@ -219,13 +219,13 @@ const Header = () => {
 
                         <button
                             onClick={() => setSearchOpen(true)}
-                            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                            className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
                             aria-label="Search tutorials"
                         >
-                            <Search className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                            <Search className="w-5 h-5 text-gray-300" />
                         </button>
 
-                        <ThemeToggle />
+                        {/* ThemeToggle removed */}
 
                         <button onClick={handleCtaClick} className="btn-primary btn-primary--compact">
                             <CTAIcon className="w-4 h-4" />
@@ -237,14 +237,14 @@ const Header = () => {
                     <div className="md:hidden flex items-center space-x-2">
                         <button
                             onClick={() => setSearchOpen(true)}
-                            className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            className="p-2 rounded-md text-gray-300 hover:text-gray-100 hover:bg-gray-800"
                             aria-label="Search tutorials"
                         >
                             <Search className="w-5 h-5" />
                         </button>
-                        <ThemeToggle />
+                        {/* ThemeToggle removed */}
                         <button
-                            className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            className="p-2 rounded-md text-gray-300 hover:text-gray-100 hover:bg-gray-800"
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                             aria-label={mobileMenuOpen ? 'Navigation schließen' : 'Navigation öffnen'}
                         >
