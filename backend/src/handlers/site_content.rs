@@ -27,7 +27,6 @@ fn allowed_sections() -> &'static HashSet<&'static str> {
             "footer",
             "site_meta",
             "stats",
-        "stats",
             "cta_section",
             "settings",
         ]
