@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useContent } from '../context/ContentContext'
+import { getIconComponent } from '../utils/iconMap'
 import { Terminal, Lock, User, AlertCircle } from 'lucide-react'
 const Login = () => {
+  const { getSection } = useContent()
+  const loginContent = getSection('login') || {}
+  const IconComponent = getIconComponent(loginContent.icon, 'Terminal')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -79,15 +84,15 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
-        {}
+        { }
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl mb-4">
-            <Terminal className="w-8 h-8 text-white" />
+            <IconComponent className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Linux Tutorial</h1>
-          <p className="text-primary-100">Admin Login</p>
+          <h1 className="text-3xl font-bold text-white mb-2">{loginContent.title || 'Linux Tutorial'}</h1>
+          <p className="text-primary-100">{loginContent.subtitle || 'Admin Login'}</p>
         </div>
-        {}
+        { }
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Anmelden</h2>
           {error && (
@@ -97,10 +102,10 @@ const Login = () => {
             </div>
           )}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {}
+            { }
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Benutzername
+                {loginContent.usernameLabel || 'Benutzername'}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -110,16 +115,16 @@ const Login = () => {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                   placeholder="admin"
                   required
                 />
               </div>
             </div>
-            {}
+            { }
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Passwort
+                {loginContent.passwordLabel || 'Passwort'}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -129,29 +134,29 @@ const Login = () => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                   placeholder="********"
                   required
                 />
               </div>
             </div>
-            {}
+            { }
             <button
               type="submit"
               disabled={isSubmitting || (cooldownUntil && Date.now() < cooldownUntil)}
               className="w-full bg-gradient-to-r from-primary-600 to-primary-700 text-white py-3 rounded-lg font-semibold hover:from-primary-700 hover:to-primary-800 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Anmelden...' : 'Anmelden'}
+              {isSubmitting ? 'Anmelden...' : (loginContent.buttonLabel || 'Anmelden')}
             </button>
           </form>
         </div>
-        {}
+        { }
         <div className="text-center mt-6">
           <button
             onClick={() => navigate('/')}
             className="text-white hover:text-primary-100 transition-colors duration-200"
           >
-            Zurück zur Startseite
+            {loginContent.backLinkText || 'Zurück zur Startseite'}
           </button>
         </div>
       </div>

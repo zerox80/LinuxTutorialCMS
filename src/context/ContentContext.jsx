@@ -101,7 +101,15 @@ export const DEFAULT_CONTENT = {
       signature: 'Made for IT Professionals',
     },
   },
-
+  login: {
+    title: 'Linux Tutorial',
+    subtitle: 'Admin Login',
+    icon: 'Terminal',
+    buttonLabel: 'Anmelden',
+    usernameLabel: 'Benutzername',
+    passwordLabel: 'Passwort',
+    backLinkText: 'Zurück zur Startseite',
+  },
 }
 export const CONTENT_SECTIONS = Object.keys(DEFAULT_CONTENT)
 export const ContentProvider = ({ children }) => {

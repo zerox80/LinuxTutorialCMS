@@ -29,6 +29,7 @@ fn allowed_sections() -> &'static HashSet<&'static str> {
             "stats",
             "cta_section",
             "settings",
+            "login",
         ]
         .into_iter()
         .collect()
@@ -60,6 +61,7 @@ fn validate_content_structure(
         "settings" => validate_settings_structure(content),
         "stats" => Ok(()),
         "cta_section" => Ok(()),
+        "login" => validate_login_structure(content),
         _ => Ok(()),
     };
 
@@ -135,6 +137,16 @@ fn validate_settings_structure(content: &Value) -> Result<(), &'static str> {
         if !val.is_boolean() {
             return Err("Field 'pdfEnabled' must be a boolean");
         }
+    }
+    Ok(())
+}
+
+fn validate_login_structure(content: &Value) -> Result<(), &'static str> {
+    let obj = content.as_object().ok_or("Expected JSON object")?;
+    // We can be lenient, but let's check for at least one expected field if we want strictness.
+    // For now, just ensuring it's an object is enough, or check for 'title'.
+    if !obj.contains_key("title") {
+        return Err("Missing required field 'title'");
     }
     Ok(())
 }
@@ -304,5 +316,21 @@ mod tests {
             ]
         });
         assert!(validate_header_structure(&content_invalid).is_err());
+    }
+
+    #[test]
+    fn test_validate_login_structure() {
+        // Case 1: Valid login content
+        let content_valid = json!({
+            "title": "Login",
+            "subtitle": "Welcome back"
+        });
+        assert!(validate_login_structure(&content_valid).is_ok());
+
+        // Case 2: Missing title
+        let content_invalid = json!({
+            "subtitle": "Welcome back"
+        });
+        assert!(validate_login_structure(&content_invalid).is_err());
     }
 }

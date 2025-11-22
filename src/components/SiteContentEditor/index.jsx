@@ -13,6 +13,7 @@ const sectionLabels = {
   header: 'Navigation & Header',
   footer: 'Footer',
   site_meta: 'Seitentitel & Beschreibung',
+  login: 'Login Seite',
 }
 
 const cloneContent = (value) => {
@@ -1074,6 +1075,10 @@ const SiteContentEditor = () => {
 
           {selectedSection === 'cta_section' && (
             <CtaSectionForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
+          )}
+
+          {selectedSection === 'login' && (
+            <LoginForm content={draftContent} onFieldChange={handleStructuredFieldChange} />
           )}
 
           {selectedSection === 'site_meta' && (
