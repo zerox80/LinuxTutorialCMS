@@ -6,7 +6,7 @@ import remarkMath from 'remark-math'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeKatex from 'rehype-katex'
 import 'katex/dist/katex.min.css'
-import CodeBlock from './CodeBlock'
+import CodeBlock from '../ui/CodeBlock'
 import remarkMergeInlineParagraphs from '../utils/remarkMergeInlineParagraphs'
 const mergeClassNames = (...classes) => classes.filter(Boolean).join(' ')
 const headingClasses = {

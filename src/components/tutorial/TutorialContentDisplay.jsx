@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import MarkdownRenderer from '../MarkdownRenderer'
+import MarkdownRenderer from '../markdown/MarkdownRenderer'
 
 const TutorialContentDisplay = ({ content }) => {
     return (

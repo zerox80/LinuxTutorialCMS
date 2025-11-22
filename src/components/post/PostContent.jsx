@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import MarkdownRenderer from '../MarkdownRenderer'
+import MarkdownRenderer from '../markdown/MarkdownRenderer'
 import PostHeader from './PostHeader'
 
 const PostContent = ({ post }) => {

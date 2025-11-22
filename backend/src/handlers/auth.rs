@@ -22,7 +22,7 @@
 //! - 3 failures: 10-second lockout
 //! - 5+ failures: 60-second lockout
 
-use crate::{auth, csrf, db::DbPool, models::*, repositories};
+use crate::{security::{auth, csrf}, db::DbPool, models::*, repositories};
 use axum::{
     extract::State,
     http::{HeaderMap, StatusCode},

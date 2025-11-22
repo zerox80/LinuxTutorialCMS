@@ -7,7 +7,7 @@ import { getIconComponent } from '../../utils/iconMap'
 import { navigateContentTarget } from '../../utils/contentNavigation'
 import { scrollToSection } from '../../utils/scrollToSection'
 import { sanitizeExternalUrl } from '../../utils/urlValidation'
-import SearchBar from '../SearchBar'
+import SearchBar from '../search/SearchBar'
 
 const FALLBACK_NAV_ITEMS = [
     { id: 'home', label: 'Home', type: 'section' },

@@ -1,4 +1,4 @@
-use crate::{auth, repositories};
+use crate::{security::auth, repositories};
 use axum::{http::StatusCode, Json};
 
 /// AXUM middleware for protecting routes with authentication.

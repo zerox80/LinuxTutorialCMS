@@ -105,8 +105,7 @@
  * ```
  */
 // Core application modules
-pub mod auth; // Authentication and authorization
-pub mod csrf; // Cross-Site Request Forgery protection
+pub mod security; // Authentication, authorization, and CSRF protection
 pub mod db; // Database operations and migrations
 pub mod handlers; // HTTP request handlers
 pub mod middleware; // HTTP middleware

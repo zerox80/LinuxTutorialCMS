@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import ThemeToggle from '../ThemeToggle';
+import ThemeToggle from '../ui/ThemeToggle';
 import { ThemeProvider } from '../../context/ThemeContext';
 describe('ThemeToggle', () => {
   it('renders toggle button', () => {

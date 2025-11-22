@@ -1,6 +1,5 @@
 // Module declarations for organizing the backend codebase
-pub mod auth; // Authentication and JWT token management
-pub mod csrf; // Cross-Site Request Forgery protection
+pub mod security; // Authentication, authorization, and CSRF protection
 pub mod db; // Database connection and pooling
 pub mod handlers; // HTTP request handlers organized by feature
 pub mod middleware; // Middleware modules
@@ -41,10 +40,10 @@ async fn main() {
     // Initialize structured logging
     tracing_subscriber::fmt::init();
 
-    auth::init_jwt_secret().expect("Failed to initialize JWT secret");
+    security::auth::init_jwt_secret().expect("Failed to initialize JWT secret");
     tracing::info!("JWT secret initialized successfully");
 
-    csrf::init_csrf_secret().expect("Failed to initialize CSRF secret");
+    security::csrf::init_csrf_secret().expect("Failed to initialize CSRF secret");
     tracing::info!("CSRF secret initialized successfully");
 
     handlers::auth::init_login_attempt_salt().expect("Failed to initialize login attempt salt");

@@ -3,7 +3,7 @@ use tower_governor::{governor::GovernorConfig, key_extractor::SmartIpKeyExtracto
 use tower_http::limit::RequestBodyLimitLayer;
 use crate::handlers::{tutorials, site_content, site_pages, site_posts, comments, upload};
 use crate::middleware::auth::auth_middleware;
-use crate::csrf::enforce_csrf;
+use crate::security::csrf::enforce_csrf;
 use crate::db::DbPool;
 use std::sync::Arc;
 use governor::middleware::NoOpMiddleware;
