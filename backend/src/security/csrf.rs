@@ -53,7 +53,7 @@ use std::{collections::HashSet, env, sync::OnceLock};
 use time::{Duration as TimeDuration, OffsetDateTime};
 use uuid::Uuid;
 
-use crate::{auth, models::ErrorResponse};
+use crate::{security::auth, models::ErrorResponse};
 
 /// HMAC-SHA256 type alias for token signing
 type HmacSha256 = Hmac<Sha256>;
@@ -500,7 +500,7 @@ where
         let claims = match claims_result {
             Ok(claims) => {
                 // User is authenticated, so we MUST enforce CSRF
-                parts.extensions.insert::<auth::Claims>(claims.clone());
+                parts.extensions.insert(claims.clone());
                 claims
             }
             Err(_) => {
