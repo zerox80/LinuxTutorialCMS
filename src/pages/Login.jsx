@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useContent } from '../context/ContentContext'
 import { getIconComponent } from '../utils/iconMap'
-import { Terminal, Lock, User, AlertCircle } from 'lucide-react'
+import { Terminal, Lock, User, AlertCircle, ArrowRight } from 'lucide-react'
+
 const Login = () => {
   const { getSection } = useContent()
   const loginContent = getSection('login') || {}
@@ -16,6 +17,7 @@ const Login = () => {
   const [cooldownUntil, setCooldownUntil] = useState(null)
   const { login } = useAuth()
   const navigate = useNavigate()
+
   useEffect(() => {
     if (!cooldownUntil) {
       return
@@ -31,6 +33,7 @@ const Login = () => {
       window.clearInterval(intervalId)
     }
   }, [cooldownUntil])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     const now = Date.now()
@@ -42,6 +45,7 @@ const Login = () => {
     if (isSubmitting) {
       return
     }
+
     const trimmedUsername = username.trim()
     if (!/^[a-zA-Z0-9_.-]{1,50}$/.test(trimmedUsername)) {
       setError('Benutzername darf nur Buchstaben, Zahlen sowie _ . - enthalten und max. 50 Zeichen lang sein.')
@@ -55,8 +59,10 @@ const Login = () => {
       setError('Passwort darf maximal 128 Zeichen lang sein.')
       return
     }
+
     setError('')
     setIsSubmitting(true)
+
     try {
       const result = await login(trimmedUsername, password)
       if (result.success) {
@@ -81,81 +87,108 @@ const Login = () => {
       setIsSubmitting(false)
     }
   }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center px-4">
-      <div className="max-w-md w-full">
-        { }
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl mb-4">
-            <IconComponent className="w-8 h-8 text-white" />
+    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-surface-950">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 w-full h-full">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary-600/20 blur-[120px] animate-float" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-accent-violet/20 blur-[120px] animate-float" style={{ animationDelay: '-3s' }} />
+        <div className="absolute top-[20%] right-[20%] w-[20%] h-[20%] rounded-full bg-accent-cyan/20 blur-[80px] animate-pulse-slow" />
+      </div>
+
+      {/* Main Card */}
+      <div className="relative w-full max-w-md p-4 animate-scale-in">
+        <div className="relative bg-surface-900/60 backdrop-blur-xl border border-white/10 rounded-3xl shadow-card-xl overflow-hidden">
+
+          {/* Decorative top line */}
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary-500 to-transparent opacity-50" />
+
+          <div className="p-8 sm:p-10">
+            {/* Header */}
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-primary-500/20 to-accent-violet/20 rounded-2xl mb-6 ring-1 ring-white/10 shadow-inner-glow animate-float">
+                <IconComponent className="w-10 h-10 text-primary-400 drop-shadow-neon" />
+              </div>
+              <h1 className="text-3xl font-bold text-white mb-3 tracking-tight">
+                {loginContent.title || 'Linux Tutorial'}
+              </h1>
+              <p className="text-surface-300 text-sm font-medium">
+                {loginContent.subtitle || 'Admin Login'}
+              </p>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start space-x-3 animate-slide-down">
+                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-red-200 text-sm leading-relaxed">{error}</p>
+              </div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-surface-300 uppercase tracking-wider ml-1">
+                  {loginContent.usernameLabel || 'Benutzername'}
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-primary-400 text-surface-400">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="block w-full pl-11 pr-4 py-3.5 bg-surface-800/50 border border-surface-700 rounded-xl focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 text-white placeholder-surface-500 transition-all duration-200 outline-none hover:bg-surface-800/80"
+                    placeholder="admin"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-surface-300 uppercase tracking-wider ml-1">
+                  {loginContent.passwordLabel || 'Passwort'}
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-primary-400 text-surface-400">
+                    <Lock className="h-5 w-5" />
+                  </div>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="block w-full pl-11 pr-4 py-3.5 bg-surface-800/50 border border-surface-700 rounded-xl focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 text-white placeholder-surface-500 transition-all duration-200 outline-none hover:bg-surface-800/80"
+                    placeholder="••••••••"
+                    required
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting || (cooldownUntil && Date.now() < cooldownUntil)}
+                className="group relative w-full flex items-center justify-center py-3.5 px-4 border border-transparent rounded-xl text-white font-semibold bg-gradient-to-r from-primary-600 to-accent-violet hover:from-primary-500 hover:to-accent-violet/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:ring-offset-surface-900 transition-all duration-200 shadow-lg hover:shadow-primary-500/25 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+              >
+                <span className="relative z-10 flex items-center gap-2">
+                  {isSubmitting ? 'Anmelden...' : (loginContent.buttonLabel || 'Anmelden')}
+                  {!isSubmitting && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
+                </span>
+                {/* Button Shine Effect */}
+                <div className="absolute inset-0 -translate-x-full group-hover:animate-shimmer bg-gradient-to-r from-transparent via-white/20 to-transparent z-0" />
+              </button>
+            </form>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">{loginContent.title || 'Linux Tutorial'}</h1>
-          <p className="text-primary-100">{loginContent.subtitle || 'Admin Login'}</p>
         </div>
-        { }
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Anmelden</h2>
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2">
-              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-              <p className="text-red-800 text-sm">{error}</p>
-            </div>
-          )}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            { }
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {loginContent.usernameLabel || 'Benutzername'}
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
-                  placeholder="admin"
-                  required
-                />
-              </div>
-            </div>
-            { }
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {loginContent.passwordLabel || 'Passwort'}
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
-                  placeholder="********"
-                  required
-                />
-              </div>
-            </div>
-            { }
-            <button
-              type="submit"
-              disabled={isSubmitting || (cooldownUntil && Date.now() < cooldownUntil)}
-              className="w-full bg-gradient-to-r from-primary-600 to-primary-700 text-white py-3 rounded-lg font-semibold hover:from-primary-700 hover:to-primary-800 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? 'Anmelden...' : (loginContent.buttonLabel || 'Anmelden')}
-            </button>
-          </form>
-        </div>
-        { }
-        <div className="text-center mt-6">
+
+        {/* Footer Link */}
+        <div className="text-center mt-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
           <button
             onClick={() => navigate('/')}
-            className="text-white hover:text-primary-100 transition-colors duration-200"
+            className="text-surface-400 hover:text-white text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 mx-auto group"
           >
+            <span className="group-hover:-translate-x-1 transition-transform">←</span>
             {loginContent.backLinkText || 'Zurück zur Startseite'}
           </button>
         </div>
@@ -163,4 +196,5 @@ const Login = () => {
     </div>
   )
 }
+
 export default Login
