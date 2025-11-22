@@ -7,7 +7,7 @@ import rehypeHighlight from 'rehype-highlight'
 import rehypeKatex from 'rehype-katex'
 import 'katex/dist/katex.min.css'
 import CodeBlock from '../ui/CodeBlock'
-import remarkMergeInlineParagraphs from '../utils/remarkMergeInlineParagraphs'
+import remarkMergeInlineParagraphs from '../../utils/remarkMergeInlineParagraphs'
 const mergeClassNames = (...classes) => classes.filter(Boolean).join(' ')
 const headingClasses = {
   1: 'text-3xl sm:text-4xl font-bold text-gray-900 dark:text-slate-100 tracking-tight mt-10 first:mt-0',
