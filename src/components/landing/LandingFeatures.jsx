@@ -19,11 +19,11 @@ const LandingFeatures = ({ features }) => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {features.map((feature, index) => {
+                    {features.map((feature) => {
                         const FeatureIcon = resolveIcon(feature.icon)
                         return (
                             <div
-                                key={index}
+                                key={feature.title}
                                 className="group glass-card-premium p-8 rounded-3xl hover:-translate-y-2 transition-all duration-500 relative overflow-hidden"
                             >
                                 <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

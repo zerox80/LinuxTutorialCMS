@@ -194,7 +194,7 @@ const FeaturesEditor = ({ features, onChange }) => {
       </div>
       <div className="grid gap-4">
         {items.map((item, index) => (
-          <div key={index} className="relative rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+          <div key={item.id || `feature-${index}`} className="relative rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
             <button
               type="button"
               onClick={() => handleRemove(index)}
@@ -284,7 +284,7 @@ const StatsForm = ({ content, onFieldChange }) => {
       </div>
       <div className="space-y-3">
         {items.map((item, index) => (
-          <div key={index} className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
+          <div key={item.label || `stat-${index}`} className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
             <div className="flex-1 grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="text-xs font-medium text-gray-500">Wert (z.B. 10k+)</label>
@@ -543,7 +543,7 @@ const HeaderForm = ({ content, onFieldChange }) => {
         </div>
         <div className="space-y-3">
           {navItems.map((item, index) => (
-            <div key={index} className="flex items-start gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
+            <div key={item.id || `nav-${index}`} className="flex items-start gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
               <div className="flex-1 grid gap-3 sm:grid-cols-3">
                 <div>
                   <label className="text-xs font-medium text-gray-500">Label</label>
@@ -657,7 +657,7 @@ const FooterForm = ({ content, onFieldChange }) => {
         </div>
         <div className="space-y-3">
           {quickLinks.map((link, index) => (
-            <div key={index} className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
+            <div key={link.label || `link-${index}`} className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
               <div className="flex-1 grid gap-3 sm:grid-cols-2">
                 <input
                   type="text"

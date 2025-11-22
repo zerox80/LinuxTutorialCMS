@@ -181,9 +181,9 @@ const TutorialManagement = () => {
                                 {/* Topics Tags */}
                                 <div className="mb-4">
                                     <div className="flex flex-wrap gap-2">
-                                        {(tutorial.topics || []).slice(0, 3).map((topic, index) => (
+                                        {(tutorial.topics || []).slice(0, 3).map((topic) => (
                                             <span
-                                                key={index}
+                                                key={topic}
                                                 className="px-2 py-1 bg-primary-50 text-primary-700 text-xs rounded-full dark:bg-primary-900/40 dark:text-primary-200"
                                             >
                                                 {topic}

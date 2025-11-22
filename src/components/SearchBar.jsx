@@ -73,6 +73,8 @@ const SearchBar = ({ onClose }) => {
       setResults([]);
       return;
     }
+
+    const controller = new AbortController();
     const timeoutId = setTimeout(async () => {
       setIsLoading(true);
       try {
@@ -82,16 +84,25 @@ const SearchBar = ({ onClose }) => {
         }
         const data = await api.request(`/search/tutorials?${params.toString()}`, {
           cacheBust: false,
+          signal: controller.signal
         })
         setResults(Array.isArray(data) ? data : [])
       } catch (error) {
-        console.error('Search failed:', error);
-        setResults([]);
+        if (error.name !== 'AbortError') {
+          console.error('Search failed:', error);
+          setResults([]);
+        }
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
       }
     }, 300);
-    return () => clearTimeout(timeoutId);
+
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, [query, selectedTopic]);
   const handleResultClick = (id) => {
     navigate(`/tutorials/${id}`);
@@ -114,7 +125,7 @@ const SearchBar = ({ onClose }) => {
         aria-labelledby="search-dialog-title"
         className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col"
       >
-        {}
+        { }
         <div className="p-4 border-b dark:border-gray-700">
           <h2 id="search-dialog-title" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Tutorialsuche
@@ -139,16 +150,15 @@ const SearchBar = ({ onClose }) => {
               </button>
             )}
           </div>
-          {}
+          { }
           {topics.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 onClick={() => setSelectedTopic('')}
-                className={`px-3 py-1 rounded-lg text-sm transition-colors ${
-                  !selectedTopic
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
+                className={`px-3 py-1 rounded-lg text-sm transition-colors ${!selectedTopic
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
               >
                 Alle
               </button>
@@ -156,11 +166,10 @@ const SearchBar = ({ onClose }) => {
                 <button
                   key={topic}
                   onClick={() => setSelectedTopic(topic)}
-                  className={`flex items-center gap-1 px-3 py-1 rounded-lg text-sm transition-colors ${
-                    selectedTopic === topic
-                      ? 'bg-primary-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
+                  className={`flex items-center gap-1 px-3 py-1 rounded-lg text-sm transition-colors ${selectedTopic === topic
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
                 >
                   <Tag className="w-3 h-3" />
                   {topic}
@@ -169,7 +178,7 @@ const SearchBar = ({ onClose }) => {
             </div>
           )}
         </div>
-        {}
+        { }
         <div className="flex-1 overflow-y-auto p-4">
           {isLoading && (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
@@ -201,9 +210,9 @@ const SearchBar = ({ onClose }) => {
                     {tutorial.description}
                   </p>
                   <div className="flex flex-wrap gap-1 mt-2">
-                    {tutorial.topics.slice(0, 3).map((topic, idx) => (
+                    {tutorial.topics.slice(0, 3).map((topic) => (
                       <span
-                        key={idx}
+                        key={topic}
                         className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs rounded"
                       >
                         {topic}
