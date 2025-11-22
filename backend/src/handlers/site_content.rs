@@ -105,11 +105,11 @@ fn validate_header_structure(content: &Value) -> Result<(), &'static str> {
         .map(|items| {
             items.iter().all(|item| {
                 let has_id_label = item.get("id").is_some() && item.get("label").is_some();
-                // Ensure at least one target property exists
-                let has_target = item.get("slug").is_some()
-                    || item.get("href").is_some()
-                    || item.get("path").is_some()
-                    || item.get("value").is_some()
+                // Ensure at least one target property exists and is not empty
+                let has_target = item.get("slug").and_then(|v| v.as_str()).map(|s| !s.trim().is_empty()).unwrap_or(false)
+                    || item.get("href").and_then(|v| v.as_str()).map(|s| !s.trim().is_empty()).unwrap_or(false)
+                    || item.get("path").and_then(|v| v.as_str()).map(|s| !s.trim().is_empty()).unwrap_or(false)
+                    || item.get("value").and_then(|v| v.as_str()).map(|s| !s.trim().is_empty()).unwrap_or(false)
                     || item.get("type").and_then(|t| t.as_str()).map(|s| s == "section").unwrap_or(false);
                 has_id_label && has_target
             })
@@ -332,5 +332,26 @@ mod tests {
             "subtitle": "Welcome back"
         });
         assert!(validate_login_structure(&content_invalid).is_err());
+    }
+
+    #[test]
+    fn test_validate_header_structure_rejects_empty_target() {
+        // Case: Empty slug should be rejected
+        let content_empty_slug = json!({
+            "brand": { "name": "Test" },
+            "navItems": [
+                { "id": "1", "label": "Empty Slug", "slug": "" }
+            ]
+        });
+        assert!(validate_header_structure(&content_empty_slug).is_err(), "Should reject empty slug");
+
+        // Case: Whitespace-only slug should be rejected
+        let content_whitespace_slug = json!({
+            "brand": { "name": "Test" },
+            "navItems": [
+                { "id": "2", "label": "Whitespace Slug", "slug": "   " }
+            ]
+        });
+        assert!(validate_header_structure(&content_whitespace_slug).is_err(), "Should reject whitespace-only slug");
     }
 }
