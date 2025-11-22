@@ -1,5 +1,5 @@
 use crate::{
-    auth, db,
+    security::auth, db,
     models::{
         ErrorResponse, SiteContentListResponse, SiteContentResponse, UpdateSiteContentRequest,
     },

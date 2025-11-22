@@ -20,7 +20,7 @@
 //! - Content length limits prevent abuse
 //! - Tutorial ID validation prevents injection
 
-use crate::{auth, db::DbPool, handlers::tutorials::validate_tutorial_id, models::*, repositories};
+use crate::{security::auth, db::DbPool, handlers::tutorials::validate_tutorial_id, models::*, repositories};
 use axum::{
     extract::{ConnectInfo, Path, Query, State},
     http::StatusCode,

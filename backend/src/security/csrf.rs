@@ -500,7 +500,7 @@ where
         let claims = match claims_result {
             Ok(claims) => {
                 // User is authenticated, so we MUST enforce CSRF
-                parts.extensions.insert(claims.clone());
+                parts.extensions.insert::<auth::Claims>(claims.clone());
                 claims
             }
             Err(_) => {

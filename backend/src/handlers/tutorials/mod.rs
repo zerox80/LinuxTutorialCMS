@@ -25,7 +25,7 @@
 //! - Version tracking for content updates
 //! - Soft validation to preserve data integrity
 
-use crate::{auth, db::DbPool, models::*, repositories};
+use crate::{security::auth, db::DbPool, models::*, repositories};
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,

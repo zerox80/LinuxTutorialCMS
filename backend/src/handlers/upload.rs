@@ -1,5 +1,5 @@
 use crate::{
-    auth,
+    security::auth,
     models::{ErrorResponse, UploadResponse},
 };
 use axum::{
