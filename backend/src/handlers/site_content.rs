@@ -106,13 +106,15 @@ fn validate_header_structure(content: &Value) -> Result<(), &'static str> {
                 // Ensure at least one target property exists
                 let has_target = item.get("slug").is_some()
                     || item.get("href").is_some()
-                    || item.get("path").is_some();
+                    || item.get("path").is_some()
+                    || item.get("value").is_some()
+                    || item.get("type").and_then(|t| t.as_str()).map(|s| s == "section").unwrap_or(false);
                 has_id_label && has_target
             })
         })
         .unwrap_or(false)
     {
-        return Err("Each navigation item must include 'id', 'label', and a target ('slug', 'href', or 'path')");
+        return Err("Each navigation item must include 'id', 'label', and a target ('slug', 'href', 'path', 'value', or type='section')");
     }
     Ok(())
 }
@@ -258,4 +260,49 @@ pub async fn update_site_content(
         })?;
 
     Ok(Json(map_record(record)?))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn test_validate_header_structure_relaxed() {
+        // Case 1: Standard link with path
+        let content_standard = json!({
+            "brand": { "name": "Test" },
+            "navItems": [
+                { "id": "1", "label": "Blog", "path": "/blog" }
+            ]
+        });
+        assert!(validate_header_structure(&content_standard).is_ok());
+
+        // Case 2: Section link with type="section" (no explicit target field)
+        let content_section = json!({
+            "brand": { "name": "Test" },
+            "navItems": [
+                { "id": "home", "label": "Home", "type": "section" }
+            ]
+        });
+        assert!(validate_header_structure(&content_section).is_ok(), "Should accept type='section' without other target fields");
+
+        // Case 3: Link with 'value' field (e.g. from some frontend logic)
+        let content_value = json!({
+            "brand": { "name": "Test" },
+            "navItems": [
+                { "id": "2", "label": "About", "value": "about-us" }
+            ]
+        });
+        assert!(validate_header_structure(&content_value).is_ok(), "Should accept 'value' field as target");
+
+        // Case 4: Invalid item (missing target)
+        let content_invalid = json!({
+            "brand": { "name": "Test" },
+            "navItems": [
+                { "id": "3", "label": "Invalid" }
+            ]
+        });
+        assert!(validate_header_structure(&content_invalid).is_err());
+    }
 }
