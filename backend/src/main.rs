@@ -7,7 +7,7 @@ pub mod models; // Data structures and database models
 pub mod repositories; // Repository modules
 pub mod routes; // Route definitions
 
-use crate::middleware::{cors, security};
+use crate::middleware::{cors, security as security_middleware};
 
 // HTTP-related imports for building the web server
 use axum::{
@@ -91,7 +91,7 @@ async fn main() {
 
     tracing::info!(origins = ?cors_origins, "Configured CORS origins");
 
-    let trust_proxy_ip_headers = security::parse_env_bool("TRUST_PROXY_IP_HEADERS", false);
+    let trust_proxy_ip_headers = security_middleware::parse_env_bool("TRUST_PROXY_IP_HEADERS", false);
     if trust_proxy_ip_headers {
         tracing::info!("Trusting X-Forwarded-* headers for client IP extraction");
     } else {
@@ -108,7 +108,7 @@ async fn main() {
         // Serve index.html with server-side injection for root and fallback
         .route("/", get(handlers::frontend_proxy::serve_index))
         .route("/{*path}", get(handlers::frontend_proxy::serve_index))
-        .layer(axum::middleware::from_fn(security::security_headers))
+        .layer(axum::middleware::from_fn(security_middleware::security_headers))
         .layer(cors_layer)
         .layer(DefaultBodyLimit::max(10 * 1024 * 1024)) // 10MB body limit
         .with_state(pool.clone());
@@ -118,7 +118,7 @@ async fn main() {
         app
     } else {
         app.layer(axum::middleware::from_fn(
-            security::strip_untrusted_forwarded_headers,
+            security_middleware::strip_untrusted_forwarded_headers,
         ))
     };
     let port_str = env::var("PORT").unwrap_or_else(|_| "8489".to_string());

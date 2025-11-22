@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Search, X, Tag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { api } from '../api/client';
+import { api } from '../../api/client';
 const SearchBar = ({ onClose }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
