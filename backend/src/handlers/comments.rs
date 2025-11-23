@@ -166,6 +166,7 @@ pub async fn list_comments(
 
 pub async fn create_comment(
     State(pool): State<DbPool>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Path(tutorial_id): Path<String>,
     Json(payload): Json<CreateCommentRequest>,
 ) -> Result<Json<Comment>, (StatusCode, Json<ErrorResponse>)> {
@@ -195,7 +196,7 @@ pub async fn create_comment(
         ));
     }
 
-    create_comment_internal(pool, Some(tutorial_id), None, payload, None).await
+    create_comment_internal(pool, Some(tutorial_id), None, payload, None, addr.ip().to_string()).await
 }
 
 pub async fn list_post_comments(
@@ -265,6 +266,7 @@ pub async fn list_post_comments(
 
 pub async fn create_post_comment(
     State(pool): State<DbPool>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Path(post_id): Path<String>,
     auth::OptionalClaims(claims): auth::OptionalClaims,
     Json(payload): Json<CreateCommentRequest>,
@@ -291,7 +293,7 @@ pub async fn create_post_comment(
         ));
     }
 
-    create_comment_internal(pool, None, Some(post_id), payload, claims).await
+    create_comment_internal(pool, None, Some(post_id), payload, claims, addr.ip().to_string()).await
 }
 
 async fn create_comment_internal(
@@ -300,11 +302,12 @@ async fn create_comment_internal(
     post_id: Option<String>,
     payload: CreateCommentRequest,
     claims: Option<auth::Claims>,
+    ip_address: String,
 ) -> Result<Json<Comment>, (StatusCode, Json<ErrorResponse>)> {
     let comment_content = sanitize_comment_content(&payload.content)?;
 
-    let author = if let Some(ref c) = claims {
-        c.sub.clone()
+    let (author, rate_limit_key) = if let Some(ref c) = claims {
+        (c.sub.clone(), c.sub.clone())
     } else {
         // Guest comment
         match payload.author {
@@ -318,7 +321,8 @@ async fn create_comment_internal(
                         }),
                     ));
                 }
-                trimmed.to_string()
+                // Use IP address for rate limiting guests, but store provided name as author
+                (trimmed.to_string(), ip_address)
             }
             None => {
                 return Err((
@@ -332,7 +336,7 @@ async fn create_comment_internal(
     };
 
     // Rate limiting
-    let last_comment_time = repositories::comments::get_last_comment_time(&pool, &author)
+    let last_comment_time = repositories::comments::get_last_comment_time(&pool, &rate_limit_key)
         .await
         .map_err(|e| {
             tracing::error!("Database error checking rate limit: {}", e);

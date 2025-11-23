@@ -34,7 +34,7 @@ idna_adapter = "=1.2.1"
 regex = { version = "1.10", default-features = false, features = ["std"] }
 anyhow = "1.0"
 time = "0.3"
-unicode-normalization = "0.1"
+
 sha2 = "0.10"
 hmac = "0.12"
 subtle = "2.5"

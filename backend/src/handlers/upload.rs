@@ -57,22 +57,24 @@ pub async fn upload_image(
                 ));
             }
 
-            let data = field.bytes().await.map_err(|err| {
+            let mut data = Vec::new();
+            while let Some(chunk) = field.chunk().await.map_err(|err| {
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
                     Json(ErrorResponse {
-                        error: format!("Failed to read file data: {}", err),
+                        error: format!("Failed to read file chunk: {}", err),
                     }),
                 )
-            })?;
-
-            if data.len() > MAX_FILE_SIZE {
-                return Err((
-                    StatusCode::BAD_REQUEST,
-                    Json(ErrorResponse {
-                        error: format!("File too large. Max size: {} bytes", MAX_FILE_SIZE),
-                    }),
-                ));
+            })? {
+                if data.len() + chunk.len() > MAX_FILE_SIZE {
+                    return Err((
+                        StatusCode::BAD_REQUEST,
+                        Json(ErrorResponse {
+                            error: format!("File too large. Max size: {} bytes", MAX_FILE_SIZE),
+                        }),
+                    ));
+                }
+                data.extend_from_slice(&chunk);
             }
 
             // Validate file content using magic bytes
