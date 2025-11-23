@@ -89,6 +89,7 @@ fn map_post(record: crate::models::SitePost) -> SitePostResponse {
         order_index: record.order_index,
         created_at: record.created_at,
         updated_at: record.updated_at,
+        allow_comments: record.allow_comments,
     }
 }
 
@@ -255,6 +256,7 @@ pub async fn create_post(
             is_published: payload.is_published,
             published_at: payload.published_at,
             order_index: payload.order_index,
+            allow_comments: payload.allow_comments,
         },
     )
     .await

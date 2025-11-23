@@ -28,7 +28,7 @@ pub async fn upload_image(
         ));
     }
 
-    while let Some(field) = multipart.next_field().await.map_err(|err| {
+    while let Some(mut field) = multipart.next_field().await.map_err(|err| {
         (
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse {

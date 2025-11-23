@@ -331,6 +331,7 @@ fn map_post(post: crate::models::SitePost) -> SitePostResponse {
         order_index: post.order_index,
         created_at: post.created_at,
         updated_at: post.updated_at,
+        allow_comments: post.allow_comments,
     }
 }
 
