@@ -8,7 +8,7 @@ pub async fn list_site_posts_for_page(
     page_id: &str,
 ) -> Result<Vec<SitePost>, sqlx::Error> {
     sqlx::query_as::<_, SitePost>(
-        "SELECT id, page_id, title, slug, excerpt, content_markdown, is_published, published_at, order_index, created_at, updated_at
+        "SELECT id, page_id, title, slug, excerpt, content_markdown, is_published, allow_comments, published_at, order_index, created_at, updated_at
          FROM site_posts
          WHERE page_id = ?
          ORDER BY order_index, created_at",
@@ -23,7 +23,7 @@ pub async fn list_published_posts_for_page(
     page_id: &str,
 ) -> Result<Vec<SitePost>, sqlx::Error> {
     sqlx::query_as::<_, SitePost>(
-        "SELECT id, page_id, title, slug, excerpt, content_markdown, is_published, published_at, order_index, created_at, updated_at
+        "SELECT id, page_id, title, slug, excerpt, content_markdown, is_published, allow_comments, published_at, order_index, created_at, updated_at
          FROM site_posts
          WHERE page_id = ? AND is_published = 1
          ORDER BY order_index, COALESCE(published_at, created_at)",
@@ -39,7 +39,7 @@ pub async fn get_published_post_by_slug(
     post_slug: &str,
 ) -> Result<Option<SitePost>, sqlx::Error> {
     sqlx::query_as::<_, SitePost>(
-        "SELECT id, page_id, title, slug, excerpt, content_markdown, is_published, published_at, order_index, created_at, updated_at
+        "SELECT id, page_id, title, slug, excerpt, content_markdown, is_published, allow_comments, published_at, order_index, created_at, updated_at
          FROM site_posts
          WHERE page_id = ? AND slug = ? AND is_published = 1",
     )
@@ -51,7 +51,7 @@ pub async fn get_published_post_by_slug(
 
 pub async fn get_site_post_by_id(pool: &DbPool, id: &str) -> Result<Option<SitePost>, sqlx::Error> {
     sqlx::query_as::<_, SitePost>(
-        "SELECT id, page_id, title, slug, excerpt, content_markdown, is_published, published_at, order_index, created_at, updated_at
+        "SELECT id, page_id, title, slug, excerpt, content_markdown, is_published, allow_comments, published_at, order_index, created_at, updated_at
          FROM site_posts WHERE id = ?",
     )
     .bind(id)
@@ -71,8 +71,8 @@ pub async fn create_site_post(
     let order_index = payload.order_index.unwrap_or(0);
 
     sqlx::query(
-        "INSERT INTO site_posts (id, page_id, title, slug, excerpt, content_markdown, is_published, published_at, order_index)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO site_posts (id, page_id, title, slug, excerpt, content_markdown, is_published, allow_comments, published_at, order_index)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(&id)
     .bind(page_id)
@@ -81,6 +81,7 @@ pub async fn create_site_post(
     .bind(excerpt)
     .bind(&payload.content_markdown)
     .bind(if payload.is_published { 1 } else { 0 })
+    .bind(if payload.allow_comments { 1 } else { 0 })
     .bind(payload.published_at)
     .bind(order_index)
     .execute(pool)
@@ -119,6 +120,9 @@ pub async fn update_site_post(
     if let Some(is_published) = payload.is_published {
         existing.is_published = is_published;
     }
+    if let Some(allow_comments) = payload.allow_comments {
+        existing.allow_comments = allow_comments;
+    }
     if let Some(published_at) = payload.published_at {
         existing.published_at = published_at;
     }
@@ -128,7 +132,7 @@ pub async fn update_site_post(
 
     sqlx::query(
         "UPDATE site_posts
-         SET title = ?, slug = ?, excerpt = ?, content_markdown = ?, is_published = ?, published_at = ?, order_index = ?, updated_at = CURRENT_TIMESTAMP
+         SET title = ?, slug = ?, excerpt = ?, content_markdown = ?, is_published = ?, allow_comments = ?, published_at = ?, order_index = ?, updated_at = CURRENT_TIMESTAMP
          WHERE id = ?",
     )
     .bind(&existing.title)
@@ -136,6 +140,7 @@ pub async fn update_site_post(
     .bind(&existing.excerpt)
     .bind(&existing.content_markdown)
     .bind(if existing.is_published { 1 } else { 0 })
+    .bind(if existing.allow_comments { 1 } else { 0 })
     .bind(&existing.published_at)
     .bind(existing.order_index)
     .bind(id)

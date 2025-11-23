@@ -119,9 +119,11 @@ const PostDetail = () => {
           <div className="space-y-8">
             <PostContent post={post} />
 
-            <div className="bg-white dark:bg-slate-900/90 rounded-3xl shadow-xl border border-gray-200 dark:border-slate-700/60 overflow-hidden p-6 sm:p-10">
-              <Comments postId={post.id} />
-            </div>
+            {post.allow_comments && (
+              <div className="bg-white dark:bg-slate-900/90 rounded-3xl shadow-xl border border-gray-200 dark:border-slate-700/60 overflow-hidden p-6 sm:p-10">
+                <Comments postId={post.id} />
+              </div>
+            )}
           </div>
         )}
       </div>

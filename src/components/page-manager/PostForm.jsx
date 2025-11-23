@@ -38,6 +38,7 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
   const [content, setContent] = useState(initialData?.content_markdown ?? '')
   const [orderIndex, setOrderIndex] = useState(initialData?.order_index ?? 0)
   const [isPublished, setIsPublished] = useState(Boolean(initialData?.is_published))
+  const [allowComments, setAllowComments] = useState(initialData?.allow_comments ?? true)
   const [publishedAt, setPublishedAt] = useState(initialData?.published_at ?? '')
   const [error, setError] = useState(null)
   const [uploading, setUploading] = useState(false)
@@ -74,7 +75,9 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
         excerpt: excerpt.trim() || null,
         content_markdown: content,
         order_index: sanitizeInteger(orderIndex),
+        order_index: sanitizeInteger(orderIndex),
         is_published: isPublished,
+        allow_comments: allowComments,
         published_at: isPublished && publishedAt ? publishedAt : null,
       }
       await onSubmit(payload)
@@ -259,6 +262,15 @@ const PostForm = ({ mode, initialData, onSubmit, onCancel, submitting }) => {
             }}
           />
           Veröffentlicht
+        </label>
+        <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-slate-200">
+          <input
+            type="checkbox"
+            className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-900"
+            checked={allowComments}
+            onChange={(event) => setAllowComments(event.target.checked)}
+          />
+          Kommentare erlauben
         </label>
         <div className="flex justify-end gap-3 pt-2">
           <button

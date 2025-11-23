@@ -114,6 +114,7 @@ pub struct SitePost {
     pub excerpt: String,
     pub content_markdown: String,
     pub is_published: bool,
+    pub allow_comments: bool,
     pub published_at: Option<String>,
     pub order_index: i64,
     pub created_at: String,
@@ -129,6 +130,7 @@ pub struct SitePostResponse {
     pub excerpt: String,
     pub content_markdown: String,
     pub is_published: bool,
+    pub allow_comments: bool,
     pub published_at: Option<String>,
     pub order_index: i64,
     pub created_at: String,
@@ -148,8 +150,14 @@ pub struct CreateSitePostRequest {
     pub content_markdown: String,
     #[serde(default)]
     pub is_published: bool,
+    #[serde(default = "default_allow_comments")]
+    pub allow_comments: bool,
     pub published_at: Option<String>,
     pub order_index: Option<i64>,
+}
+
+fn default_allow_comments() -> bool {
+    true
 }
 
 #[derive(Debug, Deserialize)]
@@ -159,6 +167,7 @@ pub struct UpdateSitePostRequest {
     pub excerpt: Option<String>,
     pub content_markdown: Option<String>,
     pub is_published: Option<bool>,
+    pub allow_comments: Option<bool>,
     pub published_at: Option<Option<String>>,
     pub order_index: Option<i64>,
 }
