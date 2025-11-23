@@ -60,3 +60,11 @@ pub async fn clear_login_attempts(pool: &DbPool, username_hash: &str) -> Result<
         .await?;
     Ok(())
 }
+
+pub async fn check_user_exists_by_name(pool: &DbPool, username: &str) -> Result<bool, sqlx::Error> {
+    let exists: Option<(i64,)> = sqlx::query_as("SELECT 1 FROM users WHERE username = ?")
+        .bind(username)
+        .fetch_optional(pool)
+        .await?;
+    Ok(exists.is_some())
+}

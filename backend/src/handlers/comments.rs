@@ -28,6 +28,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
+use html_escape;
 
 #[derive(Deserialize)]
 pub struct CreateCommentRequest {
@@ -84,14 +85,7 @@ fn sanitize_comment_content(raw: &str) -> Result<String, (StatusCode, Json<Error
         ));
     }
 
-    let sanitized: String = trimmed
-        .chars()
-        .filter(|c| match c {
-            '\n' | '\r' | '\t' => true,
-            c if c.is_control() => false,
-            _ => true,
-        })
-        .collect();
+    let sanitized = html_escape::encode_safe(trimmed).to_string();
 
     Ok(sanitized)
 }
@@ -321,6 +315,28 @@ async fn create_comment_internal(
                         }),
                     ));
                 }
+                // Check if name conflicts with registered user
+                let user_exists = repositories::users::check_user_exists_by_name(&pool, trimmed)
+                    .await
+                    .map_err(|e| {
+                        tracing::error!("Database error checking user existence: {}", e);
+                        (
+                            StatusCode::INTERNAL_SERVER_ERROR,
+                            Json(ErrorResponse {
+                                error: "Failed to validate guest name".to_string(),
+                            }),
+                        )
+                    })?;
+
+                if user_exists {
+                    return Err((
+                        StatusCode::BAD_REQUEST,
+                        Json(ErrorResponse {
+                            error: "Guest name cannot match a registered user".to_string(),
+                        }),
+                    ));
+                }
+
                 // Use IP address for rate limiting guests, but store provided name as author
                 (trimmed.to_string(), ip_address)
             }
