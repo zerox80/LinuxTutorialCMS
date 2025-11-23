@@ -92,6 +92,15 @@ pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
     // Create site-related schema (pages, posts, content)
     ensure_site_page_schema(pool).await?;
 
+    // Apply site post schema migrations (add allow_comments)
+    {
+        let mut tx = pool.begin().await?;
+        if let Err(err) = apply_site_post_migrations(&mut tx).await {
+            tracing::error!("Failed to apply site post migrations: {}", err);
+        }
+        tx.commit().await?;
+    }
+
     // Seed default site content (hero, footer, etc.)
     {
         let mut tx = pool.begin().await?;
@@ -437,6 +446,7 @@ async fn ensure_site_page_schema(pool: &DbPool) -> Result<(), sqlx::Error> {
             excerpt TEXT DEFAULT '',
             content_markdown TEXT NOT NULL,
             is_published INTEGER NOT NULL DEFAULT 0,
+            allow_comments BOOLEAN NOT NULL DEFAULT 1,
             published_at TEXT,
             order_index INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -608,6 +618,27 @@ async fn fix_comment_schema(
     sqlx::query("INSERT INTO app_metadata (key, value) VALUES ('comment_schema_fixed_v1', 'true')")
         .execute(&mut **tx)
         .await?;
+
+    Ok(())
+}
+
+async fn apply_site_post_migrations(
+    tx: &mut Transaction<'_, Sqlite>,
+) -> Result<(), sqlx::Error> {
+    // Check if allow_comments column exists
+    let has_allow_comments: bool = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM pragma_table_info('site_posts') WHERE name='allow_comments'",
+    )
+    .fetch_one(&mut **tx)
+    .await
+    .map(|count: i64| count > 0)?;
+
+    if !has_allow_comments {
+        tracing::info!("Adding allow_comments column to site_posts table");
+        sqlx::query("ALTER TABLE site_posts ADD COLUMN allow_comments BOOLEAN NOT NULL DEFAULT 1")
+            .execute(&mut **tx)
+            .await?;
+    }
 
     Ok(())
 }
