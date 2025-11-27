@@ -19,7 +19,7 @@
 import { Moon, Sun } from 'lucide-react';
 
 // Import custom hook to access theme context
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
 
 /**
  * ThemeToggle Functional Component
